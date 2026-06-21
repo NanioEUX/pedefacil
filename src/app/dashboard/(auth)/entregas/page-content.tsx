@@ -135,10 +135,12 @@ export default function EntregasPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-zinc-900">Entregas</h2>
-        <Button size="sm" onClick={() => setShowAdd(true)} className="gap-2">
-          <UserPlus className="h-4 w-4" />
-          Novo entregador
-        </Button>
+        <p className="text-sm text-zinc-500">
+          Motoboys são cadastrados na aba{" "}
+          <a href="/dashboard/usuarios" className="font-medium text-[#FF6B35] hover:underline">
+            Usuários
+          </a>
+        </p>
       </div>
 
       {/* Tabs */}
@@ -164,23 +166,6 @@ export default function EntregasPage() {
         <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
           {createdPassword}
         </div>
-      )}
-
-      {/* Add motoboy form */}
-      {showAdd && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input label="Nome" value={newMotoboy.name} onChange={(e) => setNewMotoboy({ ...newMotoboy, name: e.target.value })} placeholder="Nome" />
-              <Input label="WhatsApp" value={newMotoboy.phone} onChange={(e) => setNewMotoboy({ ...newMotoboy, phone: e.target.value })} placeholder="(11) 99999-9999" />
-              <Input label="Senha padrão" value={newMotoboy.defaultPassword} onChange={(e) => setNewMotoboy({ ...newMotoboy, defaultPassword: e.target.value })} placeholder="123456" />
-            </div>
-            <div className="mt-3 flex gap-2">
-              <Button size="sm" onClick={addMotoboy} className="gap-1"><UserPlus className="h-3 w-3" />Adicionar</Button>
-              <Button size="sm" variant="outline" onClick={() => { setShowAdd(false); setNewMotoboy({ name: "", phone: "", defaultPassword: "123456" }) }}>Cancelar</Button>
-            </div>
-          </CardContent>
-        </Card>
       )}
 
       {/* ===== TAB: ENTREGAS ===== */}

@@ -25,6 +25,7 @@ const ALL_PERMISSIONS = [
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
   atendente: "Atendente",
+  motoboy: "Motoboy",
 }
 
 export default function UsuariosPage() {
@@ -52,7 +53,7 @@ export default function UsuariosPage() {
 
   function openNew() {
     setEditingUser(null)
-    setForm({ name: "", email: "", password: "", role: "atendente", permissions: ["caixa"] })
+    setForm({ name: "", email: "", password: "123456", role: "atendente", permissions: ["caixa"] })
     setError("")
     setShowForm(true)
   }
@@ -107,13 +108,30 @@ export default function UsuariosPage() {
         const res = await fetchAuth("/api/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, establishmentId }),
+          body: JSON.stringify({
+            ...form,
+            establishmentId,
+            mustChangePassword: true,
+          }),
         })
         const data = await res.json()
         if (!res.ok) {
           setError(data.error || "Erro ao criar")
           setSaving(false)
           return
+        }
+
+        // If motoboy, create delivery person record
+        if (form.role === "motoboy" && data.id) {
+          await fetchAuth("/api/delivery-persons", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: form.name,
+              userId: data.id,
+              establishmentId,
+            }),
+          })
         }
       }
       setShowForm(false)
@@ -239,10 +257,15 @@ export default function UsuariosPage() {
                   <label className="mb-1 block text-sm font-medium text-zinc-700">Senha</label>
                   <Input
                     type="password"
-                    placeholder={editingUser ? "Deixe vazio para manter" : "••••••"}
+                    placeholder={editingUser ? "Deixe vazio para manter" : "123456 (padrão)"}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                   />
+                  {!editingUser && (
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Senha padrão: 123456 (usuário deverá trocar no primeiro login)
+                    </p>
+                  )}
                 </div>
 
                 <div>

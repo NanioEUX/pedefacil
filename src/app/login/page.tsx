@@ -43,6 +43,12 @@ export default function LoginPage() {
         refreshToken: data.refreshToken,
       }))
 
+      // Check if user must change password
+      if (data.user.mustChangePassword) {
+        router.push("/trocar-senha")
+        return
+      }
+
       if (data.user.role === "motoboy" && data.user.deliveryPerson) {
         const { slug, token: dpToken } = data.user.deliveryPerson
         router.push(`/${slug}/entregas/${dpToken}`)
@@ -105,6 +111,12 @@ export default function LoginPage() {
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              </div>
+
+              <div className="text-right">
+                <Link href="/esqueci-senha" className="text-xs text-[#FF6B35] hover:underline">
+                  Esqueceu a senha?
+                </Link>
               </div>
 
               {error && (
