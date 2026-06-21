@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Store, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
@@ -66,6 +66,7 @@ export default function CadastroPage() {
         establishmentId: data.establishment.id,
         establishment: data.establishment,
         token: data.token,
+        refreshToken: data.refreshToken,
       }))
 
       router.push("/dashboard/pedidos")
@@ -77,17 +78,16 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#FFF7F3] to-white py-12">
       <div className="mx-auto max-w-lg px-4">
-        <Link href="/" className="mb-8 flex items-center gap-2 text-green-600">
-          <Store className="h-5 w-5" />
-          <span className="font-bold text-zinc-900">PedeFácil</span>
+        <Link href="/" className="mb-8 flex justify-center">
+          <img src="/icons/pedefacil-login.png" alt="PedeFácil" className="h-12" />
         </Link>
 
-        <Card>
-          <CardHeader>
+        <Card className="border-zinc-200 shadow-lg">
+          <CardHeader className="text-center">
             <h1 className="text-2xl font-bold text-zinc-900">Criar sua conta</h1>
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-zinc-500">
               Seu cardápio online em 2 minutos
             </p>
           </CardHeader>
@@ -103,8 +103,8 @@ export default function CadastroPage() {
               />
 
               {form.name && (
-                <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-600">
-                  Seu link: <span className="font-medium text-green-600">{slug}.pedefacil.com</span>
+                <div className="rounded-lg bg-[#FFF7F3] p-3 text-sm text-zinc-600">
+                  Seu link: <span className="font-medium text-[#FF6B35]">{slug}.pedefacil.com</span>
                 </div>
               )}
 
@@ -166,18 +166,30 @@ export default function CadastroPage() {
                 <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full bg-[#FF6B35] hover:bg-[#E55A2B]"
+                disabled={loading}
+              >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Criar cardápio grátis
               </Button>
 
               <p className="text-center text-sm text-zinc-500">
                 Já tem conta?{" "}
-                <Link href="/dashboard" className="text-green-600 underline">Entrar</Link>
+                <Link href="/login" className="font-medium text-[#FF6B35] hover:underline">
+                  Entrar
+                </Link>
               </p>
             </form>
           </CardContent>
         </Card>
+
+        <p className="mt-6 text-center text-xs text-zinc-400">
+          <Link href="/" className="hover:text-[#FF6B35]">
+            ← Voltar para o início
+          </Link>
+        </p>
       </div>
     </div>
   )

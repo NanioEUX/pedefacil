@@ -58,8 +58,15 @@ export async function POST(req: NextRequest) {
       { expiresIn: "24h" }
     )
 
+    const refreshToken = jwt.sign(
+      { userId: user.id, type: "refresh" },
+      JWT_SECRET + "-refresh",
+      { expiresIn: "7d" }
+    )
+
     return NextResponse.json({
       token,
+      refreshToken,
       user: {
         id: user.id,
         name: user.name,

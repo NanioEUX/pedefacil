@@ -52,7 +52,13 @@ export async function POST(req: NextRequest) {
       { expiresIn: "24h" }
     )
 
-    return NextResponse.json({ establishment, token })
+    const refreshToken = jwt.sign(
+      { userId: establishment.id, type: "refresh" },
+      JWT_SECRET + "-refresh",
+      { expiresIn: "7d" }
+    )
+
+    return NextResponse.json({ establishment, token, refreshToken })
   } catch (error) {
     console.error(error)
     return NextResponse.json({ error: "Erro interno" }, { status: 500 })

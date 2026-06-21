@@ -1,8 +1,11 @@
-const CACHE_NAME = "pedefacil-v1"
+const CACHE_NAME = "pedefacil-v2"
 
 const urlsToCache = [
   "/",
   "/manifest.json",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/favicon.svg",
 ]
 
 self.addEventListener("install", (event: any) => {
@@ -56,8 +59,8 @@ self.addEventListener("push", (event: any) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: data.icon || "/icon-192.png",
-      badge: "/icon-192.png",
+      icon: data.icon || "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
       vibrate: [200, 100, 200],
       data: { url: data.url },
       actions: [

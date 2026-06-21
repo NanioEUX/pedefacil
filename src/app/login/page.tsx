@@ -2,10 +2,11 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Store, Loader2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import Link from "next/link"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -39,6 +40,7 @@ export default function LoginPage() {
         establishmentId: data.establishment.id,
         establishment: data.establishment,
         token: data.token,
+        refreshToken: data.refreshToken,
       }))
 
       if (data.user.role === "motoboy" && data.user.deliveryPerson) {
@@ -63,55 +65,81 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-100 p-4">
-      <Card className="w-full max-w-sm">
-        <CardContent className="p-8">
-          <div className="mb-6 flex flex-col items-center">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100">
-              <Store className="h-7 w-7 text-green-600" />
-            </div>
-            <h1 className="text-xl font-bold text-zinc-900">PedeFácil</h1>
-            <p className="text-sm text-zinc-500">Acesse seu painel</p>
-          </div>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#FFF7F3] to-white p-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <Link href="/">
+            <img src="/icons/pedefacil-login.png" alt="PedeFácil" className="mx-auto h-16" />
+          </Link>
+        </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <div className="relative">
+        <Card className="border-zinc-200 shadow-lg">
+          <CardContent className="p-8">
+            <div className="mb-6 text-center">
+              <h1 className="text-xl font-bold text-zinc-900">Bem-vindo de volta</h1>
+              <p className="text-sm text-zinc-500">Acesse seu painel de controle</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
               <Input
-                label="Senha"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                label="Email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-600"
+              <div className="relative">
+                <Input
+                  label="Senha"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-600"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+
+              {error && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-[#FF6B35] hover:bg-[#E55A2B]"
+                disabled={loading}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {loading ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-zinc-500">
+              <p>
+                Não tem uma conta?{" "}
+                <Link href="/cadastro" className="font-medium text-[#FF6B35] hover:underline">
+                  Criar gratuitamente
+                </Link>
+              </p>
             </div>
+          </CardContent>
+        </Card>
 
-            {error && (
-              <p className="text-sm text-red-500">{error}</p>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        <p className="mt-6 text-center text-xs text-zinc-400">
+          <Link href="/" className="hover:text-[#FF6B35]">
+            ← Voltar para o início
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

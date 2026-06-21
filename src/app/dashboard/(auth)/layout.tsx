@@ -119,12 +119,7 @@ export default function DashboardLayout({
       >
         <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-4">
           <div className="flex items-center gap-2">
-            {establishment.logo ? (
-              <img src={establishment.logo} alt={establishment.name} className="h-8 w-8 rounded-lg object-cover" />
-            ) : (
-              <Store className="h-5 w-5 text-green-600" />
-            )}
-            <span className="font-bold text-zinc-900">{establishment.name}</span>
+            <img src="/icons/pedefacil-sidebar.png" alt="PedeFácil" className="h-8" />
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden">
             <X className="h-5 w-5" />
@@ -304,10 +299,7 @@ export default function DashboardLayout({
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1 flex items-center gap-2">
-            {establishment.logo ? (
-              <img src={establishment.logo} alt={establishment.name} className="h-6 w-6 rounded object-cover" />
-            ) : null}
-            <p className="text-sm font-semibold text-zinc-900 lg:hidden">{establishment.name}</p>
+            <img src="/icons/pedefacil-sidebar.png" alt="PedeFácil" className="h-6" />
           </div>
           <span className="hidden text-sm text-zinc-500 lg:block">
             <a href={`/${establishment.slug}`} target="_blank" className="text-green-600 underline">/{establishment.slug}</a>

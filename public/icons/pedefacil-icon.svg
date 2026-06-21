@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8C5A"/>
+      <stop offset="100%" style="stop-color:#FF6B35"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="96" cy="96" r="90" fill="#FF6B35"/>
+  
+  <!-- Shopping Bag -->
+  <g transform="translate(36, 26)">
+    <!-- Bag Body -->
+    <path d="M10 45 L10 115 Q10 125 20 125 L100 125 Q110 125 110 115 L110 45 Z" fill="white" rx="5"/>
+    
+    <!-- Bag Handle -->
+    <path d="M30 45 L30 28 Q30 8 60 8 Q90 8 90 28 L90 45" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Items in bag -->
+    <circle cx="40" cy="70" r="10" fill="#FF6B35" opacity="0.8"/>
+    <circle cx="60" cy="70" r="10" fill="#FF6B35" opacity="0.8"/>
+    <circle cx="80" cy="70" r="10" fill="#FF6B35" opacity="0.8"/>
+    <circle cx="50" cy="95" r="10" fill="#FF6B35" opacity="0.8"/>
+    
+    <!-- Checkmark -->
+    <path d="M45 82 L55 92 L75 68" fill="none" stroke="#FF6B35" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

@@ -297,9 +297,7 @@ export function DeliveryPage({ token }: { token: string }) {
             {person.establishment.logo ? (
               <img src={person.establishment.logo} alt={person.establishment.name} className="h-10 w-10 rounded-lg object-cover" />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                <Bike className="h-5 w-5 text-green-600" />
-              </div>
+              <img src="/icons/pedefacil-icon.svg" alt="PedeFácil" className="h-10 w-10" />
             )}
             <div>
               <h1 className="text-lg font-bold text-zinc-900">Olá, {person.name}!</h1>

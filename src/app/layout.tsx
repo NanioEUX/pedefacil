@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#16a34a",
+  themeColor: "#FF6B35",
 }
 
 export default function RootLayout({
@@ -24,6 +24,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body className={inter.className}>{children}</body>
     </html>
