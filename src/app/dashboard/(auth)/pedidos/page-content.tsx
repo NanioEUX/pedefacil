@@ -1,0 +1,687 @@
+"use client"
+
+import { useEffect, useState, useRef } from "react"
+import { useSearchParams } from "next/navigation"
+import { useEstablishmentId } from "@/hooks/use-establishment-id"
+import { ShoppingBag, Search, MessageCircle, ExternalLink, User, Plus, Loader2, X, Bike, Store, CreditCard, Banknote, Printer, Calendar, Package, Send } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { formatCurrency } from "@/lib/utils"
+import { fetchAuth } from "@/lib/fetch-auth"
+
+const statusLabels: Record<string, string> = {
+  pending: "Pendente",
+  payment_pending: "Aguard. Pagamento",
+  confirmed: "Confirmado",
+  preparing: "Preparando",
+  ready: "Pronto",
+  out_for_delivery: "Saiu p/ Entrega",
+  delivered: "Entregue",
+  cancelled: "Cancelado",
+}
+
+const statusColors: Record<string, "info" | "warning" | "success" | "danger" | "default"> = {
+  pending: "info",
+  payment_pending: "warning",
+  confirmed: "info",
+  preparing: "warning",
+  ready: "success",
+  out_for_delivery: "info",
+  delivered: "success",
+  cancelled: "danger",
+}
+
+const flowOrder = ["pending", "payment_pending", "confirmed", "preparing", "ready", "out_for_delivery", "delivered"]
+const selectableStatuses = ["preparing", "ready", "out_for_delivery", "delivered"]
+
+const paymentMethodLabels: Record<string, string> = {
+  online: "Online (Pix/Cartão)",
+  delivery: "Pagar na Entrega",
+  pickup: "Pagar na Retirada",
+}
+
+const orderTypeLabels: Record<string, string> = {
+  delivery: "Entrega",
+  pickup: "Retirada",
+}
+
+export default function PedidosPage() {
+  const searchParams = useSearchParams()
+  const hookEstablishmentId = useEstablishmentId()
+  const searchParamsEstablishmentId = searchParams.get("establishment")
+  const establishmentId = searchParamsEstablishmentId || hookEstablishmentId
+  const [orders, setOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState("")
+  const [showNewOrder, setShowNewOrder] = useState(false)
+  const [newOrder, setNewOrder] = useState({ customerName: "", customerPhone: "", notes: "" })
+  const [deliveryPeople, setDeliveryPeople] = useState<any[]>([])
+  const [filterMotoboy, setFilterMotoboy] = useState("")
+  const [filterPeriod, setFilterPeriod] = useState("all")
+  const [filterType, setFilterType] = useState("all")
+  const [unreadOrders, setUnreadOrders] = useState<Record<string, { count: number; name: string; message: string }>>({})
+  const [highlightOrderId, setHighlightOrderId] = useState<string | null>(null)
+
+  async function loadOrders() {
+    if (!establishmentId) return
+    const res = await fetchAuth(`/api/orders?establishmentId=${establishmentId}`)
+    const data = await res.json()
+    setOrders(data)
+    setLoading(false)
+  }
+
+  useEffect(() => { loadOrders(); loadDeliveryPeople() }, [establishmentId])
+  useEffect(() => { const i = setInterval(loadOrders, 15000); return () => clearInterval(i) }, [establishmentId])
+
+  async function updateStatus(orderId: string, status: string) {
+    await fetchAuth(`/api/orders/${orderId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) })
+    loadOrders()
+  }
+
+  async function updateDeliveryPerson(orderId: string, deliveryPersonId: string, deliveryPersonName: string) {
+    await fetchAuth(`/api/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deliveryPersonId, deliveryPersonName }),
+    })
+    loadOrders()
+  }
+
+  async function loadDeliveryPeople() {
+    if (!establishmentId) return
+    const res = await fetchAuth(`/api/delivery-persons?establishmentId=${establishmentId}`)
+    if (res.ok) setDeliveryPeople(await res.json())
+  }
+
+  async function createWhatsAppOrder() {
+    if (!establishmentId || !newOrder.customerName) return
+    await fetchAuth("/api/orders/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...newOrder, establishmentId, items: [], total: 0 }),
+    })
+    setNewOrder({ customerName: "", customerPhone: "", notes: "" })
+    setShowNewOrder(false)
+    loadOrders()
+  }
+
+  const filtered = orders.filter((o) => {
+    const matchesName = o.customerName.toLowerCase().includes(filter.toLowerCase())
+    const matchesMotoboy = !filterMotoboy || o.deliveryPersonId === filterMotoboy
+    const matchesType = filterType === "all" || o.orderType === filterType
+    const d = new Date(o.createdAt)
+    const now = new Date()
+    let matchesPeriod = true
+    if (filterPeriod === "today") {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      matchesPeriod = d >= start
+    } else if (filterPeriod === "7days") {
+      const start = new Date(now.getTime() - 7 * 86400000)
+      matchesPeriod = d >= start
+    } else if (filterPeriod === "30days") {
+      const start = new Date(now.getTime() - 30 * 86400000)
+      matchesPeriod = d >= start
+    }
+    return matchesName && matchesMotoboy && matchesType && matchesPeriod
+  })
+
+  function groupOrders(list: any[]) {
+    const groups: Record<string, typeof list> = { active: [], completed: [], cancelled: [] }
+    list.forEach((o) => {
+      if (o.status === "cancelled") groups.cancelled.push(o)
+      else if (o.status === "delivered") groups.completed.push(o)
+      else groups.active.push(o)
+    })
+    return groups
+  }
+
+  const grouped = groupOrders(filtered)
+
+  function handleUnreadUpdate(orderId: string, count: number, name: string, message: string) {
+    setUnreadOrders((prev) => {
+      if (count === 0) {
+        const next = { ...prev }
+        delete next[orderId]
+        return next
+      }
+      return { ...prev, [orderId]: { count, name, message } }
+    })
+  }
+
+  function scrollToOrder(orderId: string) {
+    const el = document.getElementById(`order-${orderId}`)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      setHighlightOrderId(orderId)
+      setTimeout(() => setHighlightOrderId(null), 3000)
+    }
+  }
+
+  if (loading) return <div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-green-600 border-t-transparent" /></div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-zinc-900">Pedidos</h2>
+        
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <Input placeholder="Buscar por nome..." value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-9" />
+      </div>
+
+      {/* Motoboy summary */}
+      {deliveryPeople.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            onClick={() => setFilterMotoboy("")}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${!filterMotoboy ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}
+          >
+            Todos
+          </div>
+          {deliveryPeople.map((p: any) => {
+            const count = orders.filter((o: any) => o.deliveryPersonId === p.id && !["delivered", "cancelled"].includes(o.status)).length
+            return (
+              <button
+                key={p.id}
+                onClick={() => setFilterMotoboy(p.id)}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${filterMotoboy === p.id ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}
+              >
+                <Bike className="h-3 w-3" />
+                {p.name}
+                {count > 0 && <span className="ml-0.5 rounded-full bg-white/20 px-1.5 text-[10px]">{count}</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Period + Type filters */}
+      <div className="flex flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-zinc-400" />
+          <div className="flex gap-1">
+            {[
+              { value: "all", label: "Todos" },
+              { value: "today", label: "Hoje" },
+              { value: "7days", label: "7 dias" },
+              { value: "30days", label: "30 dias" },
+            ].map((p) => (
+              <button key={p.value} onClick={() => setFilterPeriod(p.value)} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${filterPeriod === p.value ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"}`}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Package className="h-4 w-4 text-zinc-400" />
+          <div className="flex gap-1">
+            {[
+              { value: "all", label: "Todos" },
+              { value: "delivery", label: "Entrega" },
+              { value: "pickup", label: "Retirada" },
+              { value: "presencial", label: "Caixa" },
+            ].map((t) => (
+              <button key={t.value} onClick={() => setFilterType(t.value)} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${filterType === t.value ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Global message notification bar */}
+      {Object.keys(unreadOrders).length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="mb-2 text-xs font-semibold text-amber-700 uppercase tracking-wider">Mensagens não lidas</p>
+          <div className="space-y-1.5">
+            {Object.entries(unreadOrders).map(([orderId, data]) => (
+              <button
+                key={orderId}
+                onClick={() => scrollToOrder(orderId)}
+                className="flex w-full items-center gap-3 rounded-lg bg-white border border-amber-200 px-3 py-2 text-left hover:bg-amber-50 transition-colors"
+              >
+                <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-zinc-900">{data.name}</p>
+                  <p className="text-xs text-zinc-500 truncate">{data.message}</p>
+                </div>
+                <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                  {data.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center">
+          <ShoppingBag className="mx-auto h-8 w-8 text-zinc-300" />
+          <p className="mt-2 text-sm text-zinc-500">Nenhum pedido ainda</p>
+        </div>
+      ) : (
+        <>
+          {grouped.active.length > 0 && <OrderSection title="Em Andamento" orders={grouped.active} onUpdateStatus={updateStatus} onUpdateDelivery={updateDeliveryPerson} deliveryPeople={deliveryPeople} onUnreadUpdate={handleUnreadUpdate} highlightOrderId={highlightOrderId} />}
+          {grouped.completed.length > 0 && (
+            <details className="group">
+              <summary className="cursor-pointer text-sm font-semibold text-zinc-400 hover:text-zinc-600">Entregues ({grouped.completed.length})</summary>
+              <div className="mt-3 space-y-3"><OrderSection title="" orders={grouped.completed} onUpdateStatus={updateStatus} onUpdateDelivery={updateDeliveryPerson} deliveryPeople={deliveryPeople} onUnreadUpdate={handleUnreadUpdate} highlightOrderId={highlightOrderId} /></div>
+            </details>
+          )}
+          {grouped.cancelled.length > 0 && (
+            <details className="group">
+              <summary className="cursor-pointer text-sm font-semibold text-red-400 hover:text-red-600">Cancelados ({grouped.cancelled.length})</summary>
+              <div className="mt-3 space-y-3"><OrderSection title="" orders={grouped.cancelled} onUpdateStatus={updateStatus} onUpdateDelivery={updateDeliveryPerson} deliveryPeople={deliveryPeople} onUnreadUpdate={handleUnreadUpdate} highlightOrderId={highlightOrderId} /></div>
+            </details>
+          )}
+        </>
+      )}
+
+      {/* New WhatsApp Order Modal */}
+      {showNewOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-green-600" />
+                  Pedido via WhatsApp
+                </h3>
+                <button onClick={() => setShowNewOrder(false)}><X className="h-5 w-5" /></button>
+              </div>
+              <div className="space-y-3">
+                <Input label="Nome do cliente" placeholder="Ex: João" value={newOrder.customerName} onChange={(e) => setNewOrder({ ...newOrder, customerName: e.target.value })} />
+                <Input label="WhatsApp do cliente" placeholder="11999999999" value={newOrder.customerPhone} onChange={(e) => setNewOrder({ ...newOrder, customerPhone: e.target.value })} />
+                <Input label="Observações" placeholder="Ex: Pedido feito pelo WhatsApp" value={newOrder.notes} onChange={(e) => setNewOrder({ ...newOrder, notes: e.target.value })} />
+                <p className="text-xs text-zinc-500">Os itens são gerenciados manualmente pelo WhatsApp. Use isso para registrar pedidos que chegaram pelo chat.</p>
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setShowNewOrder(false)}>Cancelar</Button>
+                  <Button className="flex-1" onClick={createWhatsAppOrder}>Criar pedido</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function OrderSection({ title, orders, onUpdateStatus, onUpdateDelivery, deliveryPeople, onUnreadUpdate, highlightOrderId }: {
+  title: string
+  orders: any[]
+  onUpdateStatus: (id: string, s: string) => void
+  onUpdateDelivery: (id: string, personId: string, personName: string) => void
+  deliveryPeople: any[]
+  onUnreadUpdate: (orderId: string, count: number, name: string, message: string) => void
+  highlightOrderId: string | null
+}) {
+  return (
+    <div>
+      {title && <h3 className="mb-3 text-sm font-semibold text-zinc-500 uppercase tracking-wider">{title}</h3>}
+      <div className="space-y-3">
+        {orders.map((order) => (
+          <OrderCard key={order.id} order={order} onUpdateStatus={onUpdateStatus} onUpdateDelivery={onUpdateDelivery} deliveryPeople={deliveryPeople} onUnreadUpdate={onUnreadUpdate} highlight={highlightOrderId === order.id} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function OrderCard({ order, onUpdateStatus, onUpdateDelivery, deliveryPeople, onUnreadUpdate, highlight }: { order: any; onUpdateStatus: (id: string, s: string) => void; onUpdateDelivery: (id: string, personId: string, personName: string) => void; deliveryPeople: any[]; onUnreadUpdate: (orderId: string, count: number, name: string, message: string) => void; highlight: boolean }) {
+  const items = typeof order.items === "string" ? JSON.parse(order.items) : order.items
+  const isPresencial = order.orderType === "presencial"
+  const currentIdx = flowOrder.indexOf(order.status)
+  const isNewOrder = ["pending", "payment_pending", "confirmed"].includes(order.status)
+
+  let nextStatus: string | null
+  if (isNewOrder) {
+    nextStatus = "preparing"
+  } else if (isPresencial && order.status === "ready") {
+    nextStatus = "delivered"
+  } else if (isPresencial && order.status === "preparing") {
+    nextStatus = "ready"
+  } else if (!isPresencial && currentIdx >= 0 && currentIdx < flowOrder.length - 1) {
+    nextStatus = flowOrder[currentIdx + 1]
+  } else {
+    nextStatus = null
+  }
+
+  const isLocked = isPresencial
+    ? ["delivered", "cancelled"].includes(order.status)
+    : ["ready", "out_for_delivery", "delivered"].includes(order.status)
+
+  const [chatOpen, setChatOpen] = useState(false)
+  const [messages, setMessages] = useState<any[]>([])
+  const [newMessage, setNewMessage] = useState("")
+  const [sending, setSending] = useState(false)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  async function fetchMessages() {
+    try {
+      const res = await fetchAuth(`/api/orders/${order.id}/messages?_t=${Date.now()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(data)
+      }
+    } catch (e) {}
+  }
+
+  async function markAsRead() {
+    try {
+      await fetchAuth(`/api/orders/${order.id}/messages`, { method: "PATCH" })
+      setMessages((prev) => prev.map((m) => m.sender === "customer" ? { ...m, read: true } : m))
+    } catch (e) {
+      console.error("Erro ao marcar como lida:", e)
+    }
+  }
+
+  useEffect(() => {
+    fetchMessages()
+    const i = setInterval(fetchMessages, 10000)
+    return () => clearInterval(i)
+  }, [order.id])
+
+  useEffect(() => {
+    if (chatOpen) {
+      markAsRead()
+    }
+  }, [chatOpen, order.id])
+
+  useEffect(() => {
+    if (chatOpen && chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
+  }, [messages, chatOpen])
+
+  async function sendMessage() {
+    if (!newMessage.trim() || sending) return
+    setSending(true)
+    try {
+      const res = await fetchAuth(`/api/orders/${order.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: newMessage.trim() }),
+      })
+      if (res.ok) {
+        const msg = await res.json()
+        setMessages((prev) => [...prev, msg])
+        setNewMessage("")
+      }
+    } catch {} finally {
+      setSending(false)
+    }
+  }
+
+  const unreadCount = messages.filter((m) => m.sender === "customer" && !m.read).length
+  const lastCustomerMsg = [...messages].reverse().find((m) => m.sender === "customer")
+
+  useEffect(() => {
+    onUnreadUpdate(order.id, unreadCount, order.customerName, lastCustomerMsg?.message || "")
+  }, [unreadCount, order.id, order.customerName, lastCustomerMsg?.message])
+
+  const nextLabel: Record<string, string> = {
+    pending: "Iniciar preparo",
+    payment_pending: "Iniciar preparo",
+    confirmed: "Iniciar preparo",
+    preparing: "Finalizar preparo",
+    ready: isPresencial ? "Entregar no balcão" : "Sair p/ entrega",
+    out_for_delivery: "Entregar",
+  }
+
+  function printReceipt() {
+    const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`
+    const win = window.open("", "_blank")
+    if (!win) return
+    win.document.write(`
+      <html>
+      <head>
+        <title>Pedido #${order.orderNumber || order.id.slice(0, 8)}</title>
+        <style>
+          @page { margin: 0; }
+          body { font-family: 'Courier New', monospace; font-size: 12px; padding: 20px; color: #000; }
+          h1 { font-size: 16px; text-align: center; margin: 0 0 4px; }
+          h2 { font-size: 14px; text-align: center; margin: 0 0 12px; font-weight: normal; }
+          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          table { width: 100%; border-collapse: collapse; }
+          td { padding: 2px 0; }
+          .right { text-align: right; }
+          .total { font-size: 14px; font-weight: bold; }
+          .label { color: #555; }
+          .footer { text-align: center; margin-top: 12px; font-size: 10px; }
+          .order-number { font-size: 20px; font-weight: bold; text-align: center; margin: 8px 0; }
+    </style>
+  </head>
+  <body>
+    <h1>${order.establishmentName || "Estabelecimento"}</h1>
+    <h2>--- CUPOM ---</h2>
+    <div class="order-number">Pedido #${order.orderNumber || order.id.slice(0, 8)}</div>
+    <p>${new Date(order.createdAt).toLocaleString("pt-BR")}</p>
+    <p>Status: ${statusLabels[order.status] || order.status}</p>
+    <div class="divider"></div>
+    <p><strong>Cliente:</strong> ${order.customerName}</p>
+    ${order.customerPhone ? `<p><strong>WhatsApp:</strong> ${order.customerPhone}</p>` : ""}
+    ${order.customerAddress ? `<p><strong>Endereço:</strong> ${order.customerAddress}</p>` : ""}
+    ${order.orderType ? `<p><strong>Tipo:</strong> ${orderTypeLabels[order.orderType] || order.orderType}</p>` : ""}
+    ${order.paymentMethod ? `<p><strong>Pagamento:</strong> ${paymentMethodLabels[order.paymentMethod] || order.paymentMethod}</p>` : ""}
+    ${order.deliveryPerson ? `<p><strong>Entregador:</strong> ${order.deliveryPerson}</p>` : ""}
+    <div class="divider"></div>
+    <table>
+      <tr><td><strong>Item</strong></td><td class="right"><strong>Qtd</strong></td><td class="right"><strong>Valor</strong></td></tr>
+      ${items.map((item: any) => `<tr><td>${item.name}</td><td class="right">${item.quantity}x</td><td class="right">${fmt(item.price * item.quantity)}</td></tr>`).join("")}
+    </table>
+    ${order.deliveryFee > 0 ? `<p class="right">Taxa entrega: ${fmt(order.deliveryFee)}</p>` : ""}
+    <div class="divider"></div>
+    <p class="total right">Total: ${fmt(order.total)}</p>
+    ${order.notes ? `<p><span class="label">Obs:</span> ${order.notes}</p>` : ""}
+    <div class="divider"></div>
+    <p class="footer">Obrigado pela preferência!</p>
+  </body>
+</html>`)
+win.document.close()
+win.focus()
+win.print()
+win.close()
+}
+
+  return (
+    <Card id={`order-${order.id}`} className={`${unreadCount > 0 ? "border-red-300 border-2 shadow-md shadow-red-100" : ""} ${highlight ? "ring-2 ring-amber-400 ring-offset-2" : ""} transition-all duration-300`}>
+      <CardContent className="p-4">
+        {unreadCount > 0 && (
+          <div className="mb-3 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2">
+            <span className="relative flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+            </span>
+            <p className="text-sm font-semibold text-red-700">
+              {unreadCount} {unreadCount === 1 ? "nova mensagem" : "novas mensagens"} do cliente
+            </p>
+            <MessageCircle className="h-4 w-4 text-red-500 ml-auto" />
+          </div>
+        )}
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              {order.orderNumber && (
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+                  #{order.orderNumber}
+                </span>
+              )}
+              <p className="font-semibold text-zinc-900">{order.customerName}</p>
+              {["pending", "payment_pending", "confirmed"].includes(order.status) ? (
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Novo pedido</span>
+              ) : (
+                <Badge variant={statusColors[order.status] || "default"}>{statusLabels[order.status] || order.status}</Badge>
+              )}
+              {order.paymentStatus === "paid" && <Badge variant="success">Pago</Badge>}
+              {order.method === "whatsapp" && <Badge variant="info">WhatsApp</Badge>}
+              {unreadCount > 0 && (
+                <Badge variant="danger" className="animate-pulse">{unreadCount} msg</Badge>
+              )}
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+              {order.orderType && (
+                <span className="flex items-center gap-1">
+                  {order.orderType === "delivery" ? <Bike className="h-3 w-3" /> : <Store className="h-3 w-3" />}
+                  {orderTypeLabels[order.orderType] || order.orderType}
+                </span>
+              )}
+              {order.paymentMethod && (
+                <span className="flex items-center gap-1">
+                  {order.paymentMethod === "online" ? <CreditCard className="h-3 w-3" /> : <Banknote className="h-3 w-3" />}
+                  {paymentMethodLabels[order.paymentMethod] || order.paymentMethod}
+                </span>
+              )}
+            </div>
+
+            <p className="mt-1 text-xs text-zinc-400">{new Date(order.createdAt).toLocaleString("pt-BR")}</p>
+
+            <div className="mt-1 flex flex-wrap gap-2 text-sm">
+              {order.customerPhone && (
+                <a href={`https://wa.me/55${order.customerPhone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-green-600 hover:underline">
+                  <MessageCircle className="h-3 w-3" />{order.customerPhone}
+                </a>
+              )}
+              {order.trackingToken && (
+                <a href={`/pedido/${order.trackingToken}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                  <ExternalLink className="h-3 w-3" />Rastrear
+                </a>
+              )}
+              {order.paymentLink && (
+                <a href={order.paymentLink} target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 underline">Link pgto</a>
+              )}
+            </div>
+
+            {!isPresencial && order.customerAddress && <p className="mt-1 text-sm text-zinc-500">📍 {order.customerAddress}</p>}
+
+            {items.length > 0 && (
+              <div className="mt-2 space-y-0.5 text-sm text-zinc-600">
+                {items.map((item: any, i: number) => (
+                  <p key={i}>{item.quantity}x {item.name} — {formatCurrency(item.price * item.quantity)}</p>
+                ))}
+                {!isPresencial && order.deliveryFee > 0 && (
+                  <p className="text-xs text-zinc-400">Taxa de entrega: {formatCurrency(order.deliveryFee)}</p>
+                )}
+              </div>
+            )}
+
+            {order.notes && <p className="mt-1 text-sm text-zinc-400 italic">Obs: {order.notes}</p>}
+
+            {lastCustomerMsg && (
+              <div className={`mt-2 flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${unreadCount > 0 ? "bg-red-50 border border-red-200" : "bg-zinc-50 border border-zinc-200"}`}>
+                <MessageCircle className={`h-4 w-4 mt-0.5 flex-shrink-0 ${unreadCount > 0 ? "text-red-500" : "text-zinc-400"}`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-medium ${unreadCount > 0 ? "text-red-600" : "text-zinc-500"}`}>
+                    {unreadCount > 0 ? "Última mensagem do cliente:" : "Mensagem do cliente:"}
+                  </p>
+                  <p className={`truncate ${unreadCount > 0 ? "text-red-700 font-medium" : "text-zinc-600"}`}>{lastCustomerMsg.message}</p>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">{new Date(lastCustomerMsg.createdAt).toLocaleString("pt-BR")}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Delivery person - only for non-presencial */}
+            {!isPresencial && (
+              <div className="mt-2 flex items-center gap-2">
+                <Bike className="h-3 w-3 text-zinc-400" />
+                <select
+                  value={order.deliveryPersonId || ""}
+                  onChange={(e) => {
+                    const id = e.target.value
+                    const person = deliveryPeople.find((p: any) => p.id === id)
+                    onUpdateDelivery(order.id, id, person?.name || "")
+                }}
+                disabled={isLocked}
+                className="rounded-lg border border-zinc-200 bg-white px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value=""></option>
+                {deliveryPeople.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 lg:flex-col lg:items-end">
+            <p className="text-lg font-bold text-green-600">{formatCurrency(order.total)}</p>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={printReceipt} className="gap-1">
+                <Printer className="h-3 w-3" />
+              </Button>
+              <button
+                onClick={() => setChatOpen(!chatOpen)}
+                className={`relative rounded-lg border p-1.5 transition-colors ${chatOpen ? "border-green-500 bg-green-50 text-green-600" : unreadCount > 0 ? "border-red-300 bg-red-50 text-red-600 animate-pulse" : "border-zinc-200 text-zinc-500 hover:bg-zinc-50"}`}
+              >
+                <MessageCircle className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              <select
+                value={isNewOrder ? "" : order.status}
+                onChange={(e) => onUpdateStatus(order.id, e.target.value)}
+                disabled={isLocked}
+                className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isNewOrder && <option value="" disabled>Selecionar status...</option>}
+                {selectableStatuses.map((key) => (
+                  <option key={key} value={key}>{statusLabels[key]}</option>
+                ))}
+                <option value="cancelled" disabled={isLocked}>Cancelar</option>
+              </select>
+              {nextStatus && !isLocked && (
+                <Button size="sm" onClick={() => onUpdateStatus(order.id, nextStatus)}>
+                  {nextLabel[order.status] || "Próximo"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Chat panel */}
+        {chatOpen && (
+          <div className="mt-4 border-t border-zinc-200 pt-4">
+            <div ref={chatContainerRef} className="max-h-60 overflow-y-auto space-y-2 mb-3">
+              {messages.length === 0 && (
+                <p className="text-center text-sm text-zinc-400 py-3">Nenhuma mensagem ainda</p>
+              )}
+              {messages.map((msg: any) => (
+                <div key={msg.id} className={`flex ${msg.sender === "establishment" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${msg.sender === "establishment" ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-800"}`}>
+                    <p>{msg.message}</p>
+                    <p className={`text-[10px] mt-1 ${msg.sender === "establishment" ? "text-green-200" : "text-zinc-400"}`}>
+                      {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value.slice(0, 500))}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                placeholder="Responder mensagem..."
+                className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+              />
+              <Button size="sm" onClick={sendMessage} disabled={!newMessage.trim() || sending} className="gap-1">
+                <Send className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}

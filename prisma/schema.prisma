@@ -1,0 +1,298 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Establishment {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  email       String   @unique
+  password    String
+  phone       String
+  logo        String?
+  cover       String?
+  description String?
+  address     String?
+  category    String?
+  isActive      Boolean  @default(true)
+  asaasApiKey   String?
+  asaasWalletId String?
+  platformFee   Float    @default(10)
+  paymentConfig    String   @default("{\"online\":true,\"delivery\":true,\"pickup\":true}")
+  orderConfig      String   @default("{\"delivery\":true,\"pickup\":true}")
+  deliveryFeeType  String   @default("free")
+  deliveryFeeAmount Float?  @default(0)
+  deliveryFreeAbove Float?  @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  categories      Category[]
+  products        Product[]
+  orders          Order[]
+  customers       Customer[]
+  deliveryPeople  DeliveryPerson[]
+  stockCategories StockCategory[]
+  stockItems      StockItem[]
+  users           User[]
+  deliveryPayments DeliveryPayment[]
+  coupons         Coupon[]
+  cashRegisters   CashRegister[]
+  expenses        Expense[]
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  name           String?
+  phone          String   @unique
+  address        String?
+  cep            String?
+  totalOrders    Int      @default(0)
+  totalSpent     Float    @default(0)
+  lastOrderAt    DateTime?
+  establishmentId String
+  establishment  Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  orders Order[]
+}
+
+model DeliveryPerson {
+  id              String   @id @default(cuid())
+  name            String
+  phone           String
+  token           String   @unique
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  userId          String?  @unique
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orders   Order[]
+  payments DeliveryPayment[]
+}
+
+model Category {
+  id              String        @id @default(cuid())
+  name            String
+  order           Int           @default(0)
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  products        Product[]
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  price           Float
+  image           String?
+  isAvailable     Boolean       @default(true)
+  order           Int           @default(0)
+  badge           String?
+  categoryId      String
+  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  stockItemId     String?
+  stockItem       StockItem?    @relation(fields: [stockItemId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  stockLinks ProductStockLink[]
+}
+
+model Order {
+  id               String   @id @default(cuid())
+  orderNumber      Int?
+  establishmentId  String
+  establishment    Establishment @relation(fields: [establishmentId], references: [id])
+  customerId       String?
+  customer         Customer? @relation(fields: [customerId], references: [id])
+  customerName     String
+  customerPhone    String?
+  customerAddress  String?
+  orderType        String   @default("delivery")
+  paymentMethod    String   @default("online")
+  items            String
+  total            Float
+  deliveryFee      Float    @default(0)
+  status           String   @default("pending")
+  paymentId        String?
+  paymentLink      String?
+  paymentStatus    String   @default("pending")
+  notes            String?
+  method           String   @default("site")
+  deliveryPerson   String?
+  deliveryPersonId String?
+  deliveryPersonRel DeliveryPerson? @relation(fields: [deliveryPersonId], references: [id])
+  couponId          String?
+  coupon            Coupon?  @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  trackingToken    String?  @unique
+  assignedAt       DateTime?
+  deliveredAt      DateTime?
+  messages         OrderMessage[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([establishmentId, orderNumber])
+}
+
+model StockCategory {
+  id              String   @id @default(cuid())
+  name            String
+  order           Int      @default(0)
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+
+  items StockItem[]
+}
+
+model StockItem {
+  id              String   @id @default(cuid())
+  name            String
+  unit            String   @default("un")
+  quantity        Float    @default(0)
+  minQuantity     Float    @default(0)
+  unitCost        Float    @default(0)
+  supplier        String?
+  categoryId      String
+  category        StockCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  movements    StockMovement[]
+  productLinks ProductStockLink[]
+  products     Product[]
+}
+
+model StockMovement {
+  id              String   @id @default(cuid())
+  type            String
+  quantity        Float
+  unitCost        Float?
+  notes           String?
+  itemId          String
+  item            StockItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+}
+
+model ProductStockLink {
+  id              String   @id @default(cuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stockItemId     String
+  stockItem       StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+  quantity        Float
+
+  @@unique([productId, stockItemId])
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  password        String
+  role            String   @default("atendente")
+  permissions     String   @default("[\"caixa\"]")
+  isActive        Boolean  @default(true)
+  mustChangePassword Boolean @default(false)
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deliveryPerson DeliveryPerson?
+  paidDeliveries DeliveryPayment[]
+}
+
+model DeliveryPayment {
+  id              String   @id @default(cuid())
+  amount          Float
+  period          String   @default("manual")
+  notes           String?
+  deliveryPersonId String
+  deliveryPerson  DeliveryPerson @relation(fields: [deliveryPersonId], references: [id], onDelete: Cascade)
+  paidById        String?
+  paidBy          User?    @relation(fields: [paidById], references: [id], onDelete: SetNull)
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+}
+
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String
+  type            String   @default("percent") // percent | fixed
+  value           Float
+  minOrder        Float    @default(0)
+  maxUses         Int?
+  usedCount       Int      @default(0)
+  active          Boolean  @default(true)
+  expiresAt       DateTime?
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  orders          Order[]
+  createdAt       DateTime @default(now())
+
+  @@unique([code, establishmentId])
+}
+
+model CashRegister {
+  id              String   @id @default(cuid())
+  openingAmount   Float
+  closingAmount   Float?
+  expectedAmount  Float?
+  status          String   @default("open") // open | closed
+  notes           String?
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  closedAt        DateTime?
+
+  movements CashMovement[]
+}
+
+model CashMovement {
+  id              String   @id @default(cuid())
+  type            String   // sale | expense | withdrawal | injection | refund
+  amount          Float
+  description     String?
+  paymentMethod   String?  // cash | card | pix
+  orderId         String?
+  cashRegisterId  String
+  cashRegister    CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+}
+
+model Expense {
+  id              String   @id @default(cuid())
+  description     String
+  amount          Float
+  category        String   @default("variavel") // fixa | variavel | motoboy | insumo | outro
+  date            DateTime @default(now())
+  cashRegisterId  String?
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+}
+
+model OrderMessage {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sender    String   @default("customer") // customer | establishment
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
