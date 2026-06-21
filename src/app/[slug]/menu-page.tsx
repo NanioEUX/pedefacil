@@ -37,6 +37,12 @@ interface Establishment {
   deliveryFeeType: string
   deliveryFeeAmount: number | null
   deliveryFreeAbove: number | null
+  primaryColor: string
+  backgroundColor: string
+  textColor: string
+  headerColor: string
+  colorsPublished: boolean
+  instagramUrl: string | null
 }
 
 interface CustomerData {
@@ -72,6 +78,19 @@ function ProductBadge({ badge }: { badge: string | null }) {
 }
 
 export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
+  // Color theme - use published colors or defaults
+  const theme = establishment.colorsPublished ? {
+    primary: establishment.primaryColor,
+    background: establishment.backgroundColor,
+    text: establishment.textColor,
+    header: establishment.headerColor,
+  } : {
+    primary: "#16a34a",
+    background: "#ffffff",
+    text: "#1a1a2e",
+    header: "#ffffff",
+  }
+
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
@@ -618,27 +637,37 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 pb-24">
+    <div className="min-h-screen pb-24" style={{ backgroundColor: theme.background }}>
       {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="shadow-sm sticky top-0 z-10" style={{ backgroundColor: theme.header }}>
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
-          <a href="https://www.instagram.com/geladolatesorveteria" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center shrink-0">
-            {establishment.logo ? (
-              <img src={establishment.logo} alt={establishment.name} className="h-10 w-10 rounded-lg object-cover" />
-            ) : (
-              <img src="/icons/pedefacil-icon.svg" alt="PedeFácil" className="h-10 w-10" />
-            )}
-            <span className="text-[9px] text-zinc-400 hover:text-pink-500 transition-colors mt-0.5 flex items-center gap-0.5">
-              <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-              Siga-nos
-            </span>
-          </a>
+          {establishment.instagramUrl ? (
+            <a href={establishment.instagramUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center shrink-0">
+              {establishment.logo ? (
+                <img src={establishment.logo} alt={establishment.name} className="h-10 w-10 rounded-lg object-cover" />
+              ) : (
+                <img src="/icons/pedefacil-icon.svg" alt="PedeFácil" className="h-10 w-10" />
+              )}
+              <span className="text-[9px] text-zinc-400 hover:text-pink-500 transition-colors mt-0.5 flex items-center gap-0.5">
+                <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                Siga-nos
+              </span>
+            </a>
+          ) : (
+            <div className="flex flex-col items-center shrink-0">
+              {establishment.logo ? (
+                <img src={establishment.logo} alt={establishment.name} className="h-10 w-10 rounded-lg object-cover" />
+              ) : (
+                <img src="/icons/pedefacil-icon.svg" alt="PedeFácil" className="h-10 w-10" />
+              )}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-zinc-900 truncate">{establishment.name}</h1>
+            <h1 className="text-base font-bold truncate" style={{ color: theme.text }}>{establishment.name}</h1>
           </div>
           {customer.name ? (
             <div className="text-right shrink-0">
-              <p className="text-xs text-green-600 font-medium">Olá, {customer.name}!</p>
+              <p className="text-xs font-medium" style={{ color: theme.primary }}>Olá, {customer.name}!</p>
               <button
                 onClick={() => { setCustomerData(null); setPhoneInput(""); setCustomer({ name: "", phone: "", address: "", notes: "" }); setCep(""); setCepAddress(null); localStorage.removeItem(`pedefacil-customer-${establishment.slug}`) }}
                 className="text-[10px] text-zinc-400 hover:text-zinc-600"
@@ -648,7 +677,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             </div>
           ) : customerData ? (
             <div className="text-right shrink-0">
-              <p className="text-xs text-green-600 font-medium">Olá, {customerData.name || "cliente"}!</p>
+              <p className="text-xs font-medium" style={{ color: theme.primary }}>Olá, {customerData.name || "cliente"}!</p>
               <button
                 onClick={() => { setCustomerData(null); setPhoneInput(""); setCustomer({ name: "", phone: "", address: "", notes: "" }); setCep(""); setCepAddress(null); localStorage.removeItem(`pedefacil-customer-${establishment.slug}`) }}
                 className="text-[10px] text-zinc-400 hover:text-zinc-600"
@@ -657,7 +686,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               </button>
             </div>
           ) : (
-            <button onClick={() => setShowIdentifyModal(true)} className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-green-600 shrink-0 animate-pulse">
+            <button onClick={() => setShowIdentifyModal(true)} className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 shrink-0 animate-pulse">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
@@ -702,9 +731,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 onClick={() => setActiveCategory(cat.id)}
                 className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                   activeCategory === cat.id
-                    ? "bg-green-600 text-white"
+                    ? "text-white"
                     : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
                 }`}
+                style={activeCategory === cat.id ? { backgroundColor: theme.primary } : {}}
               >
                 {cat.name}
               </button>
@@ -728,7 +758,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   <p className="mb-2 text-xs font-medium text-zinc-400 uppercase">{cat.name}</p>
                   <div className="space-y-3">
                     {filtered.map((product) => (
-                      <ProductCard key={product.id} product={product} onAdd={addToCart} />
+                      <ProductCard key={product.id} product={product} onAdd={addToCart} theme={theme} />
                     ))}
                   </div>
                 </div>
@@ -749,7 +779,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 <h2 className="mb-4 text-xl font-semibold text-zinc-900">{cat.name}</h2>
                 <div className="space-y-3">
                   {products.map((product) => (
-                    <ProductCard key={product.id} product={product} onAdd={addToCart} />
+                    <ProductCard key={product.id} product={product} onAdd={addToCart} theme={theme} />
                   ))}
                 </div>
               </div>
@@ -1333,7 +1363,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   )
 }
 
-function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product) => void }) {
+function ProductCard({ product, onAdd, theme }: { product: Product; onAdd: (p: Product) => void; theme: { primary: string } }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4">
       {product.image ? (
@@ -1355,9 +1385,9 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product)
         {product.description && (
           <p className="mt-0.5 text-sm text-zinc-500 line-clamp-2">{product.description}</p>
         )}
-        <p className="mt-1 font-bold text-green-600">{formatCurrency(product.price)}</p>
+        <p className="mt-1 font-bold" style={{ color: theme.primary }}>{formatCurrency(product.price)}</p>
       </div>
-      <Button size="sm" onClick={() => onAdd(product)} className="flex-shrink-0">+</Button>
+      <Button size="sm" onClick={() => onAdd(product)} className="flex-shrink-0" style={{ backgroundColor: theme.primary }}>+</Button>
     </div>
   )
 }

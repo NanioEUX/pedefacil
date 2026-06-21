@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
-import { Users, Plus, Pencil, Trash2, X, Loader2, Shield, Eye, EyeOff, Check } from "lucide-react"
+import { Users, Plus, Pencil, Trash2, X, Loader2, Shield, Eye, EyeOff, Check, Copy, ExternalLink } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,6 +43,7 @@ export default function UsuariosPage() {
   const searchParamsEstablishmentId = searchParams.get("establishment")
   const establishmentId = searchParamsEstablishmentId || hookEstablishmentId
   const [users, setUsers] = useState<any[]>([])
+  const [deliveryPersons, setDeliveryPersons] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
@@ -53,8 +54,12 @@ export default function UsuariosPage() {
   async function loadUsers() {
     if (!establishmentId) return
     setLoading(true)
-    const res = await fetchAuth(`/api/users?establishmentId=${establishmentId}`)
-    if (res.ok) setUsers(await res.json())
+    const [usersRes, deliveryRes] = await Promise.all([
+      fetchAuth(`/api/users?establishmentId=${establishmentId}`),
+      fetchAuth(`/api/delivery-persons?establishmentId=${establishmentId}`),
+    ])
+    if (usersRes.ok) setUsers(await usersRes.json())
+    if (deliveryRes.ok) setDeliveryPersons(await deliveryRes.json())
     setLoading(false)
   }
 
@@ -205,6 +210,8 @@ export default function UsuariosPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {users.map((user) => {
             const perms = JSON.parse(user.permissions || '["caixa"]')
+            const deliveryPerson = user.role === "motoboy" ? deliveryPersons.find((dp) => dp.userId === user.id) : null
+            const deliveryLink = deliveryPerson ? `${window.location.origin}/${establishmentId}/entregas/${deliveryPerson.token}` : null
             return (
               <Card key={user.id} className={!user.isActive ? "opacity-50" : ""}>
                 <CardContent className="p-4">
@@ -215,6 +222,11 @@ export default function UsuariosPage() {
                         {user.role === "admin" && (
                           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                             Admin
+                          </span>
+                        )}
+                        {user.role === "motoboy" && (
+                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                            Motoboy
                           </span>
                         )}
                       </div>
@@ -232,13 +244,37 @@ export default function UsuariosPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 mb-2">
                     {perms.map((p: string) => (
                       <span key={p} className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
                         {ALL_PERMISSIONS.find((ap) => ap.value === p)?.label || p}
                       </span>
                     ))}
                   </div>
+                  {deliveryLink && (
+                    <div className="mt-2 rounded-lg bg-purple-50 p-2">
+                      <p className="text-[10px] font-medium text-purple-700 mb-1">Link de acesso:</p>
+                      <div className="flex items-center gap-1">
+                        <code className="flex-1 truncate text-[10px] text-purple-600">{deliveryLink}</code>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(deliveryLink)}
+                          className="rounded p-1 text-purple-400 hover:bg-purple-100 hover:text-purple-600"
+                          title="Copiar link"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                        <a
+                          href={deliveryLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded p-1 text-purple-400 hover:bg-purple-100 hover:text-purple-600"
+                          title="Abrir link"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )

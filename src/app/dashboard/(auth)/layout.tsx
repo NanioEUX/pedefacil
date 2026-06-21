@@ -27,7 +27,6 @@ const financeiroSubItems = [
 
 const configSubItems = [
   { icon: Settings, label: "Geral", href: "/dashboard/config", perm: "config" },
-  { icon: UtensilsCrossed, label: "Cardápio", href: "/dashboard/cardapio", perm: "cardapio" },
   { icon: Users, label: "Usuários", href: "/dashboard/usuarios", perm: "usuarios" },
 ]
 
@@ -53,6 +52,21 @@ export default function DashboardLayout({
   const [establishment, setEstablishment] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<UserData | null>(null)
+  const [currentTime, setCurrentTime] = useState("")
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date()
+      setCurrentTime(
+        now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) +
+        " " +
+        now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      )
+    }
+    updateClock()
+    const interval = setInterval(updateClock, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const stored = localStorage.getItem("pedefacil-user")
@@ -113,15 +127,26 @@ export default function DashboardLayout({
       {/* Sidebar — desktop */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 transform border-r border-zinc-200 bg-white transition-transform lg:relative lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-40 w-64 transform border-r border-zinc-200 bg-white transition-transform",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-4">
-          <div className="flex items-center gap-2">
-            <img src="/icons/pedefacil-sidebar.png" alt="PedeFácil" className="h-8" />
+        <div className="flex h-16 items-center gap-3 border-b border-zinc-200 px-4">
+          <div className="flex-shrink-0">
+            {establishment?.logo ? (
+              <img src={establishment.logo} alt={establishment.name} className="h-8 w-8 rounded-lg object-cover" />
+            ) : (
+              <img src="/icons/pedefacil-sidebar.png" alt="PedeFácil" className="h-8" />
+            )}
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden">
+          <div className="min-w-0 flex-1">
+            {establishment?.name ? (
+              <p className="text-sm font-semibold text-zinc-900 leading-tight">{establishment.name}</p>
+            ) : (
+              <p className="text-sm font-semibold text-zinc-900">PedeFácil</p>
+            )}
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden flex-shrink-0">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -260,27 +285,16 @@ export default function DashboardLayout({
             </div>
           )}
 
-          <div className="pt-4 mt-4 border-t border-zinc-200">
-            <button
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-            >
-              <LogOut className="h-5 w-5" />
-              Sair
-            </button>
-          </div>
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-200 p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">
-              {user?.name?.charAt(0)?.toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-xs font-medium text-zinc-900">{user?.name}</p>
-              <p className="truncate text-[10px] text-zinc-400">{user?.role === "admin" ? "Administrador" : "Atendente"}</p>
-            </div>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="h-5 w-5" />
+            Sair
+          </button>
         </div>
       </aside>
 
@@ -293,17 +307,24 @@ export default function DashboardLayout({
       )}
 
       {/* Main */}
-      <div className="flex-1 pb-20 lg:pb-0">
+      <div className="flex-1 pb-20 lg:pb-0 lg:ml-64">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-b border-zinc-200 bg-white px-4 lg:h-16 lg:px-8">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex-1 flex items-center gap-2">
-            <img src="/icons/pedefacil-sidebar.png" alt="PedeFácil" className="h-6" />
-          </div>
+          <div className="flex-1" />
           <span className="hidden text-sm text-zinc-500 lg:block">
             <a href={`/${establishment.slug}`} target="_blank" className="text-green-600 underline">/{establishment.slug}</a>
           </span>
+          <div className="hidden items-center gap-3 text-sm text-zinc-500 lg:flex">
+            <span>{currentTime}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-[10px] font-bold text-green-700">
+                {user?.name?.charAt(0)?.toUpperCase()}
+              </div>
+              <span className="font-medium text-zinc-700">{user?.name}</span>
+            </div>
+          </div>
         </header>
         <main className="p-3 lg:p-8">{children}</main>
       </div>

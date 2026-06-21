@@ -171,9 +171,6 @@ export default function HomePage() {
                   Criar meu cardápio grátis
                 </Button>
               </Link>
-              <Link href="/demo">
-                <Button variant="outline" size="lg">Ver demonstração</Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -198,6 +195,174 @@ export default function HomePage() {
                 <p className="mt-2 text-sm text-zinc-600">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* System Screenshots */}
+      <section className="border-t border-zinc-100 bg-zinc-50 py-20">
+        <div className="mx-auto max-w-7xl px-4">
+          <h2 className="text-center text-3xl font-bold text-zinc-900">
+            Veja como funciona
+          </h2>
+          <p className="mt-2 text-center text-zinc-600">
+            Conheça as principais telas do sistema
+          </p>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Dashboard */}
+            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-green-50 to-green-100 p-4">
+                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                    <div className="h-2 w-16 rounded bg-zinc-200"></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    <div className="h-8 rounded bg-green-100"></div>
+                    <div className="h-8 rounded bg-blue-100"></div>
+                    <div className="h-8 rounded bg-orange-100"></div>
+                  </div>
+                  <div className="h-12 rounded bg-zinc-100"></div>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-zinc-900">Dashboard</h3>
+                <p className="text-sm text-zinc-600">Visão geral com vendas, pedidos e relatórios em tempo real</p>
+              </div>
+            </div>
+
+            {/* Cardápio */}
+            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-orange-50 to-orange-100 p-4">
+                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
+                  <div className="flex gap-2 mb-2">
+                    <div className="h-4 w-12 rounded-full bg-[#FF6B35]"></div>
+                    <div className="h-4 w-12 rounded-full bg-zinc-200"></div>
+                    <div className="h-4 w-12 rounded-full bg-zinc-200"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-16 rounded bg-zinc-100"></div>
+                    <div className="h-16 rounded bg-zinc-100"></div>
+                    <div className="h-16 rounded bg-zinc-100"></div>
+                    <div className="h-16 rounded bg-zinc-100"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-zinc-900">Cardápio</h3>
+                <p className="text-sm text-zinc-600">Categorias, produtos com fotos e preços</p>
+              </div>
+            </div>
+
+            {/* Pedidos */}
+            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 rounded bg-zinc-50">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-blue-200"></div>
+                        <div className="h-2 w-16 rounded bg-zinc-200"></div>
+                      </div>
+                      <div className="h-4 w-12 rounded bg-green-200"></div>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-zinc-50">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-blue-200"></div>
+                        <div className="h-2 w-16 rounded bg-zinc-200"></div>
+                      </div>
+                      <div className="h-4 w-12 rounded bg-yellow-200"></div>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-zinc-50">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-blue-200"></div>
+                        <div className="h-2 w-16 rounded bg-zinc-200"></div>
+                      </div>
+                      <div className="h-4 w-12 rounded bg-orange-200"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-zinc-900">Pedidos</h3>
+                <p className="text-sm text-zinc-600">Acompanhe pedidos em tempo real com status</p>
+              </div>
+            </div>
+
+            {/* Entregas */}
+            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-purple-50 to-purple-100 p-4">
+                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-8 w-8 rounded-full bg-purple-200"></div>
+                    <div>
+                      <div className="h-2 w-16 rounded bg-zinc-200 mb-1"></div>
+                      <div className="h-2 w-10 rounded bg-zinc-100"></div>
+                    </div>
+                  </div>
+                  <div className="h-16 rounded bg-zinc-100 mb-2"></div>
+                  <div className="flex gap-2">
+                    <div className="h-4 flex-1 rounded bg-purple-200"></div>
+                    <div className="h-4 flex-1 rounded bg-green-200"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-zinc-900">Entregas</h3>
+                <p className="text-sm text-zinc-600">Painel do motoboy com mapa e status</p>
+              </div>
+            </div>
+
+            {/* Caixa */}
+            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
+                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
+                  <div className="grid grid-cols-3 gap-1 mb-2">
+                    <div className="h-8 rounded bg-emerald-100"></div>
+                    <div className="h-8 rounded bg-emerald-100"></div>
+                    <div className="h-8 rounded bg-emerald-100"></div>
+                    <div className="h-8 rounded bg-emerald-100"></div>
+                    <div className="h-8 rounded bg-emerald-100"></div>
+                    <div className="h-8 rounded bg-emerald-100"></div>
+                  </div>
+                  <div className="h-6 rounded bg-emerald-200"></div>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-zinc-900">Caixa</h3>
+                <p className="text-sm text-zinc-600">Tela de vendas presenciais simplificada</p>
+              </div>
+            </div>
+
+            {/* Estoque */}
+            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-amber-50 to-amber-100 p-4">
+                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="h-2 w-20 rounded bg-zinc-200"></div>
+                      <div className="h-2 w-8 rounded bg-amber-200"></div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="h-2 w-16 rounded bg-zinc-200"></div>
+                      <div className="h-2 w-8 rounded bg-green-200"></div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="h-2 w-24 rounded bg-zinc-200"></div>
+                      <div className="h-2 w-8 rounded bg-red-200"></div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="h-2 w-14 rounded bg-zinc-200"></div>
+                      <div className="h-2 w-8 rounded bg-amber-200"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-zinc-900">Estoque</h3>
+                <p className="text-sm text-zinc-600">Controle de insumos e baixa automática</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -420,7 +585,6 @@ export default function HomePage() {
           <p>PedeFácil © 2024 — Seu cardápio, seu controle</p>
           <div className="mt-3 flex items-center justify-center gap-4 text-xs">
             <Link href="/cadastro" className="hover:text-[#FF6B35]">Criar conta</Link>
-            <Link href="/demo" className="hover:text-[#FF6B35]">Demonstração</Link>
             <Link href="/dashboard" className="hover:text-[#FF6B35]">Entrar</Link>
           </div>
         </div>

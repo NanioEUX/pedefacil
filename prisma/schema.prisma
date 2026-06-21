@@ -20,6 +20,12 @@ model Establishment {
   description String?
   address     String?
   category    String?
+  instagramUrl String?
+  primaryColor     String  @default("#16a34a")
+  backgroundColor  String  @default("#ffffff")
+  textColor        String  @default("#1a1a2e")
+  headerColor      String  @default("#ffffff")
+  colorsPublished  Boolean @default(false)
   isActive      Boolean  @default(true)
   asaasApiKey   String?
   asaasWalletId String?

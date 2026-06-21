@@ -58,6 +58,21 @@ export default function CaixaPOSPage() {
   const [closing, setClosing] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [todayStats, setTodayStats] = useState({ count: 0, total: 0 })
+  const [currentTime, setCurrentTime] = useState("")
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date()
+      setCurrentTime(
+        now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) +
+        " " +
+        now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      )
+    }
+    updateClock()
+    const interval = setInterval(updateClock, 10000)
+    return () => clearInterval(interval)
+  }, [])
   const [customName, setCustomName] = useState("")
   const [customPrice, setCustomPrice] = useState("")
   const [loading, setLoading] = useState(true)
@@ -312,6 +327,7 @@ export default function CaixaPOSPage() {
           <div className="font-bold">{formatCurrency(todayStats.total)}</div>
         </div>
         <div className="flex items-center gap-3">
+          <span className="hidden text-sm sm:block">{currentTime}</span>
           <span className="text-sm">{user.name}</span>
           <button onClick={handleLogout} className="rounded-lg bg-green-700 p-1.5 hover:bg-green-800">
             <LogOut className="h-4 w-4" />

@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
-import { Plus, Pencil, Trash2, UtensilsCrossed, X, GripVertical, Star, Sparkles, Tag, Image as ImageIcon } from "lucide-react"
+import { Plus, Pencil, Trash2, UtensilsCrossed, X, GripVertical, Star, Sparkles, Tag, Image as ImageIcon, Upload, Eye, Save, Loader2, Palette } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -51,11 +51,14 @@ function getBadgeDisplay(badge: string | null) {
   )
 }
 
+type Tab = "produtos" | "aparencia" | "cores"
+
 export default function CardapioPage() {
   const searchParams = useSearchParams()
   const hookEstablishmentId = useEstablishmentId()
   const searchParamsEstablishmentId = searchParams.get("establishment")
   const establishmentId = searchParamsEstablishmentId || hookEstablishmentId
+  const [activeTab, setActiveTab] = useState<Tab>("produtos")
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -74,24 +77,62 @@ export default function CardapioPage() {
   const [stockItems, setStockItems] = useState<any[]>([])
   const [productLinks, setProductLinks] = useState<{ stockItemId: string; quantity: string }[]>([])
 
+  // Aparência state
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    logo: "",
+    cover: "",
+    instagramUrl: "",
+  })
+  const [savingAppearance, setSavingAppearance] = useState(false)
+  const [savedAppearance, setSavedAppearance] = useState(false)
+
+  // Cores state
+  const [colors, setColors] = useState({
+    primaryColor: "#16a34a",
+    backgroundColor: "#ffffff",
+    textColor: "#1a1a2e",
+    headerColor: "#ffffff",
+  })
+  const [colorsPublished, setColorsPublished] = useState(false)
+  const [savingColors, setSavingColors] = useState(false)
+
   async function loadData() {
     if (!establishmentId) return
     setLoading(true)
-    const [catRes, stockRes] = await Promise.all([
+    const [catRes, stockRes, estRes] = await Promise.all([
       fetchAuth(`/api/categories?establishmentId=${establishmentId}`),
       fetchAuth(`/api/stock?establishmentId=${establishmentId}`),
+      fetchAuth(`/api/establishments?id=${establishmentId}`),
     ])
     if (catRes.ok) setCategories(await catRes.json())
     if (stockRes.ok) {
       const data = await stockRes.json()
       setStockItems(data.items)
     }
+    if (estRes.ok) {
+      const data = await estRes.json()
+      setForm({
+        name: data.name || "",
+        phone: data.phone || "",
+        logo: data.logo || "",
+        cover: data.cover || "",
+        instagramUrl: data.instagramUrl || "",
+      })
+      setColors({
+        primaryColor: data.primaryColor || "#16a34a",
+        backgroundColor: data.backgroundColor || "#ffffff",
+        textColor: data.textColor || "#1a1a2e",
+        headerColor: data.headerColor || "#ffffff",
+      })
+      setColorsPublished(data.colorsPublished || false)
+    }
     setLoading(false)
   }
 
   useEffect(() => {
     loadData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [establishmentId])
 
   async function addCategory() {
@@ -224,6 +265,49 @@ export default function CardapioPage() {
     loadData()
   }
 
+  async function saveAppearance() {
+    if (!establishmentId) return
+    setSavingAppearance(true)
+    setSavedAppearance(false)
+    try {
+      const res = await fetchAuth(`/api/establishments/${establishmentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          logo: form.logo,
+          cover: form.cover,
+          instagramUrl: form.instagramUrl,
+        }),
+      })
+      if (res.ok) {
+        setSavedAppearance(true)
+        setTimeout(() => setSavedAppearance(false), 3000)
+      }
+    } finally {
+      setSavingAppearance(false)
+    }
+  }
+
+  async function saveColors(publish: boolean) {
+    if (!establishmentId) return
+    setSavingColors(true)
+    try {
+      const res = await fetchAuth(`/api/establishments/${establishmentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...colors,
+          colorsPublished: publish,
+        }),
+      })
+      if (res.ok) {
+        setColorsPublished(publish)
+      }
+    } finally {
+      setSavingColors(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -234,119 +318,425 @@ export default function CardapioPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-zinc-900">Cardápio</h2>
-        <Button onClick={() => setShowCategoryForm(true)}>
-          <Plus className="mr-1 h-4 w-4" />
-          Nova Categoria
-        </Button>
+      <h2 className="text-2xl font-bold text-zinc-900">Cardápio</h2>
+
+      {/* Tabs */}
+      <div className="flex gap-2 rounded-lg border border-zinc-200 bg-zinc-100 p-1">
+        <button
+          onClick={() => setActiveTab("produtos")}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === "produtos"
+              ? "bg-white text-zinc-900 shadow-sm"
+              : "text-zinc-500 hover:text-zinc-700"
+          }`}
+        >
+          <UtensilsCrossed className="h-4 w-4" />
+          Produtos
+        </button>
+        <button
+          onClick={() => setActiveTab("aparencia")}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === "aparencia"
+              ? "bg-white text-zinc-900 shadow-sm"
+              : "text-zinc-500 hover:text-zinc-700"
+          }`}
+        >
+          <ImageIcon className="h-4 w-4" />
+          Aparência
+        </button>
+        <button
+          onClick={() => setActiveTab("cores")}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === "cores"
+              ? "bg-white text-zinc-900 shadow-sm"
+              : "text-zinc-500 hover:text-zinc-700"
+          }`}
+        >
+          <Palette className="h-4 w-4" />
+          Cores
+        </button>
       </div>
 
-      {/* Categories */}
-      {categories.map((cat) => {
-        const sorted = [...cat.products].sort((a, b) => a.order - b.order)
-        return (
-          <Card key={cat.id}>
-            <CardContent className="p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-zinc-900">{cat.name}</h3>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => openNewProduct(cat.id)}>
-                    <Plus className="h-4 w-4" />
-                    Adicionar
-                  </Button>
+      {/* Produtos Tab */}
+      {activeTab === "produtos" && (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-zinc-500">Gerencie as categorias e produtos do seu cardápio</p>
+            <Button onClick={() => setShowCategoryForm(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              Nova Categoria
+            </Button>
+          </div>
+
+          {categories.map((cat) => {
+            const sorted = [...cat.products].sort((a, b) => a.order - b.order)
+            return (
+              <Card key={cat.id}>
+                <CardContent className="p-4">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-zinc-900">{cat.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => openNewProduct(cat.id)}>
+                        <Plus className="h-4 w-4" />
+                        Adicionar
+                      </Button>
+                      <button
+                        onClick={() => deleteCategory(cat.id)}
+                        className="text-red-400 hover:text-red-600 p-1"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {sorted.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-zinc-400">
+                      Nenhum produto nesta categoria
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {sorted.map((product, idx) => (
+                        <div
+                          key={product.id}
+                          className="flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 p-3"
+                        >
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => moveProduct(product.id, cat.id, "up")}
+                              disabled={idx === 0}
+                              className="text-zinc-300 hover:text-zinc-600 disabled:opacity-30"
+                            >
+                              <GripVertical className="h-3 w-3 -rotate-90" />
+                            </button>
+                            <button
+                              onClick={() => moveProduct(product.id, cat.id, "down")}
+                              disabled={idx === sorted.length - 1}
+                              className="text-zinc-300 hover:text-zinc-600 disabled:opacity-30"
+                            >
+                              <GripVertical className="h-3 w-3 rotate-90" />
+                            </button>
+                          </div>
+
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="h-12 w-12 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-200 text-xl">
+                              🍕
+                            </div>
+                          )}
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-medium text-zinc-900">{product.name}</p>
+                              {!product.isAvailable && <Badge variant="danger">Indisponível</Badge>}
+                              {product.stockItemId && <Badge variant="success">Vendável</Badge>}
+                              {getBadgeDisplay(product.badge)}
+                            </div>
+                            {product.description && (
+                              <p className="text-sm text-zinc-500 truncate">{product.description}</p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-green-600">
+                              {formatCurrency(product.price)}
+                            </span>
+                            <button
+                              onClick={() => editProduct(product)}
+                              className="text-zinc-400 hover:text-zinc-600"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteProduct(product.id)}
+                              className="text-red-400 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+
+          {categories.length === 0 && (
+            <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center">
+              <UtensilsCrossed className="mx-auto h-8 w-8 text-zinc-300" />
+              <p className="mt-2 text-sm text-zinc-500">Crie uma categoria para começar</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Aparência Tab */}
+      {activeTab === "aparencia" && (
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-semibold text-zinc-900">Aparência do Cardápio</h3>
+            <p className="text-sm text-zinc-500">Personalize a visualização do seu cardápio público.</p>
+            
+            {/* Preview do cardápio */}
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-xs text-zinc-400 mb-3">Pré-visualização</p>
+              <div className="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm border border-zinc-100">
+                {form.logo ? (
+                  <img src={form.logo} alt="Logo" className="h-10 w-10 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                    <ImageIcon className="h-5 w-5 text-green-600" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-bold text-zinc-900">{form.name || "Nome do Estabelecimento"}</p>
+                  <p className="text-xs text-zinc-500">{form.phone || "Telefone"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Upload da Logo */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700">Logo do Estabelecimento</label>
+              <div className="flex items-center gap-3">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-600 hover:bg-zinc-50 hover:border-green-400 transition-colors">
+                  <Upload className="h-4 w-4" />
+                  <span>Selecionar imagem</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onloadend = () => setForm({ ...form, logo: reader.result as string })
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                </label>
+                {form.logo && (
                   <button
-                    onClick={() => deleteCategory(cat.id)}
-                    className="text-red-400 hover:text-red-600 p-1"
+                    type="button"
+                    onClick={() => setForm({ ...form, logo: "" })}
+                    className="text-xs text-red-500 hover:text-red-700"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    Remover
                   </button>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-zinc-400">Ou cole a URL da imagem abaixo</p>
+              <Input label="" id="logo" placeholder="https://..." value={form.logo.startsWith("data:") ? "" : form.logo} onChange={(e) => setForm({ ...form, logo: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700">Link do Instagram</label>
+              <Input
+                id="instagramUrl"
+                placeholder="https://instagram.com/seuperfil"
+                value={form.instagramUrl}
+                onChange={(e) => setForm({ ...form, instagramUrl: e.target.value })}
+              />
+              <p className="mt-1 text-xs text-zinc-400">Aparecerá no cardápio público como "Siga-nos" vinculado à logo</p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button type="button" onClick={saveAppearance} disabled={savingAppearance}>
+                {savingAppearance ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Salvar aparência
+              </Button>
+              {savedAppearance && <span className="flex items-center gap-1 text-sm text-green-600"><Save className="h-4 w-4" />Salvo!</span>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cores Tab */}
+      {activeTab === "cores" && (
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-zinc-900 flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-[#FF6B35]" />
+                  Personalização de Cores
+                </h3>
+                <p className="text-sm text-zinc-500">Customize as cores do seu cardápio público.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {colorsPublished ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                    Publicado
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-600">
+                    <div className="h-1.5 w-1.5 rounded-full bg-zinc-400"></div>
+                    Rascunho
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Color Picker + Preview */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Color Pickers */}
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700">Cor primária (botões, destaques)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={colors.primaryColor}
+                      onChange={(e) => setColors({ ...colors, primaryColor: e.target.value })}
+                      className="h-10 w-10 cursor-pointer rounded border-0"
+                    />
+                    <input
+                      type="text"
+                      value={colors.primaryColor}
+                      onChange={(e) => setColors({ ...colors, primaryColor: e.target.value })}
+                      className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700">Cor de fundo</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={colors.backgroundColor}
+                      onChange={(e) => setColors({ ...colors, backgroundColor: e.target.value })}
+                      className="h-10 w-10 cursor-pointer rounded border-0"
+                    />
+                    <input
+                      type="text"
+                      value={colors.backgroundColor}
+                      onChange={(e) => setColors({ ...colors, backgroundColor: e.target.value })}
+                      className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700">Cor do texto</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={colors.textColor}
+                      onChange={(e) => setColors({ ...colors, textColor: e.target.value })}
+                      className="h-10 w-10 cursor-pointer rounded border-0"
+                    />
+                    <input
+                      type="text"
+                      value={colors.textColor}
+                      onChange={(e) => setColors({ ...colors, textColor: e.target.value })}
+                      className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700">Cor do header</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={colors.headerColor}
+                      onChange={(e) => setColors({ ...colors, headerColor: e.target.value })}
+                      className="h-10 w-10 cursor-pointer rounded border-0"
+                    />
+                    <input
+                      type="text"
+                      value={colors.headerColor}
+                      onChange={(e) => setColors({ ...colors, headerColor: e.target.value })}
+                      className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {sorted.length === 0 ? (
-                <p className="py-4 text-center text-sm text-zinc-400">
-                  Nenhum produto nesta categoria
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {sorted.map((product, idx) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 p-3"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <button
-                          onClick={() => moveProduct(product.id, cat.id, "up")}
-                          disabled={idx === 0}
-                          className="text-zinc-300 hover:text-zinc-600 disabled:opacity-30"
+              {/* Live Preview */}
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs text-zinc-400 mb-3">Pré-visualização ao vivo</p>
+                <div
+                  className="rounded-lg overflow-hidden shadow-sm"
+                  style={{ backgroundColor: colors.backgroundColor }}
+                >
+                  {/* Header Preview */}
+                  <div
+                    className="p-3 flex items-center gap-2"
+                    style={{ backgroundColor: colors.headerColor }}
+                  >
+                    {form.logo ? (
+                      <img src={form.logo} alt="Logo" className="h-6 w-6 rounded object-cover" />
+                    ) : (
+                      <div className="h-6 w-6 rounded" style={{ backgroundColor: colors.primaryColor + "30" }}></div>
+                    )}
+                    <span className="font-bold text-sm" style={{ color: colors.textColor }}>
+                      {form.name || "Seu Restaurante"}
+                    </span>
+                  </div>
+                  {/* Content Preview */}
+                  <div className="p-3 space-y-2">
+                    <div className="rounded-lg p-2" style={{ backgroundColor: colors.backgroundColor === "#ffffff" ? "#f9fafb" : colors.backgroundColor }}>
+                      <div className="h-2 w-16 rounded mb-1" style={{ backgroundColor: colors.textColor + "30" }}></div>
+                      <div className="h-2 w-24 rounded mb-2" style={{ backgroundColor: colors.textColor + "20" }}></div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold" style={{ color: colors.primaryColor }}>R$ 45,00</span>
+                        <div
+                          className="rounded px-2 py-0.5 text-[10px] font-medium text-white"
+                          style={{ backgroundColor: colors.primaryColor }}
                         >
-                          <GripVertical className="h-3 w-3 -rotate-90" />
-                        </button>
-                        <button
-                          onClick={() => moveProduct(product.id, cat.id, "down")}
-                          disabled={idx === sorted.length - 1}
-                          className="text-zinc-300 hover:text-zinc-600 disabled:opacity-30"
-                        >
-                          <GripVertical className="h-3 w-3 rotate-90" />
-                        </button>
-                      </div>
-
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="h-12 w-12 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-200 text-xl">
-                          🍕
+                          Adicionar
                         </div>
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-zinc-900">{product.name}</p>
-                          {!product.isAvailable && <Badge variant="danger">Indisponível</Badge>}
-                          {product.stockItemId && <Badge variant="success">Vendável</Badge>}
-                          {getBadgeDisplay(product.badge)}
-                        </div>
-                        {product.description && (
-                          <p className="text-sm text-zinc-500 truncate">{product.description}</p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-green-600">
-                          {formatCurrency(product.price)}
-                        </span>
-                        <button
-                          onClick={() => editProduct(product)}
-                          className="text-zinc-400 hover:text-zinc-600"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteProduct(product.id)}
-                          className="text-red-400 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      })}
+              </div>
+            </div>
 
-      {categories.length === 0 && (
-        <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center">
-          <UtensilsCrossed className="mx-auto h-8 w-8 text-zinc-300" />
-          <p className="mt-2 text-sm text-zinc-500">Crie uma categoria para começar</p>
-        </div>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => saveColors(false)}
+                disabled={savingColors}
+              >
+                {savingColors ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Salvar rascunho
+              </Button>
+              <Button
+                type="button"
+                onClick={() => saveColors(true)}
+                disabled={savingColors}
+                className="bg-[#FF6B35] hover:bg-[#E55A2B]"
+              >
+                {savingColors ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
+                Publicar
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setColors({
+                    primaryColor: "#16a34a",
+                    backgroundColor: "#ffffff",
+                    textColor: "#1a1a2e",
+                    headerColor: "#ffffff",
+                  })
+                }}
+              >
+                Resetar cores
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Category Modal */}

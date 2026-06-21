@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
-import { Save, Loader2, Eye, EyeOff, DollarSign, Info, CreditCard, Banknote, Bike, Store, UserPlus, Trash2, Copy } from "lucide-react"
+import { Save, Loader2, Eye, EyeOff, CreditCard, Banknote, Bike, Store } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
-import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
 
 const categories = [
@@ -49,10 +48,6 @@ export default function ConfigPage() {
   })
   const [paymentConfig, setPaymentConfig] = useState({ online: true, delivery: true, pickup: true })
   const [orderConfig, setOrderConfig] = useState({ delivery: true, pickup: true })
-  const [finances, setFinances] = useState({ total: 0, fee: 0, net: 0, orders: 0 })
-  const [deliveryPeople, setDeliveryPeople] = useState<any[]>([])
-  const [showAddMotoboy, setShowAddMotoboy] = useState(false)
-  const [newMotoboy, setNewMotoboy] = useState({ name: "", phone: "" })
 
   useEffect(() => {
     if (!establishmentId) return
@@ -82,47 +77,7 @@ export default function ConfigPage() {
           }
         }
       })
-
-    fetchAuth(`/api/orders?establishmentId=${establishmentId}`)
-      .then((r) => r.json())
-      .then((orders) => {
-        const paid = orders.filter((o: any) => o.paymentStatus === "paid" || o.status !== "cancelled")
-        const total = paid.reduce((s: number, o: any) => s + o.total, 0)
-        setFinances({
-          total,
-          fee: total * 0.1,
-          net: total * 0.9,
-          orders: paid.length,
-        })
-      })
   }, [establishmentId])
-
-  async function loadDeliveryPeople() {
-    if (!establishmentId) return
-    const res = await fetchAuth(`/api/delivery-persons?establishmentId=${establishmentId}`)
-    if (res.ok) setDeliveryPeople(await res.json())
-  }
-
-  useEffect(() => { loadDeliveryPeople() }, [establishmentId])
-
-  async function addMotoboy() {
-    if (!establishmentId || !newMotoboy.name || !newMotoboy.phone) return
-    const res = await fetchAuth("/api/delivery-persons", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...newMotoboy, establishmentId }),
-    })
-    if (res.ok) {
-      setNewMotoboy({ name: "", phone: "" })
-      setShowAddMotoboy(false)
-      loadDeliveryPeople()
-    }
-  }
-
-  async function removeMotoboy(id: string) {
-    await fetchAuth(`/api/delivery-persons/${id}`, { method: "DELETE" })
-    loadDeliveryPeople()
-  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -157,36 +112,8 @@ export default function ConfigPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <h2 className="text-2xl font-bold text-zinc-900">Configurações</h2>
 
-      {/* Financial Summary */}
-      <Card className="border-green-200 bg-green-50">
-        <CardContent className="p-6">
-          <h3 className="flex items-center gap-2 font-semibold text-zinc-900 mb-4">
-            <DollarSign className="h-5 w-5 text-green-600" />
-            Resumo Financeiro
-          </h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-xs text-zinc-500">Vendas</p>
-              <p className="text-lg font-bold text-zinc-900">{formatCurrency(finances.total)}</p>
-              <p className="text-xs text-zinc-400">{finances.orders} pedidos</p>
-            </div>
-            <div>
-              <p className="text-xs text-zinc-500">Taxa da Plataforma (10%)</p>
-              <p className="text-lg font-bold text-blue-600">{formatCurrency(finances.fee)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-zinc-500">Seu Líquido</p>
-              <p className="text-lg font-bold text-green-600">{formatCurrency(finances.net)}</p>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-zinc-400 flex items-center gap-1">
-            <Info className="h-3 w-3" />
-            A taxa de 10% é descontada automaticamente no split do Asaas quando o cliente paga.
-          </p>
-        </CardContent>
-      </Card>
-
       <form onSubmit={handleSave} className="space-y-4">
+        {/* Dados do Estabelecimento */}
         <Card>
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-zinc-900">Dados do Estabelecimento</h3>
@@ -198,12 +125,12 @@ export default function ConfigPage() {
           </CardContent>
         </Card>
 
+        {/* Asaas */}
         <Card>
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-zinc-900">Asaas (Pagamentos Online)</h3>
             <p className="text-sm text-zinc-500">
-              Integração com Asaas para aceitar Pix e cartão. O split repassa automaticamente
-              sua parte (10%) para nossa plataforma e o restante para sua conta.
+             
             </p>
             <div className="relative">
               <Input label="API Key" id="asaasApiKey" type={showKey ? "text" : "password"} placeholder="asaas_api_key_..." value={form.asaasApiKey} onChange={(e) => setForm({ ...form, asaasApiKey: e.target.value })} />
@@ -214,71 +141,7 @@ export default function ConfigPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <h3 className="flex items-center gap-2 font-semibold text-zinc-900">
-              <Bike className="h-4 w-4" />
-              Entregadores
-            </h3>
-
-            {deliveryPeople.length > 0 && (
-              <div className="space-y-2">
-                {deliveryPeople.map((p: any) => (
-                  <div key={p.id} className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
-                    <div>
-                      <p className="font-medium text-zinc-900">{p.name}</p>
-                      <p className="text-xs text-zinc-500">{p.phone}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${p.establishmentSlug}/entregas/${p.token}`) }}
-                        className="rounded p-1.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600"
-                        title="Copiar link"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeMotoboy(p.id)}
-                        className="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600"
-                        title="Remover"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {showAddMotoboy ? (
-              <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                <Input label="Nome" value={newMotoboy.name} onChange={(e) => setNewMotoboy({ ...newMotoboy, name: e.target.value })} placeholder="Ex: João" />
-                <Input label="WhatsApp" value={newMotoboy.phone} onChange={(e) => setNewMotoboy({ ...newMotoboy, phone: e.target.value })} placeholder="(11) 99999-9999" />
-                <div className="flex gap-2">
-                  <Button type="button" size="sm" onClick={addMotoboy} className="gap-1">
-                    <UserPlus className="h-3 w-3" />
-                    Adicionar
-                  </Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => { setShowAddMotoboy(false); setNewMotoboy({ name: "", phone: "" }) }}>
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowAddMotoboy(true)}
-                className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700"
-              >
-                <UserPlus className="h-4 w-4" />
-                Adicionar entregador
-              </button>
-            )}
-          </CardContent>
-        </Card>
-
+        {/* Tipos de Pedido */}
         <Card>
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-zinc-900">Tipos de Pedido</h3>
@@ -308,6 +171,7 @@ export default function ConfigPage() {
           </CardContent>
         </Card>
 
+        {/* Taxa de Entrega */}
         <Card>
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-zinc-900">Taxa de Entrega</h3>
@@ -348,6 +212,7 @@ export default function ConfigPage() {
           </CardContent>
         </Card>
 
+        {/* Formas de Pagamento */}
         <Card>
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-zinc-900">Formas de Pagamento</h3>
@@ -384,14 +249,6 @@ export default function ConfigPage() {
                 </div>
               </label>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <h3 className="font-semibold text-zinc-900">Aparência</h3>
-            <Input label="URL da Logo" id="logo" placeholder="https://..." value={form.logo} onChange={(e) => setForm({ ...form, logo: e.target.value })} />
-            <Input label="URL da Capa (opcional)" id="cover" placeholder="https://..." value={form.cover} onChange={(e) => setForm({ ...form, cover: e.target.value })} />
           </CardContent>
         </Card>
 
