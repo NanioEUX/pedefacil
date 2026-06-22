@@ -122,6 +122,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         const parsed = JSON.parse(saved)
         setCustomer(parsed)
         setPhoneInput(parsed.phone || "")
+        setAddressSaved(true)
         if (parsed.cep) {
           setCep(parsed.cep)
           fetch(`https://viacep.com.br/ws/${parsed.cep}/json/`)
@@ -152,6 +153,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [cepAddress, setCepAddress] = useState<any>(null)
   const [cepLoading, setCepLoading] = useState(false)
   const [editingAddress, setEditingAddress] = useState(false)
+  const [addressSaved, setAddressSaved] = useState(false)
   const [previousCep, setPreviousCep] = useState("")
   const [previousCepAddress, setPreviousCepAddress] = useState<any>(null)
   const [previousAddress, setPreviousAddress] = useState("")
@@ -272,6 +274,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         if (data && !data.notFound) {
           setCustomerData(data)
           setCustomer((prev) => ({ ...prev, name: data.name || prev.name, phone: data.phone, address: data.address || prev.address }))
+          setAddressSaved(true)
           // Pre-fill CEP - the useEffect([cep, orderType]) will handle the ViaCEP lookup
           if (data.cep) {
             setCep(data.cep)
@@ -1025,7 +1028,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-zinc-900">Finalizar pedido</h2>
-              <button onClick={() => { setShowCheckout(false); setEditingAddress(false) }} className="text-zinc-400 hover:text-zinc-600">
+              <button onClick={() => { setShowCheckout(false); setEditingAddress(false); setAddressSaved(false) }} className="text-zinc-400 hover:text-zinc-600">
                 <X className="h-6 w-6" />
               </button>
             </div>
@@ -1033,10 +1036,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             <form onSubmit={handleSiteOrder} className="space-y-4">
               {orderType === "delivery" ? (
                 <div className="space-y-2">
-                  {cepAddress && customer.address ? (
+                  {cepAddress && customer.address && addressSaved ? (
                     <div className="rounded-lg bg-zinc-50 p-2 text-sm text-zinc-600">
                       {cepAddress.logradouro}, {customer.address} - {cepAddress.bairro}, {cepAddress.localidade} - {cepAddress.uf}
-                      <button type="button" onClick={() => { setPreviousCep(cep); setPreviousCepAddress(cepAddress); setPreviousAddress(customer.address); setEditingAddress(true); setCep(""); setCepAddress(null); setCustomer({ ...customer, address: "" }) }} className="ml-2 text-xs text-green-600 hover:underline">Alterar</button>
+                      <button type="button" onClick={() => { setPreviousCep(cep); setPreviousCepAddress(cepAddress); setPreviousAddress(customer.address); setEditingAddress(true); setAddressSaved(false); setCep(""); setCepAddress(null); setCustomer({ ...customer, address: "" }) }} className="ml-2 text-xs text-green-600 hover:underline">Alterar</button>
                     </div>
                   ) : cepAddress && !customer.address ? (
                     <>
