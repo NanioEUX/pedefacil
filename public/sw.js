@@ -1,4 +1,4 @@
-const CACHE_NAME = "pedefacil-v3"
+const CACHE_NAME = "pedefacil-v4"
 
 const urlsToCache = [
   "/manifest.json",

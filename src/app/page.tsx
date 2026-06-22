@@ -138,7 +138,7 @@ export default function HomePage() {
             <img src="/icons/pedefacil-sidebar.png" alt="PedeFácil" className="h-8" />
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/dashboard">
+            <Link href="/login">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
             <Link href="/cadastro">

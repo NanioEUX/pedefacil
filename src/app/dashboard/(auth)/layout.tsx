@@ -98,7 +98,6 @@ export default function DashboardLayout({
 
   function handleLogout() {
     localStorage.removeItem("pedefacil-user")
-    localStorage.removeItem("pedefacil_token")
     router.push("/login")
   }
 
