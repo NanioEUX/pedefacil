@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
-import { BarChart3, TrendingUp, DollarSign, ShoppingBag, Calendar, Percent, Package, CreditCard, Banknote, Smartphone } from "lucide-react"
+import { BarChart3, TrendingUp, DollarSign, ShoppingBag, Calendar, Package, CreditCard, Banknote, Smartphone } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
@@ -51,8 +51,7 @@ export default function RelatoriosPage() {
   const presencialOrders = filtered.filter((o) => o.orderType === "presencial")
   const onlineRevenue = onlineOrders.reduce((sum, o) => sum + o.total, 0)
   const presencialRevenue = presencialOrders.reduce((sum, o) => sum + o.total, 0)
-  const platformFee = onlineRevenue * 0.1
-  const netRevenue = onlineRevenue - platformFee + presencialRevenue
+  const netRevenue = onlineRevenue + presencialRevenue
   const averageTicket = filtered.length > 0 ? totalRevenue / filtered.length : 0
 
   // Payment method breakdown
@@ -164,25 +163,11 @@ export default function RelatoriosPage() {
         <Card>
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
-                <Percent className="h-4 w-4 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-[10px] text-zinc-500">Comissão</p>
-                <p className="text-lg font-bold text-blue-600">{formatCurrency(platformFee)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </div>
               <div>
-                <p className="text-[10px] text-zinc-500">Seu Líquido</p>
+                <p className="text-[10px] text-zinc-500">Faturamento Líquido</p>
                 <p className="text-lg font-bold text-green-600">{formatCurrency(netRevenue)}</p>
               </div>
             </div>
@@ -299,8 +284,6 @@ export default function RelatoriosPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-green-600">{formatCurrency(order.total)}</p>
-                  {order.paymentMethod === "online" && <p className="text-[10px] text-zinc-400">Taxa: {formatCurrency(order.total * 0.1)}</p>}
-                  {order.orderType === "presencial" && <p className="text-[10px] text-green-500">0% comissão</p>}
                 </div>
               </div>
             ))}

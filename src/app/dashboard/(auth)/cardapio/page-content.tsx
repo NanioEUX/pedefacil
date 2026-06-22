@@ -160,16 +160,26 @@ export default function CardapioPage() {
   async function saveProduct() {
     if (!establishmentId || !productForm.categoryId) return
 
-    const body: any = {
-      name: productForm.name,
-      description: productForm.description,
-      type: "product",
-      price: parseFloat(productForm.price),
-      image: productForm.image || null,
-      badge: productForm.badge || null,
-      stockItemId: productForm.stockItemId || null,
-      establishmentId,
-      categoryId: productForm.categoryId,
+    const formData = new FormData()
+    formData.append("name", productForm.name)
+    formData.append("description", productForm.description)
+    formData.append("price", productForm.price)
+    formData.append("categoryId", productForm.categoryId)
+    formData.append("establishmentId", establishmentId)
+    if (productForm.badge) formData.append("badge", productForm.badge)
+    if (productForm.stockItemId) formData.append("stockItemId", productForm.stockItemId)
+
+    // Handle image
+    if (productForm.image && productForm.image.startsWith("data:")) {
+      const parts = productForm.image.split(",")
+      const mime = parts[0].match(/:(.*?);/)?.[1] || "image/jpeg"
+      const bstr = atob(parts[1])
+      const arr = new Uint8Array(bstr.length)
+      for (let i = 0; i < bstr.length; i++) arr[i] = bstr.charCodeAt(i)
+      const blob = new Blob([arr], { type: mime })
+      formData.append("file", blob, "product.jpg")
+    } else if (!productForm.image) {
+      formData.append("image", "null")
     }
 
     let productId = editingProduct?.id
@@ -178,8 +188,7 @@ export default function CardapioPage() {
       if (editingProduct) {
         const res = await fetchAuth(`/api/products/${editingProduct.id}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: formData,
         })
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: "Erro desconhecido" }))
@@ -188,11 +197,21 @@ export default function CardapioPage() {
         }
       } else {
         const maxOrder = categories.find((c) => c.id === productForm.categoryId)?.products.length || 0
-        body.order = maxOrder
+        formData.append("order", String(maxOrder))
         const res = await fetchAuth("/api/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            name: productForm.name,
+            description: productForm.description,
+            price: parseFloat(productForm.price),
+            image: productForm.image || null,
+            badge: productForm.badge || null,
+            stockItemId: productForm.stockItemId || null,
+            establishmentId,
+            categoryId: productForm.categoryId,
+            order: maxOrder,
+          }),
         })
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: "Erro desconhecido" }))

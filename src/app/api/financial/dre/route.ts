@@ -30,14 +30,11 @@ export async function GET(req: NextRequest) {
     deliveryPaymentWhere.createdAt = dateFilter
   }
 
-  const [orders, expenses, deliveryPayments, establishment] = await Promise.all([
+  const [orders, expenses, deliveryPayments] = await Promise.all([
     prisma.order.findMany({ where: orderWhere }),
     prisma.expense.findMany({ where: expenseWhere }),
     prisma.deliveryPayment.findMany({ where: deliveryPaymentWhere }),
-    prisma.establishment.findUnique({ where: { id: establishmentId } }),
   ])
-
-  const platformFeePercent = establishment?.platformFee || 10
 
   // Revenue breakdown
   const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0)
@@ -47,9 +44,6 @@ export async function GET(req: NextRequest) {
   const presencialRevenue = presencialOrders.reduce((sum, o) => sum + o.total, 0)
   const deliveryRevenue = orders.filter((o) => o.orderType === "delivery").reduce((sum, o) => sum + o.total, 0)
   const pickupRevenue = orders.filter((o) => o.orderType === "pickup").reduce((sum, o) => sum + o.total, 0)
-
-  // Platform fee (only on online orders)
-  const platformFee = onlineRevenue * (platformFeePercent / 100)
 
   // Coupons discount
   const couponsUsed = orders.filter((o) => o.couponId)
@@ -84,10 +78,9 @@ export async function GET(req: NextRequest) {
   const receitaBruta = totalRevenue
   const descontos = couponsDiscount
   const receitaLiquida = receitaBruta - descontos
-  const comissaoPlataforma = platformFee
   const custoEntregas = deliveryCosts
   const despesasOperacionais = totalExpenses
-  const lucroBruto = receitaLiquida - comissaoPlataforma - custoEntregas
+  const lucroBruto = receitaLiquida - custoEntregas
   const lucroLiquido = lucroBruto - despesasOperacionais
 
   const result = {
@@ -96,7 +89,6 @@ export async function GET(req: NextRequest) {
       receitaBruta,
       descontos,
       receitaLiquida,
-      comissaoPlataforma,
       custoEntregas,
       despesasOperacionais,
       lucroBruto,

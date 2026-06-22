@@ -193,7 +193,7 @@ export default function DemoPage() {
             Todos os módulos incluídos
           </h2>
           <p className="mt-2 text-center text-zinc-600">
-            Sem taxas extras, sem limites
+            Sem comissão sobre vendas, sem limites
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

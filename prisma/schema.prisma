@@ -31,7 +31,6 @@ model Establishment {
   isActive      Boolean  @default(true)
   asaasApiKey   String?
   asaasWalletId String?
-  platformFee   Float    @default(10)
   paymentConfig    String   @default("{\"online\":true,\"delivery\":true,\"pickup\":true}")
   orderConfig      String   @default("{\"delivery\":true,\"pickup\":true}")
   deliveryFeeType  String   @default("free")

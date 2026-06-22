@@ -169,7 +169,7 @@ export default function CaixaPage() {
               <p className="text-xs text-purple-500">Pix</p>
             </div>
           </div>
-          <p className="mt-2 text-xs text-green-600 text-center">{todayOrders.length} vendas hoje • Sem comissão da plataforma</p>
+          <p className="mt-2 text-xs text-green-600 text-center">{todayOrders.length} vendas hoje</p>
         </CardContent>
       </Card>
 
@@ -279,7 +279,6 @@ export default function CaixaPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-green-600">{formatCurrency(o.total)}</p>
-                    {o.orderType === "presencial" && <p className="text-[10px] text-green-500">Sem comissão</p>}
                   </div>
                 </div>
               ))}

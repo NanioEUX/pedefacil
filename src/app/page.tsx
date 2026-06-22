@@ -89,7 +89,7 @@ const faq = [
   },
   {
     q: "Preciso pagar por transação?",
-    a: "Não cobramos nada por transação. Você paga apenas a taxa do gateway de pagamento (Asaas), que é a mesma de qualquer maquininha.",
+    a: "Não cobramos nada por transação. Você paga apenas a taxa do gateway de pagamento (Asaas), igual a qualquer maquininha.",
   },
   {
     q: "Posso cancelar quando quiser?",
@@ -163,7 +163,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-6 text-lg text-zinc-600">
               Plataforma completa de pedidos para seu restaurante. Cliente acessa seu cardápio,
-              escolhe o que quer, paga por Pix/cartão e o pedido vai direto para seu painel. Sem comissão sobre vendas.
+              escolhe o que quer, paga por Pix/cartão e o pedido vai direto para seu painel. Mensalidade fixa, sem comissão.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/cadastro">
@@ -180,7 +180,7 @@ export default function HomePage() {
       <section className="border-t border-zinc-100 bg-white py-20">
         <div className="mx-auto max-w-7xl px-4">
           <h2 className="text-center text-3xl font-bold text-zinc-900">
-            Tudo que um marketplace tem, sem as taxas
+            Tudo que um marketplace tem, sem as taxas de comissão
           </h2>
           <p className="mt-2 text-center text-zinc-600">
             Plataforma completa com preço fixo. Sem surpresas no fim do mês.

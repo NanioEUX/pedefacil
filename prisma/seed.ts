@@ -29,7 +29,6 @@ async function main() {
       description: "Os melhores sorvetes artesanais da cidade!",
       address: "Rua Augusta, 1500 - Consolação, São Paulo - SP",
       logo: "/geladolate-logo.png",
-      platformFee: 10,
       paymentConfig: JSON.stringify({ online: true, delivery: true, pickup: true }),
       orderConfig: JSON.stringify({ delivery: true, pickup: true }),
       deliveryFeeType: "free_above",
@@ -49,7 +48,6 @@ async function main() {
       category: "hamburgueria",
       description: "Hambúrgueres artesanais",
       address: "Av. Paulista, 1000 - Bela Vista, São Paulo - SP",
-      platformFee: 10,
     },
   })
   console.log(`  ${burger.name} (email: teste@hamburgueria.com / senha: 123456)`)
