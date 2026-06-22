@@ -122,6 +122,9 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         const parsed = JSON.parse(saved)
         setCustomer(parsed)
         setPhoneInput(parsed.phone || "")
+        if (parsed.cep && parsed.address) {
+          setAddressSaved(true)
+        }
         if (parsed.cep) {
           setCep(parsed.cep)
           fetch(`https://viacep.com.br/ws/${parsed.cep}/json/`)
@@ -152,6 +155,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [cepAddress, setCepAddress] = useState<any>(null)
   const [cepLoading, setCepLoading] = useState(false)
   const [editingAddress, setEditingAddress] = useState(false)
+  const [addressSaved, setAddressSaved] = useState(false)
   const [cepError, setCepError] = useState("")
   const [orderError, setOrderError] = useState("")
   const [couponCode, setCouponCode] = useState("")
@@ -269,6 +273,9 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         if (data && !data.notFound) {
           setCustomerData(data)
           setCustomer((prev) => ({ ...prev, name: data.name || prev.name, phone: data.phone, address: data.address || prev.address }))
+          if (data.cep && data.address) {
+            setAddressSaved(true)
+          }
           // Pre-fill CEP - the useEffect([cep, orderType]) will handle the ViaCEP lookup
           if (data.cep) {
             setCep(data.cep)
@@ -371,8 +378,8 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       return
     }
 
-    if (orderType === "delivery" && !customer.address) {
-      setOrderError("Informe o número do endereço")
+    if (orderType === "delivery" && !addressSaved) {
+      setOrderError("Salve o endereço antes de finalizar o pedido")
       setOrdering(false)
       return
     }
@@ -1030,20 +1037,36 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             <form onSubmit={handleSiteOrder} className="space-y-4">
               {orderType === "delivery" ? (
                 <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input label="CEP" id="cep" placeholder="00000-000" value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, "").slice(0, 8))} className="w-32" />
-                    {cep.length === 8 && !cepLoading && (
-                      <button type="button" onClick={lookupCep} className="mt-6 text-xs text-green-600 hover:underline self-start">
-                        Buscar
+                  {addressSaved && cepAddress ? (
+                    <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-600 space-y-2">
+                      <p>{cepAddress.logradouro}, {customer.address} - {cepAddress.bairro}, {cepAddress.localidade} - {cepAddress.uf}</p>
+                      <button type="button" onClick={() => setAddressSaved(false)} className="text-xs text-green-600 hover:underline">
+                        Alterar endereço
                       </button>
-                    )}
-                    {cepLoading && <Loader2 className="mt-7 h-4 w-4 animate-spin text-zinc-400" />}
-                  </div>
-                  {cepError && <p className="text-xs text-red-500">{cepError}</p>}
-                  {cepAddress && (
-                    <p className="text-xs text-zinc-500">{cepAddress.logradouro} - {cepAddress.bairro}, {cepAddress.localidade} - {cepAddress.uf}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <Input label="CEP" id="cep" placeholder="00000-000" value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, "").slice(0, 8))} className="w-32" disabled={addressSaved} />
+                        {cep.length === 8 && !cepLoading && (
+                          <button type="button" onClick={lookupCep} className="mt-6 text-xs text-green-600 hover:underline self-start">
+                            Buscar
+                          </button>
+                        )}
+                        {cepLoading && <Loader2 className="mt-7 h-4 w-4 animate-spin text-zinc-400" />}
+                      </div>
+                      {cepError && <p className="text-xs text-red-500">{cepError}</p>}
+                      {cepAddress && (
+                        <p className="text-xs text-zinc-500">{cepAddress.logradouro} - {cepAddress.bairro}, {cepAddress.localidade} - {cepAddress.uf}</p>
+                      )}
+                      <Input label="Número" id="customerAddress" placeholder="Ex: 123" value={customer.address} onChange={(e) => setCustomer({ ...customer, address: e.target.value })} disabled={addressSaved} />
+                      {cepAddress && customer.address && (
+                        <button type="button" onClick={() => { setAddressSaved(true); setEditingAddress(false) }} className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                          Salvar endereço
+                        </button>
+                      )}
+                    </>
                   )}
-                  <Input label="Número" id="customerAddress" placeholder="Ex: 123" value={customer.address} onChange={(e) => setCustomer({ ...customer, address: e.target.value })} />
                   <input type="hidden" name="fullAddress" value={fullAddress} />
                 </div>
               ) : (
