@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
-import { Bike, Phone, MapPin, Copy, UserPlus, Trash2, CheckCircle, Clock, Package, MessageCircle, ExternalLink, Loader2, Search, DollarSign, History, Wallet } from "lucide-react"
+import { Bike, Phone, MapPin, Copy, CheckCircle, Clock, Package, MessageCircle, Loader2, DollarSign, History, Wallet, Calendar } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,104 @@ const statusColors: Record<string, "info" | "warning" | "success" | "danger" | "
   delivered: "success",
 }
 
+type DateFilter = "today" | "yesterday" | "7days" | "30days" | "custom" | "all"
+
+function getDateRange(filter: DateFilter, customStart: string, customEnd: string): { start: Date; end: Date } {
+  const now = new Date()
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+
+  switch (filter) {
+    case "today":
+      return { start, end }
+    case "yesterday": {
+      const y = new Date(start)
+      y.setDate(y.getDate() - 1)
+      const ye = new Date(end)
+      ye.setDate(ye.getDate() - 1)
+      return { start: y, end: ye }
+    }
+    case "7days": {
+      const s = new Date(start)
+      s.setDate(s.getDate() - 6)
+      return { start: s, end }
+    }
+    case "30days": {
+      const s = new Date(start)
+      s.setDate(s.getDate() - 29)
+      return { start: s, end }
+    }
+    case "custom": {
+      const s = customStart ? new Date(customStart + "T00:00:00") : start
+      const e = customEnd ? new Date(customEnd + "T23:59:59") : end
+      return { start: s, end: e }
+    }
+    case "all":
+    default:
+      return { start: new Date(0), end }
+  }
+}
+
+function isInRange(dateStr: string, start: Date, end: Date): boolean {
+  const d = new Date(dateStr)
+  return d >= start && d <= end
+}
+
+const dateFilterButtons: { key: DateFilter; label: string }[] = [
+  { key: "today", label: "Hoje" },
+  { key: "yesterday", label: "Ontem" },
+  { key: "7days", label: "Últimos 7 dias" },
+  { key: "30days", label: "Últimos 30 dias" },
+  { key: "all", label: "Tudo" },
+]
+
+function DateFilters({ active, onChange, customStart, customEnd, onCustomStartChange, onCustomEndChange }: {
+  active: DateFilter
+  onChange: (f: DateFilter) => void
+  customStart: string
+  customEnd: string
+  onCustomStartChange: (v: string) => void
+  onCustomEndChange: (v: string) => void
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Calendar className="h-4 w-4 text-zinc-400" />
+      {dateFilterButtons.map((f) => (
+        <button
+          key={f.key}
+          onClick={() => onChange(f.key)}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${active === f.key ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}
+        >
+          {f.label}
+        </button>
+      ))}
+      <button
+        onClick={() => onChange(active === "custom" ? "all" : "custom")}
+        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${active === "custom" ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}
+      >
+        Personalizado
+      </button>
+      {active === "custom" && (
+        <div className="flex items-center gap-2">
+          <Input
+            type="date"
+            value={customStart}
+            onChange={(e) => onCustomStartChange(e.target.value)}
+            className="w-36 text-xs"
+          />
+          <span className="text-xs text-zinc-400">até</span>
+          <Input
+            type="date"
+            value={customEnd}
+            onChange={(e) => onCustomEndChange(e.target.value)}
+            className="w-36 text-xs"
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function EntregasPage() {
   const searchParams = useSearchParams()
   const hookEstablishmentId = useEstablishmentId()
@@ -38,11 +136,17 @@ export default function EntregasPage() {
   const [payments, setPayments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMotoboy, setSelectedMotoboy] = useState<string>("")
-  const [showAdd, setShowAdd] = useState(false)
-  const [newMotoboy, setNewMotoboy] = useState({ name: "", phone: "", defaultPassword: "123456" })
   const [tab, setTab] = useState<"entregas" | "financeiro">("entregas")
   const [payingMotoboy, setPayingMotoboy] = useState<string | null>(null)
   const [createdPassword, setCreatedPassword] = useState<string | null>(null)
+
+  const [dateFilter, setDateFilter] = useState<DateFilter>("today")
+  const [customStart, setCustomStart] = useState("")
+  const [customEnd, setCustomEnd] = useState("")
+
+  const [finDateFilter, setFinDateFilter] = useState<DateFilter>("all")
+  const [finCustomStart, setFinCustomStart] = useState("")
+  const [finCustomEnd, setFinCustomEnd] = useState("")
 
   async function loadAll() {
     if (!establishmentId) return
@@ -60,28 +164,6 @@ export default function EntregasPage() {
   useEffect(() => { loadAll() }, [establishmentId])
   useEffect(() => { const i = setInterval(loadAll, 10000); return () => clearInterval(i) }, [establishmentId])
 
-  async function addMotoboy() {
-    if (!establishmentId || !newMotoboy.name || !newMotoboy.phone) return
-    const res = await fetchAuth("/api/delivery-persons", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...newMotoboy, establishmentId }),
-    })
-    const data = await res.json()
-    setNewMotoboy({ name: "", phone: "", defaultPassword: "123456" })
-    setShowAdd(false)
-    if (data.defaultPassword) {
-      setCreatedPassword(`Login: ${newMotoboy.phone} / Senha: ${data.defaultPassword}`)
-      setTimeout(() => setCreatedPassword(null), 10000)
-    }
-    loadAll()
-  }
-
-  async function removeMotoboy(id: string) {
-    await fetchAuth(`/api/delivery-persons/${id}`, { method: "DELETE" })
-    loadAll()
-  }
-
   async function reassignOrder(orderId: string, deliveryPersonId: string) {
     const person = deliveryPeople.find((p: any) => p.id === deliveryPersonId)
     await fetchAuth(`/api/orders/${orderId}`, {
@@ -93,8 +175,9 @@ export default function EntregasPage() {
   }
 
   function calcPendingAmount(person: any) {
+    const range = getDateRange(finDateFilter, finCustomStart, finCustomEnd)
     const completedOrders = orders.filter(
-      (o: any) => o.deliveryPersonId === person.id && o.status === "delivered" && o.orderType === "delivery"
+      (o: any) => o.deliveryPersonId === person.id && o.status === "delivered" && o.orderType === "delivery" && isInRange(o.createdAt, range.start, range.end)
     )
     const totalEarned = completedOrders.reduce((sum: number, o: any) => sum + (o.deliveryFee || 0), 0)
     const totalPaid = (person.payments || []).reduce((sum: number, p: any) => sum + p.amount, 0)
@@ -108,6 +191,10 @@ export default function EntregasPage() {
 
     setPayingMotoboy(person.id)
     try {
+      const range = getDateRange(finDateFilter, finCustomStart, finCustomEnd)
+      const completedCount = orders.filter(
+        (o: any) => o.deliveryPersonId === person.id && o.status === "delivered" && o.orderType === "delivery" && isInRange(o.createdAt, range.start, range.end)
+      ).length
       await fetchAuth("/api/delivery-payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -115,7 +202,7 @@ export default function EntregasPage() {
           deliveryPersonId: person.id,
           amount: pending,
           period: "manual",
-          notes: `Pagamento referente a ${orders.filter((o: any) => o.deliveryPersonId === person.id && o.status === "delivered" && o.orderType === "delivery").length} entregas`,
+          notes: `Pagamento referente a ${completedCount} entregas`,
           establishmentId,
         }),
       })
@@ -124,6 +211,12 @@ export default function EntregasPage() {
       setPayingMotoboy(null)
     }
   }
+
+  const { start: dateStart, end: dateEnd } = getDateRange(dateFilter, customStart, customEnd)
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o: any) => isInRange(o.createdAt, dateStart, dateEnd))
+  }, [orders, dateStart.getTime(), dateEnd.getTime()])
 
   const filteredPeople = selectedMotoboy
     ? deliveryPeople.filter((p: any) => p.id === selectedMotoboy)
@@ -171,6 +264,16 @@ export default function EntregasPage() {
       {/* ===== TAB: ENTREGAS ===== */}
       {tab === "entregas" && (
         <>
+          {/* Date filters */}
+          <DateFilters
+            active={dateFilter}
+            onChange={setDateFilter}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomStartChange={setCustomStart}
+            onCustomEndChange={setCustomEnd}
+          />
+
           {/* Motoboy filter tabs */}
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -180,7 +283,7 @@ export default function EntregasPage() {
               Todos
             </button>
             {deliveryPeople.map((p: any) => {
-              const pendings = orders.filter((o: any) => o.deliveryPersonId === p.id && ["ready", "out_for_delivery"].includes(o.status)).length
+              const pendings = filteredOrders.filter((o: any) => o.deliveryPersonId === p.id && ["ready", "out_for_delivery"].includes(o.status)).length
               return (
                 <button
                   key={p.id}
@@ -196,10 +299,9 @@ export default function EntregasPage() {
           </div>
 
           {filteredPeople.map((person: any) => {
-            const personOrders = orders.filter((o: any) => o.deliveryPersonId === person.id)
+            const personOrders = filteredOrders.filter((o: any) => o.deliveryPersonId === person.id)
             const activeOrders = personOrders.filter((o: any) => ["ready", "out_for_delivery"].includes(o.status))
             const completedOrders = personOrders.filter((o: any) => o.status === "delivered")
-            const hasOutForDelivery = personOrders.some((o: any) => o.status === "out_for_delivery")
 
             return (
               <Card key={person.id}>
@@ -214,29 +316,19 @@ export default function EntregasPage() {
                         <p className="text-xs text-zinc-500">{person.phone}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => navigator.clipboard.writeText(`${window.location.origin}/${person.establishmentSlug}/entregas/${person.token}`)}
-                        className="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
-                        title="Copiar link"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => removeMotoboy(person.id)}
-                        disabled={hasOutForDelivery}
-                        className="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-red-400"
-                        title={hasOutForDelivery ? "Possui entrega em andamento" : "Remover"}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(`${window.location.origin}/${person.establishmentSlug}/entregas/${person.token}`)}
+                      className="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                      title="Copiar link"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
                   </div>
 
                   <div className="mb-4 grid grid-cols-3 gap-3">
                     <div className="rounded-lg bg-amber-50 p-3 text-center">
                       <p className="text-lg font-bold text-amber-600">{activeOrders.filter((o: any) => o.status === "ready").length}</p>
-                      <p className="text-xs text-amber-500">Prontos</p>
+                      <p className="text-xs text-amber-500">Entregas</p>
                     </div>
                     <div className="rounded-lg bg-blue-50 p-3 text-center">
                       <p className="text-lg font-bold text-blue-600">{activeOrders.filter((o: any) => o.status === "out_for_delivery").length}</p>
@@ -258,7 +350,7 @@ export default function EntregasPage() {
                   )}
 
                   {activeOrders.length === 0 && completedOrders.length === 0 && (
-                    <p className="text-sm text-zinc-400 italic">Nenhum pedido atribuído</p>
+                    <p className="text-sm text-zinc-400 italic">Nenhum pedido atribuído neste período</p>
                   )}
                 </CardContent>
               </Card>
@@ -266,7 +358,7 @@ export default function EntregasPage() {
           })}
 
           {!selectedMotoboy && (
-            <PendingOrdersSection orders={orders.filter((o: any) => o.status === "ready" && !o.deliveryPersonId)} deliveryPeople={deliveryPeople} onReassign={reassignOrder} />
+            <PendingOrdersSection orders={filteredOrders.filter((o: any) => o.status === "ready" && !o.deliveryPersonId)} deliveryPeople={deliveryPeople} onReassign={reassignOrder} />
           )}
         </>
       )}
@@ -274,6 +366,16 @@ export default function EntregasPage() {
       {/* ===== TAB: FINANCEIRO ===== */}
       {tab === "financeiro" && (
         <>
+          {/* Date filters */}
+          <DateFilters
+            active={finDateFilter}
+            onChange={setFinDateFilter}
+            customStart={finCustomStart}
+            customEnd={finCustomEnd}
+            onCustomStartChange={setFinCustomStart}
+            onCustomEndChange={setFinCustomEnd}
+          />
+
           {/* Pending amounts */}
           <Card>
             <CardContent className="p-4">
@@ -284,7 +386,10 @@ export default function EntregasPage() {
               <div className="space-y-3">
                 {deliveryPeople.map((person: any) => {
                   const pending = calcPendingAmount(person)
-                  const completedCount = orders.filter((o: any) => o.deliveryPersonId === person.id && o.status === "delivered" && o.orderType === "delivery").length
+                  const range = getDateRange(finDateFilter, finCustomStart, finCustomEnd)
+                  const completedCount = orders.filter(
+                    (o: any) => o.deliveryPersonId === person.id && o.status === "delivered" && o.orderType === "delivery" && isInRange(o.createdAt, range.start, range.end)
+                  ).length
                   return (
                     <div key={person.id} className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 p-3">
                       <div className="flex items-center gap-3">
@@ -330,10 +435,13 @@ export default function EntregasPage() {
                 Histórico de Pagamentos
               </h3>
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {payments.length === 0 ? (
-                  <p className="text-sm text-zinc-400 text-center py-4">Nenhum pagamento registrado</p>
-                ) : (
-                  payments.map((p: any) => (
+                {(() => {
+                  const range = getDateRange(finDateFilter, finCustomStart, finCustomEnd)
+                  const filtered = payments.filter((p: any) => isInRange(p.createdAt, range.start, range.end))
+                  if (filtered.length === 0) {
+                    return <p className="text-sm text-zinc-400 text-center py-4">Nenhum pagamento neste período</p>
+                  }
+                  return filtered.map((p: any) => (
                     <div key={p.id} className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 p-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
@@ -350,7 +458,7 @@ export default function EntregasPage() {
                       <span className="text-sm font-bold text-green-600">{formatCurrency(p.amount)}</span>
                     </div>
                   ))
-                )}
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -409,7 +517,8 @@ function OrderRow({ order, deliveryPeople, onReassign }: { order: any; deliveryP
           className="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-red-400"
           title={isLocked ? "Pedido em entrega/entregue" : "Cancelar pedido"}
         >
-          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Cancelar</span>
+          &times;
         </button>
       </div>
     </div>
