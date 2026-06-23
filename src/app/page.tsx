@@ -1,40 +1,46 @@
 "use client"
 
 import Link from "next/link"
-import { Smartphone, BarChart3, CreditCard, ShoppingBag, QrCode, Store, Check, ChevronDown, Zap, Shield, TrendingDown } from "lucide-react"
+import { Smartphone, BarChart3, CreditCard, ShoppingBag, QrCode, Store, Check, ChevronDown, Zap, Shield, TrendingDown, ArrowRight, Star, Sparkles, Globe, Users, Clock, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const features = [
   {
     icon: Store,
     title: "Cardápio Digital",
-    desc: "Cardápio online com fotos, categorias e variações. Seu cliente vê tudo bonito.",
+    desc: "Fotos, categorias e preços. Seu cliente vê tudo bonito e pede em segundos.",
+    gradient: "from-orange-500 to-red-500",
   },
   {
     icon: ShoppingBag,
-    title: "Pedidos pelo Site",
-    desc: "Cliente monta o pedido no site e finaliza automaticamente. Sem intervenção manual.",
+    title: "Pedidos Automáticos",
+    desc: "Cliente monta, paga e o pedido vai direto para seu painel. Zero intervenção.",
+    gradient: "from-blue-500 to-purple-500",
   },
   {
     icon: CreditCard,
     title: "Pagamento Integrado",
-    desc: "Link de pagamento por Pix, boleto ou cartão. Tudo automático.",
+    desc: "Pix, cartão ou boleto. Link de pagamento automático via Asaas.",
+    gradient: "from-green-500 to-emerald-500",
   },
   {
     icon: Smartphone,
-    title: "Funciona como App",
-    desc: "PWA instalável na tela inicial. Parece um app de verdade, sem custo de loja.",
+    title: "PWA (parece um App)",
+    desc: "Instalável na tela inicial. Sem Play Store, sem custo de desenvolvimento.",
+    gradient: "from-purple-500 to-pink-500",
   },
   {
     icon: BarChart3,
-    title: "Dashboard Completo",
-    desc: "Gerencie pedidos, produtos, relatórios e configurações em tempo real.",
+    title: "Dashboard Inteligente",
+    desc: "Vendas, pedidos, estoque, financeiro. Tudo em tempo real.",
+    gradient: "from-cyan-500 to-blue-500",
   },
   {
     icon: QrCode,
     title: "QR Code na Mesa",
-    desc: "Cliente escaneia o QR Code e já abre o cardápio. Perfeito para restaurantes.",
+    desc: "Cliente escaneia e abre o cardápio. Perfeito para restaurantes e bares.",
+    gradient: "from-amber-500 to-orange-500",
   },
 ]
 
@@ -44,7 +50,7 @@ const plans = [
     price: "0",
     period: "/mês",
     desc: "Para testar e começar a vender",
-    features: ["Até 50 pedidos/mês", "Cardápio digital","1 usuário"],
+    features: ["Até 50 pedidos/mês", "Cardápio digital", "1 usuário"],
     cta: "Começar grátis",
     highlighted: false,
   },
@@ -126,356 +132,304 @@ const testimonials = [
   },
 ]
 
+const stats = [
+  { value: "2.500+", label: "Estabelecimentos" },
+  { value: "150K+", label: "Pedidos processados" },
+  { value: "R$ 0", label: "Comissão por pedido" },
+  { value: "99.9%", label: "Uptime" },
+]
+
 export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [scrollY, setScrollY] = useState(0)
+
+  useEffect(() => {
+    function handleScroll() { setScrollY(window.scrollY) }
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
+      {/* Animated background orbs */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-[#FF6B35]/10 blur-[120px] animate-pulse" />
+        <div className="absolute top-1/3 -right-40 h-[400px] w-[400px] rounded-full bg-purple-600/10 blur-[120px] animate-pulse" style={{ animationDelay: "2s" }} />
+        <div className="absolute bottom-0 left-1/3 h-[300px] w-[300px] rounded-full bg-blue-600/8 blur-[100px] animate-pulse" style={{ animationDelay: "4s" }} />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-zinc-200 bg-white">
+      <header className={`fixed top-0 z-50 w-full transition-all duration-300 ${scrollY > 50 ? "border-b border-white/10 bg-[#0a0a0f]/80 backdrop-blur-xl" : "bg-transparent"}`}>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-8" />
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" size="sm">Entrar</Button>
+              <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">Entrar</Button>
             </Link>
             <Link href="/cadastro">
-              <Button size="sm" className="bg-[#FF6B35] hover:bg-[#E55A2B]">Criar Cardápio</Button>
+              <Button size="sm" className="bg-[#FF6B35] hover:bg-[#E55A2B] shadow-lg shadow-[#FF6B35]/25">
+                Criar Cardápio
+              </Button>
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#FFF7F3] to-white py-20">
+      <section className="relative z-10 pt-32 pb-20">
         <div className="mx-auto max-w-7xl px-4 text-center">
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#FFF0E6] px-4 py-1.5 text-sm text-[#FF6B35]">
-              <Zap className="h-4 w-4" />
-              Seu cardápio, seu controle
+          <div className="mx-auto max-w-4xl">
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 backdrop-blur-sm">
+              <Sparkles className="h-4 w-4 text-[#FF6B35]" />
+              Seu cardápio, seu controle. Sem comissão.
             </div>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-6xl">
-              Seu cardápio online.
+
+            {/* Headline */}
+            <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">
+              <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+                Seu cardápio online.
+              </span>
               <br />
-              <span className="text-[#FF6B35]">Mensalidade fixa, sem surpresas.</span>
+              <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">
+                Mensalidade fixa, sem surpresas.
+              </span>
             </h1>
-            <p className="mt-6 text-lg text-zinc-600">
-              Plataforma completa de pedidos e gerenciamento para seu estabelecimento. Cliente acessa seu cardápio,
-              escolhe o que quer, paga por Pix/cartão e o pedido vai direto para seu painel. Mensalidade fixa, sem comissão.
+
+            {/* Sub */}
+            <p className="mt-6 text-lg text-white/50 max-w-2xl mx-auto">
+              Plataforma completa de pedidos e gerenciamento para seu estabelecimento.
+              Cliente acessa seu cardápio, escolhe, paga e o pedido vai direto para seu painel.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+
+            {/* CTA */}
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/cadastro">
-                <Button size="lg" className="bg-[#FF6B35] hover:bg-[#E55A2B] px-8">
+                <Button size="lg" className="bg-[#FF6B35] hover:bg-[#E55A2B] px-8 text-base shadow-xl shadow-[#FF6B35]/30 group">
                   Criar meu cardápio grátis
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
+              <Link href="#planos">
+                <Button size="lg" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10 px-8 text-base">
+                  Ver planos
+                </Button>
+              </Link>
+            </div>
+
+            {/* Stats */}
+            <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {stats.map((s) => (
+                <div key={s.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                  <p className="text-2xl font-bold bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">{s.value}</p>
+                  <p className="mt-1 text-xs text-white/40">{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="border-t border-zinc-100 bg-white py-20">
+      <section className="relative z-10 py-24">
         <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-center text-3xl font-bold text-zinc-900">
-            Tudo que um marketplace tem, sem as taxas de comissão
-          </h2>
-          <p className="mt-2 text-center text-zinc-600">
-            Plataforma completa com preço fixo. Sem surpresas no fim do mês.
-          </p>
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f) => (
-              <div key={f.title} className="rounded-xl border border-zinc-200 bg-zinc-50 p-6">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#FFF0E6]">
-                  <f.icon className="h-6 w-6 text-[#FF6B35]" />
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold sm:text-5xl">
+              <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                Tudo que você precisa.
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">
+                Sem taxas escondidas.
+              </span>
+            </h2>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f, i) => (
+              <div
+                key={f.title}
+                className="group relative rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/10 hover:shadow-2xl hover:shadow-[#FF6B35]/5"
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${f.gradient} shadow-lg`}>
+                  <f.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-900">{f.title}</h3>
-                <p className="mt-2 text-sm text-zinc-600">{f.desc}</p>
+                <h3 className="text-lg font-semibold text-white">{f.title}</h3>
+                <p className="mt-2 text-sm text-white/50">{f.desc}</p>
+                {/* Glow effect on hover */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#FF6B35]/0 to-[#FF6B35]/0 transition-all duration-300 group-hover:from-[#FF6B35]/5 group-hover:to-transparent" />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* System Screenshots */}
-      <section className="border-t border-zinc-100 bg-zinc-50 py-20">
+      {/* Screenshots / How it works */}
+      <section className="relative z-10 py-24">
         <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-center text-3xl font-bold text-zinc-900">
-            Veja como funciona
-          </h2>
-          <p className="mt-2 text-center text-zinc-600">
-            Conheça as principais telas do sistema
-          </p>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Dashboard */}
-            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-gradient-to-br from-green-50 to-green-100 p-4">
-                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold sm:text-5xl">
+              <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                Veja como funciona
+              </span>
+            </h2>
+            <p className="mt-4 text-white/40">Um sistema completo no seu bolso</p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { title: "Dashboard", desc: "Vendas, pedidos e relatórios em tempo real", gradient: "from-green-500/20 to-emerald-500/20", border: "border-green-500/20" },
+              { title: "Cardápio", desc: "Categorias, produtos com fotos e preços", gradient: "from-[#FF6B35]/20 to-orange-500/20", border: "border-[#FF6B35]/20" },
+              { title: "Pedidos", desc: "Acompanhe pedidos em tempo real com status", gradient: "from-blue-500/20 to-purple-500/20", border: "border-blue-500/20" },
+              { title: "Entregas", desc: "Painel do motoboy com mapa e status", gradient: "from-purple-500/20 to-pink-500/20", border: "border-purple-500/20" },
+              { title: "Caixa", desc: "Vendas presenciais simplificadas", gradient: "from-emerald-500/20 to-teal-500/20", border: "border-emerald-500/20" },
+              { title: "Estoque", desc: "Controle de insumos e baixa automática", gradient: "from-amber-500/20 to-yellow-500/20", border: "border-amber-500/20" },
+            ].map((item) => (
+              <div key={item.title} className={`group relative rounded-2xl border ${item.border} bg-gradient-to-br ${item.gradient} p-6 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]`}>
+                {/* Mock UI */}
+                <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <div className="h-2 w-16 rounded bg-zinc-200"></div>
+                    <div className="h-2 w-2 rounded-full bg-[#FF6B35]" />
+                    <div className="h-2 w-16 rounded bg-white/10" />
                   </div>
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <div className="h-8 rounded bg-green-100"></div>
-                    <div className="h-8 rounded bg-blue-100"></div>
-                    <div className="h-8 rounded bg-orange-100"></div>
-                  </div>
-                  <div className="h-12 rounded bg-zinc-100"></div>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-zinc-900">Dashboard</h3>
-                <p className="text-sm text-zinc-600">Visão geral com vendas, pedidos e relatórios em tempo real</p>
-              </div>
-            </div>
-
-            {/* Cardápio */}
-            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-gradient-to-br from-orange-50 to-orange-100 p-4">
-                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
-                  <div className="flex gap-2 mb-2">
-                    <div className="h-4 w-12 rounded-full bg-[#FF6B35]"></div>
-                    <div className="h-4 w-12 rounded-full bg-zinc-200"></div>
-                    <div className="h-4 w-12 rounded-full bg-zinc-200"></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="h-16 rounded bg-zinc-100"></div>
-                    <div className="h-16 rounded bg-zinc-100"></div>
-                    <div className="h-16 rounded bg-zinc-100"></div>
-                    <div className="h-16 rounded bg-zinc-100"></div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="h-6 rounded bg-white/5" />
+                    ))}
                   </div>
                 </div>
+                <h3 className="font-semibold text-white">{item.title}</h3>
+                <p className="mt-1 text-sm text-white/40">{item.desc}</p>
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-zinc-900">Cardápio</h3>
-                <p className="text-sm text-zinc-600">Categorias, produtos com fotos e preços</p>
-              </div>
-            </div>
-
-            {/* Pedidos */}
-            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-2 rounded bg-zinc-50">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-blue-200"></div>
-                        <div className="h-2 w-16 rounded bg-zinc-200"></div>
-                      </div>
-                      <div className="h-4 w-12 rounded bg-green-200"></div>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded bg-zinc-50">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-blue-200"></div>
-                        <div className="h-2 w-16 rounded bg-zinc-200"></div>
-                      </div>
-                      <div className="h-4 w-12 rounded bg-yellow-200"></div>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded bg-zinc-50">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-blue-200"></div>
-                        <div className="h-2 w-16 rounded bg-zinc-200"></div>
-                      </div>
-                      <div className="h-4 w-12 rounded bg-orange-200"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-zinc-900">Pedidos</h3>
-                <p className="text-sm text-zinc-600">Acompanhe pedidos em tempo real com status</p>
-              </div>
-            </div>
-
-            {/* Entregas */}
-            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-gradient-to-br from-purple-50 to-purple-100 p-4">
-                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-8 w-8 rounded-full bg-purple-200"></div>
-                    <div>
-                      <div className="h-2 w-16 rounded bg-zinc-200 mb-1"></div>
-                      <div className="h-2 w-10 rounded bg-zinc-100"></div>
-                    </div>
-                  </div>
-                  <div className="h-16 rounded bg-zinc-100 mb-2"></div>
-                  <div className="flex gap-2">
-                    <div className="h-4 flex-1 rounded bg-purple-200"></div>
-                    <div className="h-4 flex-1 rounded bg-green-200"></div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-zinc-900">Entregas</h3>
-                <p className="text-sm text-zinc-600">Painel do motoboy com mapa e status</p>
-              </div>
-            </div>
-
-            {/* Caixa */}
-            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
-                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
-                  <div className="grid grid-cols-3 gap-1 mb-2">
-                    <div className="h-8 rounded bg-emerald-100"></div>
-                    <div className="h-8 rounded bg-emerald-100"></div>
-                    <div className="h-8 rounded bg-emerald-100"></div>
-                    <div className="h-8 rounded bg-emerald-100"></div>
-                    <div className="h-8 rounded bg-emerald-100"></div>
-                    <div className="h-8 rounded bg-emerald-100"></div>
-                  </div>
-                  <div className="h-6 rounded bg-emerald-200"></div>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-zinc-900">Caixa</h3>
-                <p className="text-sm text-zinc-600">Tela de vendas presenciais simplificada</p>
-              </div>
-            </div>
-
-            {/* Estoque */}
-            <div className="group rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-gradient-to-br from-amber-50 to-amber-100 p-4">
-                <div className="h-full rounded-lg bg-white shadow-sm border border-zinc-100 p-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="h-2 w-20 rounded bg-zinc-200"></div>
-                      <div className="h-2 w-8 rounded bg-amber-200"></div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="h-2 w-16 rounded bg-zinc-200"></div>
-                      <div className="h-2 w-8 rounded bg-green-200"></div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="h-2 w-24 rounded bg-zinc-200"></div>
-                      <div className="h-2 w-8 rounded bg-red-200"></div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="h-2 w-14 rounded bg-zinc-200"></div>
-                      <div className="h-2 w-8 rounded bg-amber-200"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-zinc-900">Estoque</h3>
-                <p className="text-sm text-zinc-600">Controle de insumos e baixa automática</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Comparison */}
-      <section className="bg-zinc-50 py-20">
+      <section className="relative z-10 py-24">
         <div className="mx-auto max-w-5xl px-4">
-          <h2 className="text-center text-3xl font-bold text-zinc-900">
-            Mensalidade fixa. Zero comissão.
-          </h2>
-          <p className="mt-2 text-center text-zinc-600">
-            Compare e veja quanto você economiza por mês.
-          </p>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold sm:text-5xl">
+              <span className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">Marketplace</span>
+              {" vs "}
+              <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">PedeFácil</span>
+            </h2>
+            <p className="mt-4 text-white/40">Compare e veja quanto você economiza por mês</p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2">
             {/* Marketplace */}
-            <div className="rounded-xl border border-red-200 bg-white p-6">
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 backdrop-blur-sm">
               <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
-                  <TrendingDown className="h-4 w-4 text-red-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/20">
+                  <TrendingDown className="h-5 w-5 text-red-400" />
                 </div>
-                <h3 className="font-semibold text-red-700">Marketplace Tradicional</h3>
+                <div>
+                  <h3 className="font-bold text-red-400">Marketplace Tradicional</h3>
+                  <p className="text-xs text-white/30">iFood, Rappi, etc.</p>
+                </div>
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-zinc-600">Comissão por pedido</span>
-                  <span className="font-bold text-red-600">12% a 27%</span>
+                  <span className="text-white/50">Comissão por pedido</span>
+                  <span className="font-bold text-red-400">12% a 27%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-600">Processamento pagamento</span>
-                  <span className="font-bold text-red-600">3.2%</span>
+                  <span className="text-white/50">Processamento pagamento</span>
+                  <span className="font-bold text-red-400">3.2%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-600">Mensalidade</span>
-                  <span className="font-bold text-red-600">R$ 150+</span>
+                  <span className="text-white/50">Mensalidade</span>
+                  <span className="font-bold text-red-400">R$ 150+</span>
                 </div>
-                <div className="border-t border-zinc-200 pt-3">
+                <div className="border-t border-white/10 pt-3">
                   <div className="flex justify-between">
-                    <span className="font-semibold text-zinc-900">Total em 100 pedidos (R$50)</span>
-                    <span className="font-bold text-red-600">R$ 1.325/mês</span>
+                    <span className="font-semibold text-white">Total em 100 pedidos (R$50)</span>
+                    <span className="font-bold text-red-400">R$ 1.325/mês</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* PedeFácil */}
-            <div className="rounded-xl border-2 border-[#FF6B35] bg-white p-6">
+            <div className="relative rounded-2xl border-2 border-[#FF6B35]/50 bg-[#FF6B35]/5 p-6 backdrop-blur-sm shadow-2xl shadow-[#FF6B35]/10">
+              <div className="absolute -top-3 right-4 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] px-3 py-1 text-xs font-bold text-white shadow-lg">
+                Economia de R$ 15.000/ano
+              </div>
               <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF0E6]">
-                  <Check className="h-4 w-4 text-[#FF6B35]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF6B35]/20">
+                  <Check className="h-5 w-5 text-[#FF6B35]" />
                 </div>
-                <h3 className="font-semibold text-[#FF6B35]">PedeFácil</h3>
+                <div>
+                  <h3 className="font-bold text-[#FF6B35]">PedeFácil</h3>
+                  <p className="text-xs text-white/30">Seu cardápio, seu controle</p>
+                </div>
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-zinc-600">Comissão por pedido</span>
-                  <span className="font-bold text-green-600">0%</span>
+                  <span className="text-white/50">Comissão por pedido</span>
+                  <span className="font-bold text-green-400">0%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-600">Processamento pagamento</span>
-                  <span className="font-bold text-green-600">Taxa do Asaas</span>
+                  <span className="text-white/50">Processamento pagamento</span>
+                  <span className="font-bold text-green-400">Taxa do Asaas</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-600">Mensalidade</span>
-                  <span className="font-bold text-green-600">R$ 0 a R$ 199</span>
+                  <span className="text-white/50">Mensalidade</span>
+                  <span className="font-bold text-green-400">R$ 0 a R$ 199</span>
                 </div>
-                <div className="border-t border-zinc-200 pt-3">
+                <div className="border-t border-white/10 pt-3">
                   <div className="flex justify-between">
-                    <span className="font-semibold text-zinc-900">Total em 100 pedidos (R$50)</span>
-                    <span className="font-bold text-green-600">R$ 49/mês</span>
+                    <span className="font-semibold text-white">Total em 100 pedidos (R$50)</span>
+                    <span className="font-bold text-green-400">R$ 49/mês</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <p className="mt-4 text-center text-sm text-zinc-500">
-            * Economia de até R$ 15.000/ano comparado a marketplaces tradicionais
-          </p>
         </div>
       </section>
 
       {/* Pricing */}
-      <section className="bg-white py-20" id="planos">
+      <section className="relative z-10 py-24" id="planos">
         <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-center text-3xl font-bold text-zinc-900">
-            Mensalidade fixa, sem surpresas
-          </h2>
-          <p className="mt-2 text-center text-zinc-600">
-            Escolha o plano ideal para o tamanho do seu negócio. Cancele quando quiser.
-          </p>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold sm:text-5xl">
+              <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                Mensalidade fixa.
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">
+                Sem surpresas.
+              </span>
+            </h2>
+            <p className="mt-4 text-white/40">Escolha o plano ideal. Cancele quando quiser.</p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`rounded-xl border p-6 ${
+                className={`relative rounded-2xl border p-6 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
                   plan.highlighted
-                    ? "border-[#FF6B35] bg-[#FFF7F3] shadow-lg"
-                    : "border-zinc-200 bg-white"
+                    ? "border-[#FF6B35]/50 bg-[#FF6B35]/10 shadow-2xl shadow-[#FF6B35]/10"
+                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
                 }`}
               >
                 {plan.badge && (
-                  <div className="mb-3 inline-flex rounded-full bg-[#FF6B35] px-3 py-1 text-xs font-medium text-white">
+                  <div className="absolute -top-3 left-4 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] px-3 py-1 text-xs font-bold text-white shadow-lg">
                     {plan.badge}
                   </div>
                 )}
-                <h3 className="text-lg font-bold text-zinc-900">{plan.name}</h3>
+                <h3 className="text-lg font-bold text-white">{plan.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-zinc-900">R$ {plan.price}</span>
-                  <span className="text-sm text-zinc-500">{plan.period}</span>
+                  <span className="text-4xl font-bold text-white">R$ {plan.price}</span>
+                  <span className="text-sm text-white/40">{plan.period}</span>
                 </div>
-                <p className="mt-2 text-sm text-zinc-600">{plan.desc}</p>
+                <p className="mt-2 text-sm text-white/40">{plan.desc}</p>
                 <ul className="mt-4 space-y-2">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-zinc-600">
+                    <li key={f} className="flex items-center gap-2 text-sm text-white/60">
                       <Check className="h-4 w-4 text-[#FF6B35]" />
                       {f}
                     </li>
@@ -485,8 +439,8 @@ export default function HomePage() {
                   <Button
                     className={`w-full ${
                       plan.highlighted
-                        ? "bg-[#FF6B35] hover:bg-[#E55A2B]"
-                        : "bg-zinc-900 hover:bg-zinc-800"
+                        ? "bg-[#FF6B35] hover:bg-[#E55A2B] shadow-lg shadow-[#FF6B35]/25"
+                        : "bg-white/10 hover:bg-white/20 text-white"
                     }`}
                   >
                     {plan.cta}
@@ -499,23 +453,27 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="bg-zinc-50 py-20">
+      <section className="relative z-10 py-24">
         <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-center text-3xl font-bold text-zinc-900">
-            Quem já usa, recomenda
-          </h2>
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold sm:text-5xl">
+              <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                Quem usa, recomenda
+              </span>
+            </h2>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-3">
             {testimonials.map((t) => (
-              <div key={t.name} className="rounded-xl border border-zinc-200 bg-white p-6">
+              <div key={t.name} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/10">
                 <div className="mb-3 flex gap-1">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <span key={i} className="text-yellow-400">★</span>
+                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-sm text-zinc-600">&ldquo;{t.text}&rdquo;</p>
+                <p className="text-sm text-white/60">&ldquo;{t.text}&rdquo;</p>
                 <div className="mt-4">
-                  <p className="font-semibold text-zinc-900">{t.name}</p>
-                  <p className="text-xs text-zinc-500">{t.role}</p>
+                  <p className="font-semibold text-white">{t.name}</p>
+                  <p className="text-xs text-white/30">{t.role}</p>
                 </div>
               </div>
             ))}
@@ -524,33 +482,41 @@ export default function HomePage() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-white py-20">
+      <section className="relative z-10 py-24">
         <div className="mx-auto max-w-3xl px-4">
-          <h2 className="text-center text-3xl font-bold text-zinc-900">
-            Perguntas frequentes
-          </h2>
-          <div className="mt-8 space-y-3">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold sm:text-5xl">
+              <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                Perguntas frequentes
+              </span>
+            </h2>
+          </div>
+          <div className="space-y-3">
             {faq.map((item, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-zinc-200 overflow-hidden"
+                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:border-white/20"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="flex w-full items-center justify-between p-4 text-left"
+                  className="flex w-full items-center justify-between p-5 text-left"
                 >
-                  <span className="font-medium text-zinc-900">{item.q}</span>
+                  <span className="font-medium text-white">{item.q}</span>
                   <ChevronDown
-                    className={`h-5 w-5 text-zinc-500 transition-transform ${
+                    className={`h-5 w-5 text-white/40 transition-transform duration-300 ${
                       openFaq === i ? "rotate-180" : ""
                     }`}
                   />
                 </button>
-                {openFaq === i && (
-                  <div className="px-4 pb-4 text-sm text-zinc-600">
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    openFaq === i ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="px-5 pb-5 text-sm text-white/50">
                     {item.a}
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
@@ -558,34 +524,46 @@ export default function HomePage() {
       </section>
 
       {/* CTA Final */}
-      <section className="bg-[#FF6B35] py-16">
-        <div className="mx-auto max-w-3xl px-4 text-center">
-          <h2 className="text-3xl font-bold text-white">
-            Comece a vender online hoje
-          </h2>
-          <p className="mt-3 text-lg text-white/90">
-            Crie seu cardápio em 2 minutos. Sem cartão de crédito. Sem mensalidade no plano grátis.
-          </p>
-          <div className="mt-8">
-            <Link href="/cadastro">
-              <Button size="lg" className="bg-white text-[#FF6B35] hover:bg-zinc-100 px-8">
-                Criar meu cardápio grátis
-              </Button>
-            </Link>
+      <section className="relative z-10 py-24">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="relative rounded-3xl border border-[#FF6B35]/30 bg-gradient-to-br from-[#FF6B35]/10 to-purple-600/10 p-12 text-center backdrop-blur-sm shadow-2xl shadow-[#FF6B35]/10">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[#FF6B35]/5 to-transparent" />
+            <div className="relative">
+              <h2 className="text-4xl font-bold sm:text-5xl">
+                <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                  Comece a vender online
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">
+                  hoje mesmo.
+                </span>
+              </h2>
+              <p className="mt-4 text-lg text-white/50">
+                Crie seu cardápio em 2 minutos. Sem cartão. Sem mensalidade no plano grátis.
+              </p>
+              <div className="mt-8">
+                <Link href="/cadastro">
+                  <Button size="lg" className="bg-[#FF6B35] hover:bg-[#E55A2B] px-10 text-base shadow-xl shadow-[#FF6B35]/30 group">
+                    Criar meu cardápio grátis
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 bg-white py-8">
-        <div className="mx-auto max-w-7xl px-4 text-center text-sm text-zinc-500">
+      <footer className="relative z-10 border-t border-white/10 py-8">
+        <div className="mx-auto max-w-7xl px-4 text-center text-sm text-white/30">
           <div className="mb-4">
-            <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="mx-auto h-6" />
+            <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="mx-auto h-6 opacity-50" />
           </div>
           <p>PedeFácil © 2024 — Seu cardápio, seu controle</p>
           <div className="mt-3 flex items-center justify-center gap-4 text-xs">
-            <Link href="/cadastro" className="hover:text-[#FF6B35]">Criar conta</Link>
-            <Link href="/dashboard" className="hover:text-[#FF6B35]">Entrar</Link>
+            <Link href="/cadastro" className="hover:text-[#FF6B35] transition-colors">Criar conta</Link>
+            <Link href="/dashboard" className="hover:text-[#FF6B35] transition-colors">Entrar</Link>
           </div>
         </div>
       </footer>
