@@ -1282,7 +1282,7 @@ export default function CaixaPOSPage() {
                   autoFocus
                   onKeyDown={(e) => { if (e.key === "Enter") confirmNewTable() }}
                 />
-                <p className="mt-1 text-[10px] text-zinc-400">Se preencher, aparecerá como "Mesa {nextTableNum} - {newTableName || "João"}"</p>
+                <p className="mt-1 text-[10px] text-zinc-400">{`Se preencher, aparecerá como "Mesa ${nextTableNum} - ${newTableName || "João"}"`}</p>
               </div>
               <button onClick={confirmNewTable} className="w-full rounded-xl bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700">
                 Abrir Mesa
