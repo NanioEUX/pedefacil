@@ -81,8 +81,8 @@ export default function HomePage() {
       <nav className={`fixed top-0 z-50 w-full transition-all duration-500 ease-out ${scrollY > 50 ? "border-b border-white/[0.08] bg-black/60 backdrop-blur-xl" : "bg-transparent"}`}>
         <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 md:px-[60px]">
           <div className="flex items-center gap-3">
-            <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-8" />
-            <span className="text-[17px] font-semibold tracking-[-0.3px] text-white">PedeFácil</span>
+            <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-12 md:h-14" />
+            <span className="text-[22px] md:text-[26px] font-bold tracking-[-0.5px] text-white">PedeFácil</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login" className="hidden sm:block text-[15px] font-medium text-white/50 hover:text-white transition-colors duration-300">Entrar</Link>
@@ -105,7 +105,7 @@ export default function HomePage() {
           <div className="mb-10 flex justify-center">
             <div className="relative">
               <div className="absolute inset-0 rounded-3xl bg-[#FF6B35]/20 blur-[60px]" />
-              <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="relative h-16 md:h-20" />
+              <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="relative h-24 md:h-32" />
             </div>
           </div>
 
@@ -438,7 +438,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-[1440px] px-5 md:px-[60px]">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-3">
-              <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-7 opacity-40" />
+              <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-10 opacity-40" />
               <span className="text-[14px] text-white/25">PedeFácil © 2024</span>
             </div>
             <div className="flex items-center gap-6 text-[13px] text-white/25">
