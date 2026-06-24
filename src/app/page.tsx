@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Smartphone, BarChart3, CreditCard, ShoppingBag, QrCode, Store, Check, ChevronDown, Zap, Shield, TrendingDown, ArrowRight, Star, Sparkles, Globe, Users, Clock, TrendingUp } from "lucide-react"
+import { Smartphone, BarChart3, CreditCard, ShoppingBag, QrCode, Store, Check, ChevronDown, Zap, Shield, TrendingDown, ArrowRight, Star, Sparkles, Globe, Users, Clock, TrendingUp, DollarSign, Megaphone, Landmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 
@@ -227,8 +227,11 @@ export default function HomePage() {
               { title: "Dashboard", desc: "Vendas, pedidos e relatórios em tempo real", bg: "from-green-500/[0.08] to-emerald-500/[0.04]", border: "border-green-500/[0.12]", icon: BarChart3, iconColor: "text-green-400" },
               { title: "Cardápio", desc: "Categorias, produtos com fotos e preços", bg: "from-[#FF6B35]/[0.08] to-orange-500/[0.04]", border: "border-[#FF6B35]/[0.12]", icon: Store, iconColor: "text-[#FF6B35]" },
               { title: "Pedidos", desc: "Acompanhe pedidos em tempo real com status", bg: "from-blue-500/[0.08] to-purple-500/[0.04]", border: "border-blue-500/[0.12]", icon: ShoppingBag, iconColor: "text-blue-400" },
+              { title: "Frente de Caixa", desc: "Vendas presenciais rápidas com PDV completo", bg: "from-emerald-500/[0.08] to-teal-500/[0.04]", border: "border-emerald-500/[0.12]", icon: CreditCard, iconColor: "text-emerald-400" },
+              { title: "Financeiro", desc: "DRE, despesas, relatórios e fluxo de caixa", bg: "from-cyan-500/[0.08] to-sky-500/[0.04]", border: "border-cyan-500/[0.12]", icon: Landmark, iconColor: "text-cyan-400" },
+              { title: "Clientes", desc: "Cadastros, histórico de pedidos e fidelidade", bg: "from-violet-500/[0.08] to-indigo-500/[0.04]", border: "border-violet-500/[0.12]", icon: Users, iconColor: "text-violet-400" },
               { title: "Entregas", desc: "Painel do motoboy com mapa e status", bg: "from-purple-500/[0.08] to-pink-500/[0.04]", border: "border-purple-500/[0.12]", icon: Smartphone, iconColor: "text-purple-400" },
-              { title: "Caixa", desc: "Vendas presenciais simplificadas", bg: "from-emerald-500/[0.08] to-teal-500/[0.04]", border: "border-emerald-500/[0.12]", icon: CreditCard, iconColor: "text-emerald-400" },
+              { title: "Marketing", desc: "Cupons de desconto e programa de fidelidade", bg: "from-rose-500/[0.08] to-pink-500/[0.04]", border: "border-rose-500/[0.12]", icon: Megaphone, iconColor: "text-rose-400" },
               { title: "Estoque", desc: "Controle de insumos e baixa automática", bg: "from-amber-500/[0.08] to-yellow-500/[0.04]", border: "border-amber-500/[0.12]", icon: QrCode, iconColor: "text-amber-400" },
             ].map((item) => (
               <div key={item.title} className={`rounded-[16px] border ${item.border} bg-gradient-to-br ${item.bg} p-6 transition-all duration-500 hover:scale-[1.02]`}>
