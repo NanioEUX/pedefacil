@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         role: role || "atendente",
         permissions: JSON.stringify(permissions || ["caixa"]),
         canCloseRegister: canCloseRegister || false,
+        mustChangePassword: true,
         establishmentId,
       },
       select: {

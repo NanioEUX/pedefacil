@@ -108,7 +108,7 @@ export default function DemoPage() {
           </div>
           <Link href="/cadastro">
             <Button className="bg-[#FF6B35] hover:bg-[#E55A2B]">
-              Criar meu cardápio grátis
+                Testar 7 dias grátis
             </Button>
           </Link>
         </div>
@@ -220,12 +220,12 @@ export default function DemoPage() {
             Comece agora mesmo
           </h2>
           <p className="mt-2 text-white/90">
-            Crie seu cardápio em 2 minutos. É grátis para sempre.
+            Crie seu cardápio em 2 minutos. Teste 7 dias grátis.
           </p>
           <div className="mt-6">
             <Link href="/cadastro">
               <Button size="lg" className="bg-white text-[#FF6B35] hover:bg-zinc-100">
-                Criar meu cardápio grátis
+              Testar 7 dias grátis
               </Button>
             </Link>
           </div>

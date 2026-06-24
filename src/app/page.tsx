@@ -15,9 +15,8 @@ const features = [
 ]
 
 const plans = [
-  { name: "Grátis", price: "0", period: "/mês", desc: "Para testar e começar a vender", features: ["Até 50 pedidos/mês", "Cardápio digital", "1 usuário"], cta: "Começar grátis", highlighted: false },
-  { name: "Starter", price: "49", period: "/mês", desc: "Para crescer sem limites", features: ["Até 200 pedidos/mês", "Tudo do Grátis", "Dashboard completo", "Relatórios", "3 usuários"], cta: "Assinar Starter", highlighted: true, badge: "Mais popular" },
-  { name: "Pro", price: "99", period: "/mês", desc: "Para quem quer escalar", features: ["Pedidos ilimitados", "Tudo do Starter", "Controle de estoque", "Financeiro completo", "Cupons e promoções", "Entregadores", "10 usuários"], cta: "Assinar Pro", highlighted: false },
+  { name: "Starter", price: "49", period: "/mês", desc: "Para crescer sem limites", features: ["Até 200 pedidos/mês", "Cardápio digital", "Dashboard completo", "Relatórios", "3 usuários"], cta: "Testar 7 dias grátis", highlighted: true, badge: "Mais popular" },
+  { name: "Pro", price: "99", period: "/mês", desc: "Para quem quer escalar", features: ["Pedidos ilimitados", "Tudo do Starter", "Controle de estoque", "Financeiro completo", "Cupons e promoções", "Entregadores", "10 usuários"], cta: "Testar 7 dias grátis", highlighted: false },
   { name: "Enterprise", price: "199", period: "/mês", desc: "Para redes e franquias", features: ["Multi-unidade", "Tudo do Pro", "Multi-tenant", "Suporte prioritário", "Usuários ilimitados", "API personalizada"], cta: "Falar com vendas", highlighted: false },
 ]
 
@@ -82,13 +81,12 @@ export default function HomePage() {
         <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 md:px-[60px]">
           <div className="flex items-center gap-3">
             <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-12 md:h-14" />
-            <span className="text-[22px] md:text-[26px] font-bold tracking-[-0.5px] text-white">PedeFácil</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="hidden sm:block text-[15px] font-medium text-white/50 hover:text-white transition-colors duration-300">Entrar</Link>
-            <Link href="/cadastro">
+            <Link href="/login" className="text-[15px] font-medium text-white/50 hover:text-white transition-colors duration-300">Entrar</Link>
+            <Link href="/cadastro" className="hidden sm:inline-flex">
               <span className="inline-flex h-[44px] items-center rounded-full bg-[#FF6B35] px-6 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer">
-                Criar Cardápio
+                Testar 7 dias grátis
               </span>
             </Link>
           </div>
@@ -110,20 +108,19 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-[40px] md:text-[72px] font-semibold leading-[118%] md:leading-[105%] tracking-[-1px] md:tracking-[-2.4px]">
-            Seu cardápio online.
+            A solução completa
             <br />
-            <span className="bg-gradient-to-r from-[#FF6B35] via-[#FF8F6B] to-[#FFB088] bg-clip-text text-transparent">Mensalidade fixa, sem surpresas.</span>
+            <span className="bg-gradient-to-r from-[#FF6B35] via-[#FF8F6B] to-[#FFB088] bg-clip-text text-transparent">pro seu estabelecimento.</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-[640px] text-[16px] md:text-[18px] leading-[150%] tracking-[-0.3px] text-white/50 font-light">
-            Plataforma completa de pedidos e gerenciamento para seu estabelecimento.
-            Cliente acessa seu cardápio, escolhe, paga e o pedido vai direto para seu painel.
+            Cardápio digital, pedidos automáticos, pagamento integrado e gestão completa — tudo por mensalidade fixa, sem comissão por pedido.
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link href="/cadastro">
               <span className="inline-flex h-[58px] items-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] px-10 text-[18px] font-semibold text-white transition-opacity hover:opacity-90 shadow-[0_0_40px_rgba(255,107,53,0.3)]">
-                Criar meu cardápio grátis
+                Testar 7 dias grátis
                 <ArrowRight className="h-5 w-5" />
               </span>
             </Link>
@@ -414,17 +411,17 @@ export default function HomePage() {
           <div className="rounded-[24px] border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/[0.08] to-purple-600/[0.04] p-12 md:p-20 text-center">
             <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Comece agora</p>
             <h2 className="text-[36px] md:text-[64px] font-semibold leading-[110%] tracking-[-1.5px] md:tracking-[-2.4px]">
-              <span className="bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">Comece a vender online</span>
+              <span className="bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">O marketplace cobra até 27% por pedido.</span>
               <br />
-              <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">hoje mesmo.</span>
+              <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">Aqui é mensalidade fixa.</span>
             </h2>
             <p className="mx-auto mt-5 max-w-[500px] text-[16px] md:text-[18px] leading-[150%] text-white/40 font-light">
-              Crie seu cardápio em 2 minutos. Sem cartão. Sem mensalidade no plano grátis.
+              Teste 7 dias grátis. Sem cartão. Cancele quando quiser.
             </p>
             <div className="mt-10">
               <Link href="/cadastro">
                 <span className="inline-flex h-[58px] items-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] px-10 text-[18px] font-semibold text-white transition-opacity hover:opacity-90 shadow-[0_0_50px_rgba(255,107,53,0.3)]">
-                  Criar meu cardápio grátis
+                  Testar 7 dias grátis
                   <ArrowRight className="h-5 w-5" />
                 </span>
               </Link>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
-import { Save, Loader2, Eye, EyeOff, CreditCard, Banknote, Bike, Store, Clock, Star } from "lucide-react"
+import { Save, Loader2, Eye, EyeOff, CreditCard, Banknote, Bike, Store, Clock, Star, Sun, Moon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +45,7 @@ export default function ConfigPage() {
     deliveryFeeType: "free",
     deliveryFeeAmount: "0",
     deliveryFreeAbove: "0",
+    defaultTheme: "dark",
   })
   const [paymentConfig, setPaymentConfig] = useState({ online: true, delivery: true, pickup: true })
   const [orderConfig, setOrderConfig] = useState({ delivery: true, pickup: true })
@@ -78,6 +79,7 @@ export default function ConfigPage() {
             deliveryFeeType: data.deliveryFeeType || "free",
             deliveryFeeAmount: String(data.deliveryFeeAmount || "0"),
             deliveryFreeAbove: String(data.deliveryFreeAbove || "0"),
+            defaultTheme: data.defaultTheme || "dark",
           })
           if (data.paymentConfig) {
             try { setPaymentConfig(JSON.parse(data.paymentConfig)) } catch {}
@@ -122,6 +124,7 @@ export default function ConfigPage() {
           orderConfig: JSON.stringify(orderConfig),
           businessHours: JSON.stringify(businessHours),
           loyaltyConfig: JSON.stringify(loyaltyConfig),
+          defaultTheme: form.defaultTheme,
         }),
       })
 
@@ -149,6 +152,41 @@ export default function ConfigPage() {
             <Input label="WhatsApp (com DDD)" id="phone" placeholder="11999999999" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <Select label="Categoria" id="category" options={categories} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             <Input label="Endereço" id="address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          </CardContent>
+        </Card>
+
+        {/* Tema do Cardápio */}
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <h3 className="flex items-center gap-2 font-semibold text-zinc-900">
+              {form.defaultTheme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              Tema do Cardápio
+            </h3>
+            <p className="text-sm text-zinc-500">Escolha o tema padrão do cardápio público. O cliente poderá alternar no cardápio.</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, defaultTheme: "dark" })}
+                className={`flex-1 flex items-center gap-3 rounded-lg border p-4 transition-colors ${form.defaultTheme === "dark" ? "border-green-500 bg-green-50 text-green-700" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+              >
+                <Moon className="h-5 w-5" />
+                <div className="text-left">
+                  <p className="font-medium">Escuro</p>
+                  <p className="text-xs opacity-60">Padrão PedeFácil</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, defaultTheme: "light" })}
+                className={`flex-1 flex items-center gap-3 rounded-lg border p-4 transition-colors ${form.defaultTheme === "light" ? "border-green-500 bg-green-50 text-green-700" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+              >
+                <Sun className="h-5 w-5" />
+                <div className="text-left">
+                  <p className="font-medium">Claro</p>
+                  <p className="text-xs opacity-60">Cores do estabelecimento</p>
+                </div>
+              </button>
+            </div>
           </CardContent>
         </Card>
 

@@ -25,12 +25,12 @@
   </g>
   
   <!-- Text: PedeFácil (centered) -->
-  <text x="100" y="180" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="42" font-weight="700" fill="#1A1A2E">
+  <text x="100" y="180" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="42" font-weight="700" fill="#FFFFFF">
     Pede<tspan fill="#FF6B35">Fácil</tspan>
   </text>
   
   <!-- Tagline (centered) -->
-  <text x="100" y="210" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14" fill="#6B7280">
+  <text x="100" y="210" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14" fill="#FFFFFF">
     Seu cardápio, seu controle
   </text>
 </svg>

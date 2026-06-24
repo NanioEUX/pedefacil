@@ -199,7 +199,7 @@ export default function CadastroPage() {
               className="flex h-[52px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] text-[15px] font-semibold text-white transition-opacity hover:opacity-90 shadow-[0_0_30px_rgba(255,107,53,0.25)] disabled:opacity-50 mt-2"
             >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {loading ? "Criando..." : "Criar cardápio grátis"}
+              {loading ? "Criando..." : "Testar 7 dias grátis"}
             </button>
           </form>
 
