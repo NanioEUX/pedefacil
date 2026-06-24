@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Search, X, Minus, Plus, Trash2, Banknote, CreditCard, DollarSign, CheckCircle, LogOut, TrendingUp, Clock, Store, ShoppingBag, ArrowLeft, Package, Bike, MapPin, MessageCircle, ExternalLink, Printer, Sun, Moon } from "lucide-react"
 import { fetchAuth } from "@/lib/fetch-auth"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
+import { useToast } from "@/components/toast"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const ALL_PERMISSIONS = [
   { value: "dashboard", label: "Dashboard" },
@@ -49,6 +51,7 @@ interface CartItem {
 
 export default function CaixaPOSPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [user, setUser] = useState<UserData | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
@@ -116,6 +119,7 @@ export default function CaixaPOSPage() {
     }
     return true
   })
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void }>({ open: false, title: "", message: "", onConfirm: () => {} })
 
   useEffect(() => {
     localStorage.setItem("pedefacil-caixa-theme", darkMode ? "dark" : "light")
@@ -369,11 +373,23 @@ export default function CaixaPOSPage() {
     const tableLabel = isMesa ? (tableNames[activeTable] ? `Mesa ${activeTable} - ${tableNames[activeTable]}` : `Mesa ${activeTable}`) : "Balcão"
 
     if (isMesa) {
-      if (!confirm(`Adicionar pedido à ${tableLabel}? (Pagamento será cobrado no fechamento da mesa)`)) return
+      setConfirmDialog({
+        open: true,
+        title: `Adicionar pedido à ${tableLabel}`,
+        message: "Pagamento será cobrado no fechamento da mesa.",
+        onConfirm: () => { setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {} }); executeSale(isMesa, tableLabel) }
+      })
     } else {
-      if (!confirm(`Finalizar venda ${tableLabel} - ${formatCurrency(cartTotal)}?`)) return
+      setConfirmDialog({
+        open: true,
+        title: `Finalizar venda ${tableLabel}`,
+        message: `Total: ${formatCurrency(cartTotal)}`,
+        onConfirm: () => { setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {} }); executeSale(isMesa, tableLabel) }
+      })
     }
+  }
 
+  async function executeSale(isMesa: boolean, tableLabel: string) {
     setClosing(true)
     try {
       // Optimistic: create temporary order for instant UI feedback
@@ -549,9 +565,14 @@ export default function CaixaPOSPage() {
         setShowCashRegisterModal(false)
         setOpeningAmount("")
         loadData(user.establishmentId)
+        toast("Caixa aberto com sucesso", "success")
+      } else {
+        const data = await res.json()
+        toast(data.error || "Erro ao abrir caixa", "error")
       }
     } catch (err) {
       console.error(err)
+      toast("Erro ao abrir caixa", "error")
     }
   }
 
@@ -573,30 +594,42 @@ export default function CaixaPOSPage() {
       setShowCashRegisterModal(false)
       setClosingAmount("")
       loadData(user.establishmentId)
+      toast("Caixa fechado com sucesso", "success")
     } catch (err) {
       console.error(err)
+      toast("Erro ao fechar caixa", "error")
     }
   }
 
   async function transferCashRegister() {
     if (!cashRegister || !transferUserId || !user?.establishmentId) return
     const toUser = allUsers.find((u: any) => u.id === transferUserId)
-    if (!confirm(`Transferir caixa para ${toUser?.name || "outro atendente"}? Você será desconectado.`)) return
-    try {
-      await fetchAuth(`/api/cash-register/${cashRegister.id}/transfer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toUserId: transferUserId,
-          amount: 0,
-          notes: `Transferência de ${user.name}`,
-        }),
-      })
-      setShowCashRegisterModal(false)
-      setTransferUserId("")
-      handleLogout()
-    } catch (err) {
-      console.error(err)
+    setConfirmDialog({
+      open: true,
+      title: "Transferir caixa",
+      message: `Transferir caixa para ${toUser?.name || "outro atendente"}? Você será desconectado.`,
+      onConfirm: async () => {
+        setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {} })
+        try {
+          await fetchAuth(`/api/cash-register/${cashRegister.id}/transfer`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              toUserId: transferUserId,
+              amount: 0,
+              notes: `Transferência de ${user.name}`,
+            }),
+          })
+          setShowCashRegisterModal(false)
+          setTransferUserId("")
+          toast("Caixa transferido com sucesso", "success")
+          handleLogout()
+        } catch (err) {
+          console.error(err)
+          toast("Erro ao transferir caixa", "error")
+        }
+      }
+    })
     }
   }
 
@@ -635,7 +668,7 @@ export default function CaixaPOSPage() {
               {user.establishment.logo ? (
                 <img src={user.establishment.logo} alt={user.establishment.name} className="h-8 w-8 rounded-lg object-cover" />
               ) : (
-                <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-8" />
+                <img src={darkMode ? "/icons/pedefacil-logo.svg" : "/icons/pedefacil-logo-dark.svg"} alt="PedeFácil" className="h-8" />
               )}
               <span className={`text-sm font-semibold ${darkMode ? "text-zinc-100" : "text-zinc-900"}`}>{user.establishment.name}</span>
             </>
@@ -703,11 +736,8 @@ export default function CaixaPOSPage() {
           </div>
           <button onClick={handleLogout} className={`rounded-lg p-1.5 ${darkMode ? "text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200" : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"}`}>
             <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-        <div className={`flex items-center justify-center border-t px-4 py-1.5 ${darkMode ? "border-zinc-700 bg-zinc-800" : "border-zinc-200 bg-white"}`}>
-          <span className={`text-[10px] ${darkMode ? "text-zinc-600" : "text-zinc-400"}`}>Powered by <span className={`font-semibold ${darkMode ? "text-zinc-500" : "text-zinc-500"}`}>PedeFácil</span></span>
-        </div>
+            </button>
+          </div>
       </div>
 
       {/* Tabs */}
@@ -817,8 +847,16 @@ export default function CaixaPOSPage() {
         {/* Products Grid */}
         <div className="flex-1 overflow-y-auto p-3">
           {!cashRegister && (
-            <div className="mb-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
-              Abra o caixa no financeiro antes de vender
+            <div className="mb-3 rounded-xl border-2 border-dashed border-yellow-400 bg-yellow-50 px-6 py-8 text-center">
+              <Banknote className="mx-auto mb-3 h-10 w-10 text-yellow-500" />
+              <p className="text-sm font-semibold text-yellow-800">Nenhum caixa aberto</p>
+              <p className="mt-1 text-xs text-yellow-600">Abra o caixa para começar a vender</p>
+              <button
+                onClick={() => { setCashRegisterAction("open"); setShowCashRegisterModal(true) }}
+                className="mt-4 rounded-xl bg-green-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-green-700 shadow-lg shadow-green-600/20"
+              >
+                Abrir Caixa
+              </button>
             </div>
           )}
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
@@ -1000,8 +1038,8 @@ export default function CaixaPOSPage() {
                         className="ml-1 text-red-400 hover:text-red-600"
                       >
                         <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
+            </button>
+          </div>
                   </div>
                 ))}
               </div>
@@ -1157,9 +1195,9 @@ export default function CaixaPOSPage() {
       {/* Cash Register Modal */}
       {showCashRegisterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="rounded-2xl bg-white p-6 shadow-2xl w-full max-w-sm">
+          <div className={`rounded-2xl p-6 shadow-2xl w-full max-w-sm ${darkMode ? "bg-zinc-800" : "bg-white"}`}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-zinc-900">
+              <h3 className={`text-lg font-bold ${darkMode ? "text-zinc-100" : "text-zinc-900"}`}>
                 {cashRegisterAction === "open" ? "Abrir Caixa" : cashRegisterAction === "close" ? "Fechar Caixa" : "Transferir Caixa"}
               </h3>
               <button onClick={() => setShowCashRegisterModal(false)} className="text-zinc-400 hover:text-zinc-600">
@@ -1170,14 +1208,14 @@ export default function CaixaPOSPage() {
             {cashRegisterAction === "open" && (
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-zinc-500">Valor em caixa (R$)</label>
+                  <label className={`text-xs ${darkMode ? "text-zinc-400" : "text-zinc-500"}`}>Valor em caixa (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     placeholder="0,00"
                     value={openingAmount}
                     onChange={(e) => setOpeningAmount(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-green-500 focus:outline-none ${darkMode ? "border-zinc-600 bg-zinc-700 text-zinc-100 placeholder:text-zinc-500" : "border-zinc-200"}`}
                   />
                 </div>
                 <button onClick={openCashRegister} className="w-full rounded-xl bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700">
@@ -1188,20 +1226,20 @@ export default function CaixaPOSPage() {
 
             {cashRegisterAction === "close" && (
               <div className="space-y-3">
-                <div className="rounded-lg bg-zinc-50 p-3 text-sm">
-                  <p className="text-zinc-500">Valor esperado: <span className="font-bold text-zinc-900">{formatCurrency(
+                <div className={`rounded-lg p-3 text-sm ${darkMode ? "bg-zinc-700" : "bg-zinc-50"}`}>
+                  <p className={darkMode ? "text-zinc-400" : "text-zinc-500"}>Valor esperado: <span className={`font-bold ${darkMode ? "text-zinc-100" : "text-zinc-900"}`}>{formatCurrency(
                     (cashRegister?.openingAmount || 0) + (cashRegister?.movements || []).reduce((s: number, m: any) => s + m.amount, 0)
                   )}</span></p>
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500">Valor contado (R$)</label>
+                  <label className={`text-xs ${darkMode ? "text-zinc-400" : "text-zinc-500"}`}>Valor contado (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     placeholder="0,00"
                     value={closingAmount}
                     onChange={(e) => setClosingAmount(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-green-500 focus:outline-none ${darkMode ? "border-zinc-600 bg-zinc-700 text-zinc-100 placeholder:text-zinc-500" : "border-zinc-200"}`}
                   />
                 </div>
                 <button onClick={closeCashRegister} className="w-full rounded-xl bg-red-600 py-3 text-sm font-bold text-white hover:bg-red-700">
@@ -1213,11 +1251,11 @@ export default function CaixaPOSPage() {
             {cashRegisterAction === "transfer" && (
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-zinc-500">Transferir para</label>
+                  <label className={`text-xs ${darkMode ? "text-zinc-400" : "text-zinc-500"}`}>Transferir para</label>
                   <select
                     value={transferUserId}
                     onChange={(e) => setTransferUserId(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-green-500 focus:outline-none ${darkMode ? "border-zinc-600 bg-zinc-700 text-zinc-100" : "border-zinc-200"}`}
                   >
                     <option value="">Selecionar atendente...</option>
                     {allUsers.filter((u: any) => u.id !== user?.id && u.role !== "motoboy").map((u: any) => (
@@ -1757,6 +1795,17 @@ function BalcaoTab({ orders, tableNames, establishmentId, onRefresh, darkMode }:
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        variant="warning"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {} })}
+      />
     </div>
   )
 }
