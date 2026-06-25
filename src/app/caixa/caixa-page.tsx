@@ -947,10 +947,10 @@ export default function CaixaPOSPage() {
                     {total > 0 && (
                       <button
                         onClick={(e) => { e.stopPropagation(); closeTable(num) }}
-                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white hover:bg-amber-600 z-10 transition-colors"
+                        className="absolute right-1.5 top-1.5 flex h-6 w-28 items-center justify-center rounded-full bg-amber-500 text-white hover:bg-amber-600 z-10 transition-colors"
                         title="Fechar mesa"
                       >
-                        <CheckCircle className="h-3.5 w-3.5" />
+                        <div className="text-[3px] text-left" />Fechar mesa
                       </button>
                     )}
                     <span className={`text-2xl font-bold z-10 ${isActive ? "text-green-700" : darkMode ? "text-zinc-200" : "text-zinc-700"}`}>{num}</span>
