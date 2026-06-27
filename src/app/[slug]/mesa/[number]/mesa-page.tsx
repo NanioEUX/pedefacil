@@ -490,8 +490,9 @@ export function MesaPage({ establishment: est, tableNumber }: Props) {
                     if (payMethod === "pix" && amount > 0) {
                       generatePix(amount, `Mesa ${tableNumber} - ${chargeMethod === "unique" ? "Pagamento Único" : chargeMethod === "split" ? `Dividir ${splitCount} pessoas` : chargeMethod === "each" ? "Cada um paga" : "Abater"}`)
                     } else {
-                      const msg = encodeURIComponent(`Gostaria de pagar a Mesa ${tableNumber}. Total: ${formatCurrency(amount)}`)
-                      window.open(`https://wa.me/${est.phone?.replace(/\D/g, "")}?text=${msg}`, "_blank")
+                      setShowPaymentModal(false)
+                      setShowSuccess(true)
+                      setTimeout(() => setShowSuccess(false), 2500)
                     }
                   }}
                   disabled={pixLoading || (chargeMethod === "each" && selectedItems.size === 0) || (chargeMethod === "abater" && (!discountAmount || parseFloat(discountAmount) <= 0))}
