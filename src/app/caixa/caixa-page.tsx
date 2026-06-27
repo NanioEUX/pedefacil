@@ -201,13 +201,20 @@ export default function CaixaPOSPage() {
     setUser(userData)
     loadData(userData.establishmentId)
 
+    const refreshInterval = setInterval(() => {
+      loadData(userData.establishmentId)
+    }, 15000)
+
     function handleStorage(e: StorageEvent) {
       if (e.key === "pedefacil-last-action" && e.newValue) {
         loadData(userData.establishmentId)
       }
     }
     window.addEventListener("storage", handleStorage)
-    return () => window.removeEventListener("storage", handleStorage)
+    return () => {
+      clearInterval(refreshInterval)
+      window.removeEventListener("storage", handleStorage)
+    }
   }, [router])
 
   async function loadData(establishmentId: string) {
