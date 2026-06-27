@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useCallback } from "react"
-import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react"
+import { AlertTriangle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-type DialogStatus = "idle" | "loading" | "success"
 
 interface ConfirmDialogProps {
   open: boolean
@@ -13,7 +11,7 @@ interface ConfirmDialogProps {
   confirmLabel?: string
   cancelLabel?: string
   variant?: "danger" | "warning"
-  status?: DialogStatus
+  confirmed?: boolean
   successTitle?: string
   successMessage?: string
   onConfirm: () => void
@@ -27,7 +25,7 @@ export function ConfirmDialog({
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   variant = "danger",
-  status = "idle",
+  confirmed = false,
   successTitle,
   successMessage,
   onConfirm,
@@ -35,9 +33,9 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape" && status === "idle") onCancel()
+      if (e.key === "Escape" && !confirmed) onCancel()
     },
-    [onCancel, status]
+    [onCancel, confirmed]
   )
 
   useEffect(() => {
@@ -49,28 +47,17 @@ export function ConfirmDialog({
 
   if (!open) return null
 
-  if (status === "loading") {
+  if (confirmed) {
     return (
       <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50">
-        <div className="mx-4 w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
-          <div className="flex flex-col items-center">
-            <Loader2 className="mb-4 h-12 w-12 text-green-500 animate-spin" />
-            <p className="text-lg font-semibold text-zinc-900">Processando...</p>
+        <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-900">{successTitle || title}</h3>
           </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (status === "success") {
-    return (
-      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50">
-        <div className="mx-4 w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
-          <div className="flex flex-col items-center">
-            <CheckCircle className="mb-4 h-12 w-12 text-green-500" />
-            <p className="text-lg font-bold text-zinc-900">{successTitle || title}</p>
-            {successMessage && <p className="mt-1 text-sm text-zinc-500">{successMessage}</p>}
-          </div>
+          {successMessage && <p className="mb-2 text-sm text-zinc-600">{successMessage}</p>}
         </div>
       </div>
     )

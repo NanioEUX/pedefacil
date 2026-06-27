@@ -108,7 +108,7 @@ export default function CaixaPOSPage() {
     }
     return true
   })
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void; status: "idle" | "loading" | "success"; successTitle: string; successMessage: string }>({ open: false, title: "", message: "", onConfirm: () => {}, status: "idle", successTitle: "", successMessage: "" })
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void; confirmed: boolean; successTitle: string; successMessage: string }>({ open: false, title: "", message: "", onConfirm: () => {}, confirmed: false, successTitle: "", successMessage: "" })
   const [tableCount, setTableCount] = useState(10)
   const [lastClosedOrder, setLastClosedOrder] = useState<{ cart: any[]; tableLabel: string; total: number; orderNumber?: number; createdAt?: string } | null>(null)
 
@@ -534,8 +534,8 @@ export default function CaixaPOSPage() {
         open: true,
         title: `Adicionar pedido à ${tableLabel}`,
         message: `${mergedCart.length} itens — ${formatCurrency(total)}`,
-        onConfirm: () => { setConfirmDialog((prev) => ({ ...prev, status: "loading" })); executeSale(isMesa, tableLabel, mergedCart, total) },
-        status: "idle",
+        onConfirm: () => { setConfirmDialog((prev) => ({ ...prev, confirmed: true })); executeSale(isMesa, tableLabel, mergedCart, total) },
+        confirmed: false,
         successTitle: "",
         successMessage: "",
       })
@@ -544,8 +544,8 @@ export default function CaixaPOSPage() {
         open: true,
         title: `Finalizar venda ${tableLabel}`,
         message: `Total: ${formatCurrency(total)}`,
-        onConfirm: () => { setConfirmDialog((prev) => ({ ...prev, status: "loading" })); executeSale(isMesa, tableLabel, mergedCart, total) },
-        status: "idle",
+        onConfirm: () => { setConfirmDialog((prev) => ({ ...prev, confirmed: true })); executeSale(isMesa, tableLabel, mergedCart, total) },
+        confirmed: false,
         successTitle: "",
         successMessage: "",
       })
@@ -667,17 +667,17 @@ export default function CaixaPOSPage() {
       const successMsg = isMesa
         ? (savedNeedsPrep ? "Pedido adicionado e enviado para preparo!" : "Pedido adicionado à mesa!")
         : (savedNeedsPrep ? "Pedido enviado para preparo!" : "Venda registrada!")
-      const successSub = isMesa && savedNeedsPrep ? "Acompanhe no módulo Pedidos" : ""
+      const successSub = isMesa && savedNeedsPrep ? "Acompanhe no módulo Pedidos" : `Pedido #${orderData.orderNumber || orderData.id?.slice(0, 8)}`
 
       setConfirmDialog((prev) => ({
         ...prev,
-        status: "success",
+        confirmed: true,
         successTitle: successMsg,
-        successMessage: successSub || `Pedido #${orderData.orderNumber || orderData.id?.slice(0, 8)}`,
+        successMessage: successSub,
       }))
 
       setTimeout(() => {
-        setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, status: "idle", successTitle: "", successMessage: "" })
+        setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, confirmed: false, successTitle: "", successMessage: "" })
         if (!isMesa && printReceipt && orderData) {
           setShowReceipt(true)
         }
@@ -800,11 +800,11 @@ export default function CaixaPOSPage() {
       open: true,
       title: "Transferir caixa",
       message: `Transferir caixa para ${toUser?.name || "outro atendente"}? Você será desconectado.`,
-      status: "idle",
+      confirmed: false,
       successTitle: "",
       successMessage: "",
       onConfirm: async () => {
-        setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, status: "idle", successTitle: "", successMessage: "" })
+        setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, confirmed: false, successTitle: "", successMessage: "" })
         try {
           await fetchAuth(`/api/cash-register/${cashRegister.id}/transfer`, {
             method: "POST",
@@ -1747,8 +1747,8 @@ export default function CaixaPOSPage() {
                       open: true,
                       title: `Fechar Mesa ${closingTableNumber}?`,
                       message: `Total: ${formatCurrency(remaining)}\nPagamento: ${paymentLabels[selectedPayment] || selectedPayment}`,
-                      onConfirm: () => { setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, status: "idle", successTitle: "", successMessage: "" }); handleCloseTable() },
-                      status: "idle",
+                      onConfirm: () => { setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, confirmed: false, successTitle: "", successMessage: "" }); handleCloseTable() },
+                      confirmed: false,
                       successTitle: "",
                       successMessage: "",
                     })
@@ -1851,11 +1851,11 @@ export default function CaixaPOSPage() {
         confirmLabel="Confirmar"
         cancelLabel="Cancelar"
         variant="warning"
-        status={confirmDialog.status}
+        confirmed={confirmDialog.confirmed}
         successTitle={confirmDialog.successTitle}
         successMessage={confirmDialog.successMessage}
         onConfirm={confirmDialog.onConfirm}
-        onCancel={() => setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, status: "idle", successTitle: "", successMessage: "" })}
+        onCancel={() => setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, confirmed: false, successTitle: "", successMessage: "" })}
       />
     </div>
   )
