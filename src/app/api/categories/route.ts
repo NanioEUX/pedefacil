@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
           price: body.price,
           image: body.image,
           badge: body.badge || null,
+          sendToPrep: body.sendToPrep || false,
           order: body.order ?? 0,
           stockItemId: body.stockItemId || null,
           categoryId: body.categoryId,

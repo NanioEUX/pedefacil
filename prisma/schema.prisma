@@ -9,61 +9,62 @@ datasource db {
 }
 
 model Establishment {
-  id                String            @id @default(cuid())
-  name              String
-  slug              String            @unique
-  email             String            @unique
-  password          String
-  phone             String
-  logo              String?
-  cover             String?
-  description       String?
-  address           String?
-  category          String?
-  instagramUrl      String?
-  primaryColor      String            @default("#16a34a")
-  backgroundColor   String            @default("#ffffff")
-  textColor         String            @default("#1a1a2e")
-  headerColor       String            @default("#ffffff")
-  colorsPublished   Boolean           @default(false)
-  businessHours     String?           @default("[{\"day\":\" Segunda\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Terça\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Quarta\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Quinta\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Sexta\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Sábado\",\"open\":\"09:00\",\"close\":\"23:00\",\"active\":true},{\"day\":\"Domingo\",\"open\":\"00:00\",\"close\":\"00:00\",\"active\":false}]")
-  loyaltyConfig     String?           @default("{\"enabled\":false,\"pointsPerReal\":1,\"redeemPoints\":100,\"redeemDiscount\":10}")
-  isActive          Boolean           @default(true)
-  asaasApiKey       String?
-  asaasWalletId     String?
-  paymentConfig     String            @default("{\"online\":true,\"delivery\":true,\"pickup\":true}")
-  orderConfig       String            @default("{\"delivery\":true,\"pickup\":true}")
-  deliveryFeeType   String            @default("free")
-  deliveryFeeAmount Float?            @default(0)
-  deliveryFreeAbove Float?            @default(0)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  pickupMessage     String?
-  deliveryMessage   String?
-  confirmationTitle String?
-  confirmationImage String?
-  closedTitle       String?
-  closedSub         String?
-  defaultTheme      String            @default("dark")
-  trialStartsAt     DateTime?
-  trialEndsAt       DateTime?
-  subscriptionPlan  String?           @default("starter")
-  subscriptionStatus String           @default("trial")
-  nextPaymentAt     DateTime?
-  asaasCustomerId   String?
+  id                  String            @id @default(cuid())
+  name                String
+  slug                String            @unique
+  email               String            @unique
+  password            String
+  phone               String
+  logo                String?
+  cover               String?
+  description         String?
+  address             String?
+  category            String?
+  instagramUrl        String?
+  primaryColor        String            @default("#16a34a")
+  backgroundColor     String            @default("#ffffff")
+  textColor           String            @default("#1a1a2e")
+  headerColor         String            @default("#ffffff")
+  colorsPublished     Boolean           @default(false)
+  businessHours       String?           @default("[{\"day\":\" Segunda\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Terça\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Quarta\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Quinta\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Sexta\",\"open\":\"09:00\",\"close\":\"22:00\",\"active\":true},{\"day\":\"Sábado\",\"open\":\"09:00\",\"close\":\"23:00\",\"active\":true},{\"day\":\"Domingo\",\"open\":\"00:00\",\"close\":\"00:00\",\"active\":false}]")
+  loyaltyConfig       String?           @default("{\"enabled\":false,\"pointsPerReal\":1,\"redeemPoints\":100,\"redeemDiscount\":10}")
+  isActive            Boolean           @default(true)
+  asaasApiKey         String?
+  asaasWalletId       String?
+  paymentConfig       String            @default("{\"online\":true,\"delivery\":true,\"pickup\":true}")
+  orderConfig         String            @default("{\"delivery\":true,\"pickup\":true}")
+  deliveryFeeType     String            @default("free")
+  deliveryFeeAmount   Float?            @default(0)
+  deliveryFreeAbove   Float?            @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  pickupMessage       String?
+  deliveryMessage     String?
+  confirmationTitle   String?
+  confirmationImage   String?
+  closedSub           String?
+  closedTitle         String?
+  defaultTheme        String            @default("dark")
+  asaasCustomerId     String?
   asaasSubscriptionId String?
-  cashRegisters     CashRegister[]
-  categories        Category[]
-  coupons           Coupon[]
-  customers         Customer[]
-  deliveryPayments  DeliveryPayment[]
-  deliveryPeople    DeliveryPerson[]
-  expenses          Expense[]
-  orders            Order[]
-  products          Product[]
-  stockCategories   StockCategory[]
-  stockItems        StockItem[]
-  users             User[]
+  nextPaymentAt       DateTime?
+  tableCount          Int               @default(10)
+  subscriptionPlan    String?           @default("starter")
+  subscriptionStatus  String            @default("trial")
+  trialEndsAt         DateTime?
+  trialStartsAt       DateTime?
+  cashRegisters       CashRegister[]
+  categories          Category[]
+  coupons             Coupon[]
+  customers           Customer[]
+  deliveryPayments    DeliveryPayment[]
+  deliveryPeople      DeliveryPerson[]
+  expenses            Expense[]
+  orders              Order[]
+  products            Product[]
+  stockCategories     StockCategory[]
+  stockItems          StockItem[]
+  users               User[]
 }
 
 model Customer {
@@ -115,6 +116,7 @@ model Product {
   price           Float
   image           String?
   isAvailable     Boolean            @default(true)
+  sendToPrep      Boolean            @default(false)
   order           Int                @default(0)
   badge           String?
   categoryId      String

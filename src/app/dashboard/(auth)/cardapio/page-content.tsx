@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { formatCurrency } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { fetchAuth } from "@/lib/fetch-auth"
+import { useToast } from "@/components/toast"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 interface Product {
   id: string
@@ -19,6 +21,7 @@ interface Product {
   price: number
   image: string | null
   isAvailable: boolean
+  sendToPrep: boolean
   order: number
   badge: string | null
   categoryId: string
@@ -58,6 +61,7 @@ export default function CardapioPage() {
   const hookEstablishmentId = useEstablishmentId()
   const searchParamsEstablishmentId = searchParams.get("establishment")
   const establishmentId = searchParamsEstablishmentId || hookEstablishmentId
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<Tab>("produtos")
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -73,6 +77,7 @@ export default function CardapioPage() {
     image: "",
     badge: "",
     stockItemId: "",
+    sendToPrep: false,
   })
   const [stockItems, setStockItems] = useState<any[]>([])
   const [productLinks, setProductLinks] = useState<{ stockItemId: string; quantity: string }[]>([])
@@ -103,6 +108,7 @@ export default function CardapioPage() {
   })
   const [colorsPublished, setColorsPublished] = useState(false)
   const [savingColors, setSavingColors] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; type: "category" | "product"; id: string; name: string; productCount?: number }>({ open: false, type: "category", id: "", name: "" })
 
   async function loadData() {
     if (!establishmentId) return
@@ -163,9 +169,19 @@ export default function CardapioPage() {
     loadData()
   }
 
-  async function deleteCategory(id: string) {
-    if (!confirm("Remover esta categoria e todos os produtos?")) return
-    await fetchAuth(`/api/categories/${id}`, { method: "DELETE" })
+  function handleDeleteCategory(id: string, name: string, productCount: number) {
+    setDeleteConfirm({ open: true, type: "category", id, name, productCount })
+  }
+
+  async function confirmDelete() {
+    if (deleteConfirm.type === "category") {
+      await fetchAuth(`/api/categories/${deleteConfirm.id}`, { method: "DELETE" })
+      toast("Categoria removida com sucesso", "success")
+    } else {
+      await fetchAuth(`/api/products/${deleteConfirm.id}`, { method: "DELETE" })
+      toast("Produto removido com sucesso", "success")
+    }
+    setDeleteConfirm({ open: false, type: "category", id: "", name: "" })
     loadData()
   }
 
@@ -180,6 +196,7 @@ export default function CardapioPage() {
     formData.append("establishmentId", establishmentId)
     if (productForm.badge) formData.append("badge", productForm.badge)
     if (productForm.stockItemId) formData.append("stockItemId", productForm.stockItemId)
+    formData.append("sendToPrep", String(productForm.sendToPrep))
 
     // Handle image
     if (productForm.image && productForm.image.startsWith("data:")) {
@@ -214,12 +231,14 @@ export default function CardapioPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            type: "product",
             name: productForm.name,
             description: productForm.description,
             price: parseFloat(productForm.price),
             image: productForm.image || null,
             badge: productForm.badge || null,
             stockItemId: productForm.stockItemId || null,
+            sendToPrep: productForm.sendToPrep,
             establishmentId,
             categoryId: productForm.categoryId,
             order: maxOrder,
@@ -252,15 +271,45 @@ export default function CardapioPage() {
 
     setShowProductForm(false)
     setEditingProduct(null)
-    setProductForm({ name: "", description: "", price: "", categoryId: "", image: "", badge: "", stockItemId: "" })
+    setProductForm({ name: "", description: "", price: "", categoryId: "", image: "", badge: "", stockItemId: "", sendToPrep: false })
     setProductLinks([])
     loadData()
   }
 
-  async function deleteProduct(id: string) {
-    if (!confirm("Remover este produto?")) return
-    await fetchAuth(`/api/products/${id}`, { method: "DELETE" })
-    loadData()
+  function handleDeleteProduct(id: string, name: string) {
+    setDeleteConfirm({ open: true, type: "product", id, name })
+  }
+
+  async function toggleSendToPrep(productId: string, currentValue: boolean) {
+    if (!establishmentId) return
+    const newValue = !currentValue
+    try {
+      const res = await fetchAuth(`/api/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sendToPrep: newValue }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        console.error("[toggleSendToPrep] API error:", err)
+        toast(err.error || "Erro ao atualizar produto", "error")
+        return
+      }
+      const data = await res.json()
+      console.log("[toggleSendToPrep] saved:", data.sendToPrep)
+      setCategories((prev) =>
+        prev.map((cat) => ({
+          ...cat,
+          products: cat.products.map((p) =>
+            p.id === productId ? { ...p, sendToPrep: newValue } : p
+          ),
+        }))
+      )
+      toast(newValue ? "Item irá para preparo" : "Item não vai para preparo", "success")
+    } catch (err) {
+      console.error("[toggleSendToPrep] error:", err)
+      toast("Erro ao atualizar produto", "error")
+    }
   }
 
   function editProduct(product: Product) {
@@ -273,6 +322,7 @@ export default function CardapioPage() {
       image: product.image || "",
       badge: product.badge || "",
       stockItemId: product.stockItemId || "",
+      sendToPrep: product.sendToPrep || false,
     })
     const links = (product as any).stockLinks || []
     setProductLinks(links.map((l: any) => ({ stockItemId: l.stockItemId, quantity: String(l.quantity) })))
@@ -281,7 +331,7 @@ export default function CardapioPage() {
 
   function openNewProduct(categoryId: string) {
     setEditingProduct(null)
-    setProductForm({ name: "", description: "", price: "", categoryId, image: "", badge: "", stockItemId: "" })
+    setProductForm({ name: "", description: "", price: "", categoryId, image: "", badge: "", stockItemId: "", sendToPrep: false })
     setProductLinks([])
     setShowProductForm(true)
   }
@@ -433,7 +483,7 @@ export default function CardapioPage() {
                         Adicionar
                       </Button>
                       <button
-                        onClick={() => deleteCategory(cat.id)}
+                        onClick={() => handleDeleteCategory(cat.id, cat.name, cat.products.length)}
                         className="text-red-400 hover:text-red-600 p-1"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -498,13 +548,32 @@ export default function CardapioPage() {
                               {formatCurrency(product.price)}
                             </span>
                             <button
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSendToPrep(product.id, product.sendToPrep) }}
+                              className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors shrink-0 ${
+                                product.sendToPrep
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-zinc-100 text-zinc-400"
+                              }`}
+                              title={product.sendToPrep ? "Entra no preparo (clique para desativar)" : "Não vai para preparo (clique para ativar)"}
+                            >
+                              <span className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                                product.sendToPrep ? "bg-orange-500" : "bg-zinc-300"
+                              }`}>
+                                <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform ${
+                                  product.sendToPrep ? "translate-x-3.5" : "translate-x-0.5"
+                                }`} />
+                              </span>
+                              {product.sendToPrep ? "Preparo" : "Sem preparo"}
+                            </button>
+                            <button
                               onClick={() => editProduct(product)}
                               className="text-zinc-400 hover:text-zinc-600"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => deleteProduct(product.id)}
+                              onClick={() => handleDeleteProduct(product.id, product.name)}
                               className="text-red-400 hover:text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1141,6 +1210,32 @@ export default function CardapioPage() {
                   )}
                 </div>
 
+                {/* Send to prep */}
+                <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${
+                  productForm.sendToPrep
+                    ? "border-orange-300 bg-orange-50"
+                    : "border-zinc-200"
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">👨‍🍳</span>
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">Enviar para preparo</p>
+                      <p className="text-xs text-zinc-500">Aparece no módulo Pedidos para a cozinha</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProductForm({ ...productForm, sendToPrep: !productForm.sendToPrep })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      productForm.sendToPrep ? "bg-orange-500" : "bg-zinc-300"
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      productForm.sendToPrep ? "translate-x-6" : "translate-x-1"
+                    }`} />
+                  </button>
+                </div>
+
                 <div className="flex gap-2 pt-2">
                   <Button
                     variant="outline"
@@ -1158,6 +1253,20 @@ export default function CardapioPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title={deleteConfirm.type === "category" ? "Remover categoria" : "Remover produto"}
+        message={
+          deleteConfirm.type === "category"
+            ? `Tem certeza que deseja remover a categoria "${deleteConfirm.name}" e seus ${deleteConfirm.productCount || 0} produtos? Esta ação não pode ser desfeita.`
+            : `Tem certeza que deseja remover o produto "${deleteConfirm.name}"? Esta ação não pode ser desfeita.`
+        }
+        confirmLabel="Remover"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false, type: "category", id: "", name: "" })}
+      />
     </div>
   )
 }

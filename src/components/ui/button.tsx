@@ -1,16 +1,19 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react"
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "danger" | "outline"
   size?: "sm" | "md" | "lg"
+  loading?: boolean
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", loading, children, disabled, ...props }, ref) => {
     return (
       <button
         ref={ref}
+        disabled={disabled || loading}
         className={cn(
           "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
           {
@@ -28,7 +31,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         {...props}
-      />
+      >
+        {loading && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+        {children}
+      </button>
     )
   }
 )

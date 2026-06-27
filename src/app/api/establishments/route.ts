@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET!
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, phone, category, address } = await req.json()
+    const { name, ownerName, email, password, phone, category, address } = await req.json()
 
     if (!name || !email || !password || !phone) {
       return NextResponse.json({ error: "Nome, email, senha e WhatsApp são obrigatórios" }, { status: 400 })
@@ -47,12 +47,11 @@ export async function POST(req: NextRequest) {
     // Create admin user for this establishment
     const adminUser = await prisma.user.create({
       data: {
-        name,
+        name: ownerName || name,
         email,
         password: hashedPassword,
         role: "admin",
-        permissions: JSON.stringify(["admin"]),
-        mustChangePassword: true,
+        permissions: JSON.stringify(["dashboard","pedidos","entregas","cardapio","estoque","clientes","financeiro","caixa","config","usuarios","relatorios"]),
         establishmentId: establishment.id,
       },
     })

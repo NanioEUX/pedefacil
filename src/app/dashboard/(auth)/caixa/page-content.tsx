@@ -35,7 +35,7 @@ export default function CaixaPage() {
     setLoading(false)
   }
 
-  useEffect(() => { loadAll() }, [establishmentId])
+  useEffect(() => { loadAll() }, [establishmentId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const todayOrders = orders.filter((o) => {
     const d = new Date(o.createdAt)

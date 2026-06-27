@@ -83,7 +83,7 @@ export default function DashboardLayout({
     const userData: UserData = JSON.parse(stored)
     setUser(userData)
 
-    if (!userData.permissions?.includes("caixa") && userData.permissions?.length <= 1) {
+    if (userData.role !== "admin" && !userData.permissions?.includes("caixa") && userData.permissions?.length <= 1) {
       router.replace("/login")
       return
     }
@@ -110,7 +110,7 @@ export default function DashboardLayout({
       .finally(() => setLoading(false))
   }, [router, pathname])
 
-  const navItems = mainNavItems.filter((item) => user?.permissions?.includes(item.perm))
+  const navItems = mainNavItems.filter((item) => user?.role === "admin" || user?.permissions?.includes(item.perm))
   const mobileNavItems = navItems.slice(0, 5)
 
   function handleLogout() {
@@ -152,7 +152,7 @@ export default function DashboardLayout({
             {establishment?.logo ? (
               <img src={establishment.logo} alt={establishment.name} className="h-8 w-8 rounded-lg object-cover" />
             ) : (
-              <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-8" />
+              <img src="/icons/pedefacil-logo-dark.svg" alt="PedeFácil" className="h-8" />
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -218,7 +218,7 @@ export default function DashboardLayout({
           )}
 
           {/* Financeiro submenu */}
-          {user?.permissions?.includes("relatorios") && (
+          {(user?.role === "admin" || user?.permissions?.includes("relatorios")) && (
             <div>
               <button
                 onClick={() => setFinanceiroOpen(!financeiroOpen)}
@@ -235,7 +235,7 @@ export default function DashboardLayout({
               </button>
               {financeiroOpen && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-zinc-200 pl-3">
-                  {financeiroSubItems.filter((item) => !item.perm || user?.permissions?.includes(item.perm)).map((item) => (
+                  {financeiroSubItems.filter((item) => !item.perm || user?.role === "admin" || user?.permissions?.includes(item.perm)).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -257,7 +257,7 @@ export default function DashboardLayout({
           )}
 
           {/* Marketing submenu */}
-          {user?.permissions?.includes("config") && (
+          {(user?.role === "admin" || user?.permissions?.includes("config")) && (
             <div>
               <button
                 onClick={() => setMarketingOpen(!marketingOpen)}
@@ -274,7 +274,7 @@ export default function DashboardLayout({
               </button>
               {marketingOpen && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-zinc-200 pl-3">
-                  {marketingSubItems.filter((item) => !item.perm || user?.permissions?.includes(item.perm)).map((item) => (
+                  {marketingSubItems.filter((item) => !item.perm || user?.role === "admin" || user?.permissions?.includes(item.perm)).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -296,7 +296,7 @@ export default function DashboardLayout({
           )}
 
           {/* Configuracoes submenu */}
-          {user?.permissions?.includes("config") && (
+          {(user?.role === "admin" || user?.permissions?.includes("config")) && (
             <div>
               <button
                 onClick={() => setConfigOpen(!configOpen)}
@@ -313,7 +313,7 @@ export default function DashboardLayout({
               </button>
               {configOpen && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-zinc-200 pl-3">
-                  {configSubItems.filter((item) => !item.perm || user?.permissions?.includes(item.perm)).map((item) => (
+                  {configSubItems.filter((item) => !item.perm || user?.role === "admin" || user?.permissions?.includes(item.perm)).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}

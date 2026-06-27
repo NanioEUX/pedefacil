@@ -1,8 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Smartphone, BarChart3, CreditCard, ShoppingBag, QrCode, Store, Check, ChevronDown, Zap, Shield, TrendingDown, ArrowRight, Star, Sparkles, Globe, Users, Clock, TrendingUp, DollarSign, Megaphone, Landmark } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Smartphone, BarChart3, CreditCard, ShoppingBag, QrCode, Store, Check, ChevronDown, TrendingDown, ArrowRight, Star, Globe, Users, Clock, TrendingUp, Landmark, Megaphone } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 
 const features = [
@@ -30,9 +29,9 @@ const faq = [
 ]
 
 const testimonials = [
-  { name: "Carlos Silva", role: "Pizzaria do Carlos", text: "Saí do marketplace e economizo R$ 800/mês. O PedeFácil é muito mais simples e meus clientes adoram.", rating: 5 },
-  { name: "Maria Santos", role: "Lanchonete da Mari", text: "Em 1 semana já estava com meu cardápio online. O suporte é incrível, respondem em minutos.", rating: 5 },
-  { name: "João Costa", role: "Hamburgueria JB", text: "O dashboard é incrível. Consigo ver tudo em tempo real: pedidos, estoque, financeiro. Perfeito!", rating: 5 },
+  { name: "Carlos Silva", role: "Pizzaria do Carlos", text: "Saí do marketplace e economizo R$ 800/mês. O PedeFácil é muito mais simples e meus clientes adoram pedir pelo celular.", rating: 5, savings: "R$ 800/mês" },
+  { name: "Maria Santos", role: "Lanchonete da Mari", text: "Em 1 semana já estava com meu cardápio online. O suporte é incrível, respondem em minutos. Meus pedidos cresceram 40%.", rating: 5, savings: "40% mais pedidos" },
+  { name: "João Costa", role: "Hamburgueria JB", text: "O dashboard é incrível. Consigo ver tudo em tempo real: pedidos, estoque, financeiro. Perfeito para tomar decisões rápidas.", rating: 5, savings: "Visão total do negócio" },
 ]
 
 function useReveal(threshold = 0.15) {
@@ -52,10 +51,9 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [scrollY, setScrollY] = useState(0)
   const hero = useReveal(0.1)
-  const brand = useReveal(0.15)
   const feat = useReveal(0.1)
-  const how = useReveal(0.1)
   const compare = useReveal(0.1)
+  const how = useReveal(0.1)
   const pricing = useReveal(0.1)
   const test = useReveal(0.1)
   const faqSec = useReveal(0.1)
@@ -96,10 +94,8 @@ export default function HomePage() {
       {/* Hero */}
       <section ref={hero.ref} className={`relative z-10 min-h-svh flex flex-col items-center justify-center px-5 pt-20 ${hero.className}`}>
         <div className="mx-auto max-w-[980px] text-center">
-          {/* Overline */}
-          <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Cardápio digital + gestão completa</p>
+          <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Cardápio digital + gestão completa</p>
 
-          {/* Logo central */}
           <div className="mb-10 flex justify-center">
             <div className="relative">
               <div className="absolute inset-0 rounded-3xl bg-[#FF6B35]/20 blur-[60px]" />
@@ -144,47 +140,9 @@ export default function HomePage() {
           ].map((s) => (
             <div key={s.l} className="text-center">
               <p className="text-[28px] md:text-[36px] font-semibold tracking-[-1px] bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">{s.v}</p>
-              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/25">{s.l}</p>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">{s.l}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Brand Showcase */}
-      <section ref={brand.ref} className={`relative z-10 py-[120px] md:py-[200px] ${brand.className}`}>
-        <div className="mx-auto max-w-[1080px] px-5 md:px-[60px]">
-          <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-8 md:p-16">
-            <div className="grid items-center gap-12 md:grid-cols-[1fr_1.2fr]">
-              <div>
-                <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Por que PedeFácil</p>
-                <h2 className="text-[32px] md:text-[48px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-1.6px]">
-                  Não é só cardápio.
-                  <br />
-                  <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">É o sistema completo.</span>
-                </h2>
-                <p className="mt-5 text-[15px] md:text-[17px] leading-[150%] tracking-[-0.3px] text-white/40 font-light">
-                  Do cardápio digital ao controle total do seu negócio. Pedidos, caixa, estoque, financeiro, entregadores, relatórios — tudo em um só lugar.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Globe, label: "Cardápio Online" },
-                  { icon: ShoppingBag, label: "Pedidos Automáticos" },
-                  { icon: CreditCard, label: "Pagamento Integrado" },
-                  { icon: BarChart3, label: "Dashboard" },
-                  { icon: Users, label: "Gestão de Equipe" },
-                  { icon: Clock, label: "Controle de Caixa" },
-                  { icon: TrendingUp, label: "Relatórios" },
-                  { icon: Smartphone, label: "PWA (App)" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 rounded-[12px] border border-white/[0.06] bg-white/[0.03] px-4 py-3">
-                    <item.icon className="h-4 w-4 text-[#FF6B35]" />
-                    <span className="text-[13px] font-medium text-white/60">{item.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -192,7 +150,7 @@ export default function HomePage() {
       <section ref={feat.ref} className={`relative z-10 py-[120px] md:py-[200px] ${feat.className}`}>
         <div className="mx-auto max-w-[1080px] px-5 md:px-[60px]">
           <div className="mb-16 md:mb-24">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Funcionalidades</p>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Funcionalidades</p>
             <h2 className="text-[32px] md:text-[56px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-2px] max-w-[800px]">
               Tudo que um marketplace tem.
               <br />
@@ -213,44 +171,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it looks */}
-      <section ref={how.ref} className={`relative z-10 py-[120px] md:py-[200px] ${how.className}`}>
-        <div className="mx-auto max-w-[1080px] px-5 md:px-[60px]">
-          <div className="mb-16 md:mb-24 text-center">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Visual</p>
-            <h2 className="text-[32px] md:text-[56px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-2px]">
-              Veja como funciona
-            </h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              { title: "Dashboard", desc: "Vendas, pedidos e relatórios em tempo real", bg: "from-green-500/[0.08] to-emerald-500/[0.04]", border: "border-green-500/[0.12]", icon: BarChart3, iconColor: "text-green-400" },
-              { title: "Cardápio", desc: "Categorias, produtos com fotos e preços", bg: "from-[#FF6B35]/[0.08] to-orange-500/[0.04]", border: "border-[#FF6B35]/[0.12]", icon: Store, iconColor: "text-[#FF6B35]" },
-              { title: "Pedidos", desc: "Acompanhe pedidos em tempo real com status", bg: "from-blue-500/[0.08] to-purple-500/[0.04]", border: "border-blue-500/[0.12]", icon: ShoppingBag, iconColor: "text-blue-400" },
-              { title: "Frente de Caixa", desc: "Vendas presenciais rápidas com PDV completo", bg: "from-emerald-500/[0.08] to-teal-500/[0.04]", border: "border-emerald-500/[0.12]", icon: CreditCard, iconColor: "text-emerald-400" },
-              { title: "Financeiro", desc: "DRE, despesas, relatórios e fluxo de caixa", bg: "from-cyan-500/[0.08] to-sky-500/[0.04]", border: "border-cyan-500/[0.12]", icon: Landmark, iconColor: "text-cyan-400" },
-              { title: "Clientes", desc: "Cadastros, histórico de pedidos e fidelidade", bg: "from-violet-500/[0.08] to-indigo-500/[0.04]", border: "border-violet-500/[0.12]", icon: Users, iconColor: "text-violet-400" },
-              { title: "Entregas", desc: "Painel do motoboy com mapa e status", bg: "from-purple-500/[0.08] to-pink-500/[0.04]", border: "border-purple-500/[0.12]", icon: Smartphone, iconColor: "text-purple-400" },
-              { title: "Marketing", desc: "Cupons de desconto e programa de fidelidade", bg: "from-rose-500/[0.08] to-pink-500/[0.04]", border: "border-rose-500/[0.12]", icon: Megaphone, iconColor: "text-rose-400" },
-              { title: "Estoque", desc: "Controle de insumos e baixa automática", bg: "from-amber-500/[0.08] to-yellow-500/[0.04]", border: "border-amber-500/[0.12]", icon: QrCode, iconColor: "text-amber-400" },
-            ].map((item) => (
-              <div key={item.title} className={`rounded-[16px] border ${item.border} bg-gradient-to-br ${item.bg} p-6 transition-all duration-500 hover:scale-[1.02]`}>
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-white/[0.08] bg-white/[0.04]">
-                  <item.icon className={`h-7 w-7 ${item.iconColor}`} />
-                </div>
-                <h3 className="text-[17px] font-semibold tracking-[-0.3px] text-white">{item.title}</h3>
-                <p className="mt-1 text-[14px] text-white/35">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Comparison */}
       <section ref={compare.ref} className={`relative z-10 py-[120px] md:py-[200px] ${compare.className}`}>
         <div className="mx-auto max-w-[980px] px-5 md:px-[60px]">
           <div className="mb-16 md:mb-24 text-center">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Comparação</p>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Comparação</p>
             <h2 className="text-[32px] md:text-[56px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-2px]">
               <span className="text-red-400">Marketplace</span>{" vs "}
               <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF8F6B] bg-clip-text text-transparent">PedeFácil</span>
@@ -264,7 +189,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h3 className="text-[17px] font-semibold text-red-400">Marketplace Tradicional</h3>
-                  <p className="text-[12px] text-white/25">iFood, Rappi, etc.</p>
+                  <p className="text-[12px] text-white/30">iFood, Rappi, etc.</p>
                 </div>
               </div>
               <div className="space-y-3 text-[15px]">
@@ -287,18 +212,57 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h3 className="text-[17px] font-semibold text-[#FF6B35]">PedeFácil</h3>
-                  <p className="text-[12px] text-white/25">Seu cardápio, seu controle</p>
+                  <p className="text-[12px] text-white/30">Seu cardápio, seu controle</p>
                 </div>
               </div>
               <div className="space-y-3 text-[15px]">
                 <div className="flex justify-between"><span className="text-white/40">Comissão por pedido</span><span className="font-semibold text-green-400">0%</span></div>
                 <div className="flex justify-between"><span className="text-white/40">Processamento pagamento</span><span className="font-semibold text-green-400">Taxa do Asaas</span></div>
-                <div className="flex justify-between"><span className="text-white/40">Mensalidade</span><span className="font-semibold text-green-400">R$ 0 a R$ 199</span></div>
+                <div className="flex justify-between"><span className="text-white/40">Mensalidade</span><span className="font-semibold text-green-400">R$ 49 a R$ 199</span></div>
                 <div className="border-t border-white/[0.08] pt-3">
                   <div className="flex justify-between"><span className="font-medium text-white">Total em 100 pedidos</span><span className="font-semibold text-green-400">R$ 49/mês</span></div>
                 </div>
               </div>
+              <Link href="/cadastro" className="mt-6 block">
+                <span className="flex h-[48px] w-full items-center justify-center rounded-full bg-[#FF6B35] text-[15px] font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer shadow-[0_0_30px_rgba(255,107,53,0.25)]">
+                  Começar agora
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </span>
+              </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it looks */}
+      <section ref={how.ref} className={`relative z-10 py-[120px] md:py-[200px] ${how.className}`}>
+        <div className="mx-auto max-w-[1080px] px-5 md:px-[60px]">
+          <div className="mb-16 md:mb-24 text-center">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Visual</p>
+            <h2 className="text-[32px] md:text-[56px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-2px]">
+              Veja como funciona
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              { title: "Dashboard", desc: "Vendas, pedidos e relatórios em tempo real", bg: "from-green-500/[0.08] to-emerald-500/[0.04]", border: "border-green-500/[0.12]", icon: BarChart3, iconColor: "text-green-400" },
+              { title: "Cardápio", desc: "Categorias, produtos com fotos e preços", bg: "from-[#FF6B35]/[0.08] to-orange-500/[0.04]", border: "border-[#FF6B35]/[0.12]", icon: Store, iconColor: "text-[#FF6B35]" },
+              { title: "Pedidos", desc: "Acompanhe pedidos em tempo real com status", bg: "from-blue-500/[0.08] to-purple-500/[0.04]", border: "border-blue-500/[0.12]", icon: ShoppingBag, iconColor: "text-blue-400" },
+              { title: "Frente de Caixa", desc: "Vendas presenciais rápidas com PDV completo", bg: "from-emerald-500/[0.08] to-teal-500/[0.04]", border: "border-emerald-500/[0.12]", icon: CreditCard, iconColor: "text-emerald-400" },
+              { title: "Financeiro", desc: "DRE, despesas, relatórios e fluxo de caixa", bg: "from-cyan-500/[0.08] to-sky-500/[0.04]", border: "border-cyan-500/[0.12]", icon: Landmark, iconColor: "text-cyan-400" },
+              { title: "Clientes", desc: "Cadastros, histórico de pedidos e fidelidade", bg: "from-violet-500/[0.08] to-indigo-500/[0.04]", border: "border-violet-500/[0.12]", icon: Users, iconColor: "text-violet-400" },
+              { title: "Entregas", desc: "Painel do motoboy com mapa e status", bg: "from-purple-500/[0.08] to-pink-500/[0.04]", border: "border-purple-500/[0.12]", icon: Smartphone, iconColor: "text-purple-400" },
+              { title: "Marketing", desc: "Cupons de desconto e programa de fidelidade", bg: "from-rose-500/[0.08] to-pink-500/[0.04]", border: "border-rose-500/[0.12]", icon: Megaphone, iconColor: "text-rose-400" },
+              { title: "Estoque", desc: "Controle de insumos e baixa automática", bg: "from-amber-500/[0.08] to-yellow-500/[0.04]", border: "border-amber-500/[0.12]", icon: QrCode, iconColor: "text-amber-400" },
+            ].map((item) => (
+              <div key={item.title} className={`rounded-[16px] border ${item.border} bg-gradient-to-br ${item.bg} p-6 transition-all duration-500 hover:scale-[1.02]`}>
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-white/[0.08] bg-white/[0.04]">
+                  <item.icon className={`h-7 w-7 ${item.iconColor}`} />
+                </div>
+                <h3 className="text-[17px] font-semibold tracking-[-0.3px] text-white">{item.title}</h3>
+                <p className="mt-1 text-[14px] text-white/40">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -307,7 +271,7 @@ export default function HomePage() {
       <section ref={pricing.ref} className={`relative z-10 py-[120px] md:py-[200px] ${pricing.className}`} id="planos">
         <div className="mx-auto max-w-[1080px] px-5 md:px-[60px]">
           <div className="mb-16 md:mb-24 text-center">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Planos</p>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Planos</p>
             <h2 className="text-[32px] md:text-[56px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-2px]">
               Mensalidade fixa.
               <br />
@@ -322,12 +286,12 @@ export default function HomePage() {
                     {plan.badge}
                   </div>
                 )}
-                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">{plan.name}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/40">{plan.name}</p>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-[40px] font-semibold tracking-[-1.5px] text-white">R$ {plan.price}</span>
                   <span className="text-[14px] text-white/30">{plan.period}</span>
                 </div>
-                <p className="mt-2 text-[14px] text-white/35">{plan.desc}</p>
+                <p className="mt-2 text-[14px] text-white/40">{plan.desc}</p>
                 <ul className="mt-5 space-y-2.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2.5 text-[14px] text-white/50">
@@ -351,7 +315,7 @@ export default function HomePage() {
       <section ref={test.ref} className={`relative z-10 py-[120px] md:py-[200px] ${test.className}`}>
         <div className="mx-auto max-w-[1080px] px-5 md:px-[60px]">
           <div className="mb-16 md:mb-24 text-center">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Depoimentos</p>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Depoimentos</p>
             <h2 className="text-[32px] md:text-[56px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-2px]">
               Quem usa, recomenda
             </h2>
@@ -365,9 +329,12 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="text-[15px] leading-[150%] tracking-[-0.3px] text-white/50 font-light">&ldquo;{t.text}&rdquo;</p>
-                <div className="mt-6">
-                  <p className="text-[15px] font-semibold text-white">{t.name}</p>
-                  <p className="text-[12px] text-white/25">{t.role}</p>
+                <div className="mt-6 flex items-center justify-between">
+                  <div>
+                    <p className="text-[15px] font-semibold text-white">{t.name}</p>
+                    <p className="text-[12px] text-white/30">{t.role}</p>
+                  </div>
+                  <span className="rounded-full bg-green-500/10 px-3 py-1 text-[11px] font-semibold text-green-400">{t.savings}</span>
                 </div>
               </div>
             ))}
@@ -379,7 +346,7 @@ export default function HomePage() {
       <section ref={faqSec.ref} className={`relative z-10 py-[120px] md:py-[200px] ${faqSec.className}`}>
         <div className="mx-auto max-w-[720px] px-5 md:px-[60px]">
           <div className="mb-16 md:mb-24 text-center">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">FAQ</p>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">FAQ</p>
             <h2 className="text-[32px] md:text-[48px] font-semibold leading-[115%] tracking-[-1px] md:tracking-[-1.6px]">
               Perguntas frequentes
             </h2>
@@ -404,7 +371,7 @@ export default function HomePage() {
       <section ref={cta.ref} className={`relative z-10 py-[120px] md:py-[200px] ${cta.className}`}>
         <div className="mx-auto max-w-[980px] px-5 md:px-[60px]">
           <div className="rounded-[24px] border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/[0.08] to-purple-600/[0.04] p-12 md:p-20 text-center">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">Comece agora</p>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Comece agora</p>
             <h2 className="text-[36px] md:text-[64px] font-semibold leading-[110%] tracking-[-1.5px] md:tracking-[-2.4px]">
               <span className="bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">O marketplace cobra até 27% por pedido.</span>
               <br />
@@ -426,12 +393,12 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/[0.06] py-10">
+      <footer className="relative z-10 border-t border-white/[0.06] py-10 pb-24 md:pb-10">
         <div className="mx-auto max-w-[1440px] px-5 md:px-[60px]">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-3">
               <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-10 opacity-40" />
-              <span className="text-[14px] text-white/25">PedeFácil © 2024</span>
+              <span className="text-[14px] text-white/25">PedeFácil © {new Date().getFullYear()}</span>
             </div>
             <div className="flex items-center gap-6 text-[13px] text-white/25">
               <Link href="/cadastro" className="hover:text-[#FF6B35] transition-colors">Criar conta</Link>
@@ -443,6 +410,16 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Floating CTA - Mobile only */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+        <Link href="/cadastro" className="block">
+          <div className="flex h-[60px] items-center justify-center bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] text-[16px] font-semibold text-white shadow-[0_-4px_20px_rgba(255,107,53,0.3)]">
+            Testar 7 dias grátis
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </div>
+        </Link>
+      </div>
     </div>
   )
 }

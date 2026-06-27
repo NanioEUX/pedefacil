@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
+import { useToast } from "@/components/toast"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const units = [
   { value: "un", label: "Unidade" },
@@ -27,11 +29,14 @@ export default function EstoquePage() {
   const hookEstablishmentId = useEstablishmentId()
   const searchParamsEstablishmentId = searchParams.get("establishment")
   const establishmentId = searchParamsEstablishmentId || hookEstablishmentId
+  const { toast } = useToast()
   const [categories, setCategories] = useState<any[]>([])
   const [items, setItems] = useState<any[]>([])
   const [movements, setMovements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<"items" | "movements">("items")
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" })
+  const [movementError, setMovementError] = useState("")
 
   const [showCategoryForm, setShowCategoryForm] = useState(false)
   const [newCatName, setNewCatName] = useState("")
@@ -107,15 +112,31 @@ export default function EstoquePage() {
     setShowItemForm(true)
   }
 
-  async function deleteItem(id: string) {
-    if (!confirm("Remover este insumo?")) return
-    await fetchAuth(`/api/stock/${id}`, { method: "DELETE" })
+  function handleDeleteItem(id: string, name: string) {
+    setDeleteConfirm({ open: true, id, name })
+  }
+
+  async function confirmDeleteItem() {
+    await fetchAuth(`/api/stock/${deleteConfirm.id}`, { method: "DELETE" })
+    toast("Item removido com sucesso", "success")
+    setDeleteConfirm({ open: false, id: "", name: "" })
     loadAll()
   }
 
   async function saveMovement() {
     if (!movementForm.itemId || !movementForm.quantity) return
-    await fetchAuth("/api/stock", {
+    setMovementError("")
+
+    if (movementForm.movementType === "exit") {
+      const item = items.find((i) => i.id === movementForm.itemId)
+      const qty = parseFloat(movementForm.quantity) || 0
+      if (item && qty > item.quantity) {
+        setMovementError(`Estoque insuficiente. Disponível: ${item.quantity} ${item.unit}`)
+        return
+      }
+    }
+
+    const res = await fetchAuth("/api/stock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -127,6 +148,12 @@ export default function EstoquePage() {
         notes: movementForm.notes,
       }),
     })
+    if (res.ok) {
+      toast("Movimentação registrada", "success")
+    } else {
+      const data = await res.json()
+      toast(data.error || "Erro ao registrar movimentação", "error")
+    }
     setMovementForm({ itemId: "", movementType: "entry", quantity: "1", unitCost: "0", notes: "" })
     setShowMovementForm(false)
     loadAll()
@@ -248,7 +275,7 @@ export default function EstoquePage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <button onClick={() => editItem(item)} className="text-zinc-400 hover:text-zinc-600 text-xs">Editar</button>
-                            <button onClick={() => deleteItem(item.id)} className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
+                            <button onClick={() => handleDeleteItem(item.id, item.name)} className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
                           </div>
                         </div>
                       ))}
@@ -387,6 +414,7 @@ export default function EstoquePage() {
                   <Input label="Custo unitário (R$)" type="number" step="0.01" min="0" value={movementForm.unitCost} onChange={(e) => setMovementForm({ ...movementForm, unitCost: e.target.value })} />
                 </div>
                 <Input label="Observação" placeholder="Ex: Compra no atacado" value={movementForm.notes} onChange={(e) => setMovementForm({ ...movementForm, notes: e.target.value })} />
+                {movementError && <p className="text-sm text-red-500">{movementError}</p>}
                 <div className="flex gap-2 pt-2">
                   <Button variant="outline" className="flex-1" onClick={() => setShowMovementForm(false)}>Cancelar</Button>
                   <Button className="flex-1" onClick={saveMovement}>Registrar</Button>
@@ -396,6 +424,16 @@ export default function EstoquePage() {
           </Card>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Remover insumo"
+        message={`Tem certeza que deseja remover o insumo "${deleteConfirm.name}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Remover"
+        variant="danger"
+        onConfirm={confirmDeleteItem}
+        onCancel={() => setDeleteConfirm({ open: false, id: "", name: "" })}
+      />
     </div>
   )
 }

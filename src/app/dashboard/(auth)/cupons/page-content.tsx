@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { fetchAuth } from "@/lib/fetch-auth"
+import { useToast } from "@/components/toast"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 interface Coupon {
   id: string
@@ -27,11 +29,14 @@ export default function CuponsPage() {
   const searchParams = useSearchParams()
   const hookEstablishmentId = useEstablishmentId()
   const establishmentId = searchParams.get("establishment") || hookEstablishmentId
+  const { toast } = useToast()
 
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string }>({ open: false, id: "" })
+  const [codeError, setCodeError] = useState("")
   const [form, setForm] = useState({
     code: "",
     type: "percent",
@@ -50,8 +55,18 @@ export default function CuponsPage() {
       .finally(() => setLoading(false))
   }, [establishmentId])
 
+  function handleCodeChange(value: string) {
+    const sanitized = value.toUpperCase().replace(/[^A-Z0-9_]/g, "")
+    setForm({ ...form, code: sanitized })
+    setCodeError("")
+  }
+
   async function handleCreate() {
     if (!form.code || !form.value) return
+    if (form.code.length < 3) {
+      setCodeError("Código deve ter pelo menos 3 caracteres")
+      return
+    }
     setSaving(true)
     try {
       const res = await fetchAuth("/api/coupons", {
@@ -72,6 +87,10 @@ export default function CuponsPage() {
         setCoupons([coupon, ...coupons])
         setShowForm(false)
         setForm({ code: "", type: "percent", value: "", minOrder: "", maxUses: "", expiresAt: "" })
+        toast("Cupom criado com sucesso", "success")
+      } else {
+        const data = await res.json()
+        toast(data.error || "Erro ao criar cupom", "error")
       }
     } finally {
       setSaving(false)
@@ -87,10 +106,15 @@ export default function CuponsPage() {
     setCoupons(coupons.map((c) => c.id === coupon.id ? { ...c, active: !c.active } : c))
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Excluir cupom?")) return
-    await fetchAuth(`/api/coupons/${id}`, { method: "DELETE" })
-    setCoupons(coupons.filter((c) => c.id !== id))
+  function handleDeleteClick(id: string) {
+    setDeleteConfirm({ open: true, id })
+  }
+
+  async function confirmDelete() {
+    await fetchAuth(`/api/coupons/${deleteConfirm.id}`, { method: "DELETE" })
+    setCoupons(coupons.filter((c) => c.id !== deleteConfirm.id))
+    toast("Cupom removido", "success")
+    setDeleteConfirm({ open: false, id: "" })
   }
 
   if (loading) {
@@ -129,9 +153,10 @@ export default function CuponsPage() {
                 <Input
                   placeholder="DESCONTO10"
                   value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  onChange={(e) => handleCodeChange(e.target.value)}
                   className="uppercase"
                 />
+                {codeError && <p className="mt-1 text-xs text-red-500">{codeError}</p>}
               </div>
               <div>
                 <label className="text-xs text-zinc-500">Tipo</label>
@@ -226,13 +251,23 @@ export default function CuponsPage() {
                   <ToggleLeft className="h-7 w-7 text-zinc-300" />
                 )}
               </button>
-              <button onClick={() => handleDelete(coupon.id)} className="text-red-400 hover:text-red-600">
+              <button onClick={() => handleDeleteClick(coupon.id)} className="text-red-400 hover:text-red-600">
                 <Trash2 className="h-4 w-4" />
               </button>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Remover cupom"
+        message="Tem certeza que deseja remover este cupom? Esta ação não pode ser desfeita."
+        confirmLabel="Remover"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false, id: "" })}
+      />
     </div>
   )
 }

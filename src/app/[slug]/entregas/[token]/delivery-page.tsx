@@ -465,7 +465,12 @@ function OrderCard({ order, statusLabel, statusAction, onUpdate, updating }: {
   onUpdate: (id: string, status: string) => void
   updating: boolean
 }) {
-  const items: OrderItem[] = JSON.parse(order.items)
+  let items: OrderItem[] = []
+  try {
+    items = JSON.parse(order.items)
+  } catch {
+    items = []
+  }
 
   return (
     <Card>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Store, Phone, MapPin, CreditCard, Bike, Banknote, Send, MessageCircle } from "lucide-react"
+import { Store, Phone, MapPin, CreditCard, Bike, Banknote, Send, MessageCircle, Loader2, Clock } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -72,7 +72,12 @@ interface Props {
 }
 
 export function TrackingPage({ order, statusSteps }: Props) {
-  const items = JSON.parse(order.items)
+  let items: any[] = []
+  try {
+    items = JSON.parse(order.items)
+  } catch {
+    items = []
+  }
   const flowOrder = statusSteps.map(s => s.key)
   const currentIndex = flowOrder.indexOf(order.status)
   const cancelled = order.status === "cancelled"
@@ -129,7 +134,7 @@ export function TrackingPage({ order, statusSteps }: Props) {
 
   useEffect(() => {
     fetchMessages()
-    const interval = setInterval(fetchMessages, 10000)
+    const interval = setInterval(fetchMessages, 30000)
     return () => clearInterval(interval)
   }, [order.id])
 
@@ -174,6 +179,24 @@ export function TrackingPage({ order, statusSteps }: Props) {
   }
 
   const unreadCount = messages.filter((m) => m.sender === "establishment" && !m.read).length
+  const orderNumber = (order as any).orderNumber || order.id.substring(0, 8).toUpperCase()
+  const whatsappPhone = order.establishment.phone.replace(/\D/g, "")
+  const whatsappMessage = encodeURIComponent(`Olá! Gostaria de falar sobre o pedido #${orderNumber}`)
+  const whatsappUrl = `https://wa.me/55${whatsappPhone}?text=${whatsappMessage}`
+
+  function getEstimatedTime(): string | null {
+    if (order.status === "delivered" || order.status === "cancelled") return null
+    const created = new Date(order.createdAt)
+    const now = new Date()
+    const elapsed = (now.getTime() - created.getTime()) / 60000
+    const baseTime = order.orderType === "delivery" ? 45 : 25
+    const remaining = Math.max(0, baseTime - elapsed)
+    if (remaining === 0) return "A qualquer momento"
+    const mins = Math.ceil(remaining)
+    return mins <= 5 ? "Pronto!" : `~${mins} min`
+  }
+
+  const estimatedTime = getEstimatedTime()
 
   return (
     <div className="min-h-screen bg-zinc-50 py-8">
@@ -191,8 +214,35 @@ export function TrackingPage({ order, statusSteps }: Props) {
           </p>
         </div>
 
-        {/* Order type + payment badge */}
-        <div className="mb-4 flex justify-center gap-2">
+        {/* Order summary — top of page */}
+        <Card className="mb-4">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-zinc-900">Pedido #{orderNumber}</h3>
+              <span className="text-lg font-bold text-green-600">{formatCurrency(order.total)}</span>
+            </div>
+            <div className="space-y-1.5">
+              {items.map((item: any, idx: number) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span className="text-zinc-600">{item.quantity}x {item.name}</span>
+                  <span className="font-medium text-zinc-800">{formatCurrency(item.price * item.quantity)}</span>
+                </div>
+              ))}
+              {(order as any).deliveryFee > 0 && (
+                <div className="flex justify-between text-sm text-zinc-500">
+                  <span>Taxa de entrega</span>
+                  <span>{formatCurrency((order as any).deliveryFee)}</span>
+                </div>
+              )}
+            </div>
+            {order.notes && (
+              <p className="mt-2 text-xs text-zinc-400 italic border-t border-zinc-100 pt-2">Obs: {order.notes}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Order type + payment + estimated time */}
+        <div className="mb-4 flex flex-wrap justify-center gap-2">
           {order.orderType && (
             <Badge variant="info" className="gap-1">
               {order.orderType === "delivery" ? <Bike className="h-3 w-3" /> : "🏪"}
@@ -203,6 +253,12 @@ export function TrackingPage({ order, statusSteps }: Props) {
             <Badge variant="warning" className="gap-1">
               {order.paymentMethod === "online" ? <CreditCard className="h-3 w-3" /> : <Banknote className="h-3 w-3" />}
               {order.paymentMethod === "online" ? "Pago Online" : order.paymentMethod === "delivery" ? "Pagar na Entrega" : "Pagar na Retirada"}
+            </Badge>
+          )}
+          {estimatedTime && (
+            <Badge variant="success" className="gap-1">
+              <Clock className="h-3 w-3" />
+              {estimatedTime}
             </Badge>
           )}
         </div>
@@ -268,8 +324,8 @@ export function TrackingPage({ order, statusSteps }: Props) {
                       >
                         {step.label}
                       </p>
-                      {isCurrent && (
-                        <p className="text-sm text-green-600">Status atual</p>
+                      {isCurrent && estimatedTime && (
+                        <p className="text-sm text-green-600">Tempo estimado: {estimatedTime}</p>
                       )}
                     </div>
                   </div>
@@ -342,7 +398,7 @@ export function TrackingPage({ order, statusSteps }: Props) {
                   size="sm"
                   className="gap-1"
                 >
-                  <Send className="h-4 w-4" />
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
             </CardContent>
@@ -355,10 +411,10 @@ export function TrackingPage({ order, statusSteps }: Props) {
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
               <Store className="h-6 w-6 text-green-600" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="font-semibold text-zinc-900">{order.establishment.name}</p>
               <a
-                href={`https://wa.me/55${order.establishment.phone.replace(/\D/g, "")}`}
+                href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-green-600 hover:underline flex items-center gap-1"
@@ -366,35 +422,6 @@ export function TrackingPage({ order, statusSteps }: Props) {
                 <Phone className="h-3 w-3" />
                 Falar com o estabelecimento
               </a>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Order details */}
-        <Card className="mb-4">
-          <CardContent className="p-4">
-            <h3 className="mb-3 font-semibold text-zinc-900">Itens do Pedido</h3>
-            <div className="space-y-2">
-              {items.map((item: any) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-zinc-600">
-                    {item.quantity}x {item.name}
-                  </span>
-                  <span className="font-medium">
-                    {formatCurrency(item.price * item.quantity)}
-                  </span>
-                </div>
-              ))}
-              {(order as any).deliveryFee > 0 && (
-                <div className="flex justify-between text-sm text-zinc-500">
-                  <span>Taxa de entrega</span>
-                  <span>{formatCurrency((order as any).deliveryFee)}</span>
-                </div>
-              )}
-            </div>
-            <div className="mt-3 flex justify-between border-t border-zinc-200 pt-3 text-lg font-bold">
-              <span>Total</span>
-              <span className="text-green-600">{formatCurrency(order.total)}</span>
             </div>
           </CardContent>
         </Card>
@@ -429,10 +456,6 @@ export function TrackingPage({ order, statusSteps }: Props) {
               Pagar agora (Pix / Cartão)
             </Button>
           </a>
-        )}
-
-        {order.notes && (
-          <p className="mt-4 text-sm text-zinc-400 italic">Obs: {order.notes}</p>
         )}
       </div>
     </div>

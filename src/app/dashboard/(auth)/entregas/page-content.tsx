@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
+import { useToast } from "@/components/toast"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
@@ -131,6 +133,7 @@ export default function EntregasPage() {
   const hookEstablishmentId = useEstablishmentId()
   const searchParamsEstablishmentId = searchParams.get("establishment")
   const establishmentId = searchParamsEstablishmentId || hookEstablishmentId
+  const { toast } = useToast()
   const [deliveryPeople, setDeliveryPeople] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
@@ -139,6 +142,7 @@ export default function EntregasPage() {
   const [tab, setTab] = useState<"entregas" | "financeiro">("entregas")
   const [payingMotoboy, setPayingMotoboy] = useState<string | null>(null)
   const [createdPassword, setCreatedPassword] = useState<string | null>(null)
+  const [cancelConfirm, setCancelConfirm] = useState<{ open: boolean; orderId: string }>({ open: false, orderId: "" })
 
   const [dateFilter, setDateFilter] = useState<DateFilter>("today")
   const [customStart, setCustomStart] = useState("")
@@ -171,6 +175,21 @@ export default function EntregasPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ deliveryPersonId, deliveryPersonName: person?.name || "" }),
     })
+    loadAll()
+  }
+
+  function handleCancelOrder(orderId: string) {
+    setCancelConfirm({ open: true, orderId })
+  }
+
+  async function confirmCancelOrder() {
+    await fetchAuth(`/api/orders/${cancelConfirm.orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "cancelled" }),
+    })
+    toast("Pedido cancelado", "success")
+    setCancelConfirm({ open: false, orderId: "" })
     loadAll()
   }
 
@@ -344,7 +363,7 @@ export default function EntregasPage() {
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Pedidos ativos</p>
                       {activeOrders.map((order: any) => (
-                        <OrderRow key={order.id} order={order} deliveryPeople={deliveryPeople} onReassign={reassignOrder} />
+                        <OrderRow key={order.id} order={order} deliveryPeople={deliveryPeople} onReassign={reassignOrder} onCancel={handleCancelOrder} />
                       ))}
                     </div>
                   )}
@@ -358,7 +377,7 @@ export default function EntregasPage() {
           })}
 
           {!selectedMotoboy && (
-            <PendingOrdersSection orders={filteredOrders.filter((o: any) => o.status === "ready" && !o.deliveryPersonId)} deliveryPeople={deliveryPeople} onReassign={reassignOrder} />
+            <PendingOrdersSection orders={filteredOrders.filter((o: any) => o.status === "ready" && !o.deliveryPersonId)} deliveryPeople={deliveryPeople} onReassign={reassignOrder} onCancel={handleCancelOrder} />
           )}
         </>
       )}
@@ -398,7 +417,7 @@ export default function EntregasPage() {
                         </div>
                         <div>
                           <p className="font-medium text-zinc-900">{person.name}</p>
-                          <p className="text-xs text-zinc-500">{completedCount} entregas • Taxa recebida: {formatCurrency(completedCount * 5)}</p>
+                          <p className="text-xs text-zinc-500">{completedCount} entregas • Taxa recebida: {formatCurrency(orders.filter((o: any) => o.deliveryPersonId === person.id && o.status === "delivered" && o.orderType === "delivery" && isInRange(o.createdAt, range.start, range.end)).reduce((sum: number, o: any) => sum + (o.deliveryFee || 0), 0))}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -464,11 +483,21 @@ export default function EntregasPage() {
           </Card>
         </>
       )}
+
+      <ConfirmDialog
+        open={cancelConfirm.open}
+        title="Cancelar pedido"
+        message="Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita."
+        confirmLabel="Cancelar Pedido"
+        variant="danger"
+        onConfirm={confirmCancelOrder}
+        onCancel={() => setCancelConfirm({ open: false, orderId: "" })}
+      />
     </div>
   )
 }
 
-function OrderRow({ order, deliveryPeople, onReassign }: { order: any; deliveryPeople: any[]; onReassign: (id: string, personId: string) => void }) {
+function OrderRow({ order, deliveryPeople, onReassign, onCancel }: { order: any; deliveryPeople: any[]; onReassign: (id: string, personId: string) => void; onCancel: (id: string) => void }) {
   const isLocked = ["out_for_delivery", "delivered", "cancelled"].includes(order.status)
   return (
     <div className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 p-3">
@@ -504,15 +533,7 @@ function OrderRow({ order, deliveryPeople, onReassign }: { order: any; deliveryP
           ))}
         </select>
         <button
-          onClick={() => {
-            if (confirm("Cancelar este pedido?")) {
-              fetchAuth(`/api/orders/${order.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "cancelled" }),
-              }).then(() => window.location.reload())
-            }
-          }}
+          onClick={() => onCancel(order.id)}
           disabled={isLocked}
           className="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-red-400"
           title={isLocked ? "Pedido em entrega/entregue" : "Cancelar pedido"}
@@ -525,7 +546,7 @@ function OrderRow({ order, deliveryPeople, onReassign }: { order: any; deliveryP
   )
 }
 
-function PendingOrdersSection({ orders, deliveryPeople, onReassign }: { orders: any[]; deliveryPeople: any[]; onReassign: (id: string, personId: string) => void }) {
+function PendingOrdersSection({ orders, deliveryPeople, onReassign, onCancel }: { orders: any[]; deliveryPeople: any[]; onReassign: (id: string, personId: string) => void; onCancel: (id: string) => void }) {
   if (orders.length === 0) return null
 
   return (
@@ -537,7 +558,7 @@ function PendingOrdersSection({ orders, deliveryPeople, onReassign }: { orders: 
         </h3>
         <div className="space-y-2">
           {orders.map((order: any) => (
-            <OrderRow key={order.id} order={order} deliveryPeople={deliveryPeople} onReassign={onReassign} />
+            <OrderRow key={order.id} order={order} deliveryPeople={deliveryPeople} onReassign={onReassign} onCancel={onCancel} />
           ))}
         </div>
       </CardContent>

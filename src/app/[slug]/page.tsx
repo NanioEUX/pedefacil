@@ -1,6 +1,44 @@
 import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
+import type { Metadata } from "next"
 import { MenuPage } from "./menu-page"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string }
+}): Promise<Metadata> {
+  const establishment = await prisma.establishment.findUnique({
+    where: { slug: params.slug },
+    select: { name: true, description: true, logo: true, cover: true, phone: true },
+  })
+
+  if (!establishment) {
+    return { title: "Estabelecimento não encontrado" }
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://pedefacil.com.br"
+  const imageUrl = establishment.cover || establishment.logo || `${baseUrl}/og-default.png`
+
+  return {
+    title: `${establishment.name} - Cardápio Digital | PedeFácil`,
+    description: establishment.description || `Faça seu pedido no ${establishment.name}. Cardápio digital com delivery e retirada.`,
+    openGraph: {
+      title: establishment.name,
+      description: establishment.description || `Faça seu pedido no ${establishment.name}`,
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
+      siteName: "PedeFácil",
+      locale: "pt_BR",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: establishment.name,
+      description: establishment.description || `Faça seu pedido no ${establishment.name}`,
+      images: [imageUrl],
+    },
+  }
+}
 
 export default async function EstablishmentPage({
   params,

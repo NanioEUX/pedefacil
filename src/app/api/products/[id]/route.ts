@@ -20,7 +20,6 @@ export async function PATCH(
       const formData = await req.formData()
       for (const [key, value] of formData.entries()) {
         if (key === "file") {
-          // Skip file entries
           continue
         }
         if (value === "null" || value === "undefined") {
@@ -32,7 +31,6 @@ export async function PATCH(
         }
       }
 
-      // Handle file upload
       const file = formData.get("file") as File | null
       if (file && file.size > 0) {
         const bytes = await file.arrayBuffer()
@@ -44,10 +42,14 @@ export async function PATCH(
       data = await req.json()
     }
 
+    console.log("[PRODUCT PATCH]", id, data)
+
     const product = await prisma.product.update({
       where: { id },
       data,
     })
+
+    console.log("[PRODUCT PATCH] result:", product.sendToPrep)
 
     return NextResponse.json(product)
   } catch (error: any) {

@@ -111,8 +111,12 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
   const theme = useMemo(() => {
     if (darkMode) {
+      const pc = hasCustomColors ? establishment.primaryColor : "#FF6B35"
       return {
-        primary: hasCustomColors ? establishment.primaryColor : "#FF6B35",
+        primary: pc,
+        accent: pc,
+        accentLight: `${pc}1a`,
+        accentMid: `${pc}40`,
         bgPage: "#0a0a0f",
         bgCard: "rgba(255,255,255,0.03)",
         bgCardHover: "rgba(255,255,255,0.06)",
@@ -129,14 +133,19 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         textSubtle: "rgba(255,255,255,0.5)",
         borderSubtle: "rgba(255,255,255,0.06)",
         borderInputColor: "rgba(255,255,255,0.12)",
-        shadowPrimary: `${hasCustomColors ? establishment.primaryColor : "#FF6B35"}40`,
+        shadowPrimary: `${pc}40`,
         overlay: "rgba(0,0,0,0.5)",
         bgBadge: "rgba(255,255,255,0.05)",
+        success: "#22c55e",
       }
     }
     const ec = establishment
+    const pc = ec.primaryColor || "#16a34a"
     return {
-      primary: ec.primaryColor || "#16a34a",
+      primary: pc,
+      accent: pc,
+      accentLight: `${pc}1a`,
+      accentMid: `${pc}40`,
       bgPage: ec.backgroundColor || "#ffffff",
       bgCard: ec.backgroundColor === "#ffffff" ? "#f9fafb" : `${ec.backgroundColor}ee`,
       bgCardHover: ec.backgroundColor === "#ffffff" ? "#f3f4f6" : `${ec.backgroundColor}dd`,
@@ -153,13 +162,15 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       textSubtle: ec.textColor ? `${ec.textColor}aa` : "rgba(26,26,46,0.65)",
       borderSubtle: ec.textColor ? `${ec.textColor}10` : "rgba(0,0,0,0.06)",
       borderInputColor: ec.textColor ? `${ec.textColor}1a` : "rgba(0,0,0,0.1)",
-      shadowPrimary: `${ec.primaryColor || "#16a34a"}40`,
+      shadowPrimary: `${pc}40`,
       overlay: "rgba(0,0,0,0.4)",
       bgBadge: ec.textColor ? `${ec.textColor}0a` : "rgba(0,0,0,0.03)",
+      success: "#16a34a",
     }
   }, [darkMode, hasCustomColors, establishment])
 
   const [cart, setCart] = useState<CartItem[]>([])
+  const [addedItemId, setAddedItemId] = useState<string | null>(null)
   const [showCart, setShowCart] = useState(false)
   const [showBusinessHours, setShowBusinessHours] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
@@ -352,20 +363,28 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     .filter((cat) => cat.products.length > 0 || searchQuery === "")
     .sort((a, b) => {
       if (!searchQuery) return 0
-      const aMatch = a.products.some((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const q = searchQuery.toLowerCase()
+      const aCatMatch = a.name.toLowerCase().includes(q)
+      const bCatMatch = b.name.toLowerCase().includes(q)
+      const aProdMatch = a.products.some((p) =>
+        p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
       )
-      const bMatch = b.products.some((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const bProdMatch = b.products.some((p) =>
+        p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
       )
-      return aMatch === bMatch ? 0 : aMatch ? -1 : 1
+      if (aCatMatch && !bCatMatch) return -1
+      if (!aCatMatch && bCatMatch) return 1
+      return aProdMatch === bProdMatch ? 0 : aProdMatch ? -1 : 1
     })
 
   const filteredProducts = (cat: Category) => {
     if (!searchQuery) return cat.products
+    const q = searchQuery.toLowerCase()
+    const catNameMatch = cat.name.toLowerCase().includes(q)
+    if (catNameMatch) return cat.products
     return cat.products.filter((p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      p.name.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q)
     )
   }
 
@@ -485,10 +504,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   }
 
   function addToCart(product: Product) {
-    if (!customer.phone && !customerData?.phone) {
-      setShowIdentifyModal(true)
-      return
-    }
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id)
       if (existing) {
@@ -498,6 +513,8 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       }
       return [...prev, { id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 } as CartItem]
     })
+    setAddedItemId(product.id)
+    setTimeout(() => setAddedItemId(null), 800)
   }
 
   function updateQuantity(productId: string, delta: number) {
@@ -547,9 +564,17 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     setOrderError("")
     setOrdering(true)
 
-    if (!customer.name || !customer.phone) {
-      setOrderError("Preencha seu nome e telefone no topo da página")
+    if (!customer.name.trim()) {
+      setOrderError("Preencha seu nome para finalizar")
       setOrdering(false)
+      setShowIdentifyModal(true)
+      return
+    }
+
+    if (!customer.phone || customer.phone.replace(/\D/g, "").length < 11) {
+      setOrderError("Preencha um telefone válido com DDD")
+      setOrdering(false)
+      setShowIdentifyModal(true)
       return
     }
 
@@ -783,13 +808,13 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             <h2 className="text-xl font-bold" style={{ color: theme.text }}>{establishment.confirmationTitle || "Pedido enviado!"}</h2>
 
             {orderResult.orderType === "pickup" && establishment.pickupMessage && (
-              <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/[0.06] p-3">
-                <p className="text-sm text-green-300">{establishment.pickupMessage}</p>
+              <div className="mt-3 rounded-lg border p-3" style={{ borderColor: theme.accentLight, backgroundColor: theme.accentLight }}>
+                <p className="text-sm" style={{ color: theme.accent }}>{establishment.pickupMessage}</p>
               </div>
             )}
             {orderResult.orderType === "delivery" && establishment.deliveryMessage && (
-              <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/[0.06] p-3">
-                <p className="text-sm text-green-300">{establishment.deliveryMessage}</p>
+              <div className="mt-3 rounded-lg border p-3" style={{ borderColor: theme.accentLight, backgroundColor: theme.accentLight }}>
+                <p className="text-sm" style={{ color: theme.accent }}>{establishment.deliveryMessage}</p>
               </div>
             )}
 
@@ -848,6 +873,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
   return (
     <div className="min-h-screen pb-24 overflow-x-hidden transition-colors duration-300" style={{ backgroundColor: theme.bgPage, color: theme.text }}>
+      <style>{`@keyframes hrBlink { 0%,100%{opacity:1;color:inherit} 50%{opacity:1;color:#FBBF24} } .animate-hr-blink { animation: hrBlink 1.5s ease-in-out infinite; }`}</style>
       {/* Background orb */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[500px] rounded-full blur-[150px] opacity-20" style={{ backgroundColor: theme.primary }} />
@@ -984,12 +1010,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4 text-center backdrop-blur-sm">
             <p className="text-sm font-medium text-amber-300">{closedMessage.title}</p>
             <p className="mt-1 text-xs text-amber-400/70">{closedMessage.sub}</p>
-            <button
-              onClick={() => setShowBusinessHours(true)}
-              className="mt-2 text-xs font-medium text-amber-400 underline hover:text-amber-300"
-            >
-              Ver horários de funcionamento
-            </button>
           </div>
         </div>
       )}
@@ -1009,7 +1029,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   <p className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: theme.textMutedMore }}>{cat.name}</p>
                   <div className="space-y-3">
                     {filtered.map((product) => (
-                      <ProductCard key={product.id} product={product} onAdd={addToCart} theme={theme} disabled={!isOpen} />
+                      <ProductCard key={product.id} product={product} onAdd={addToCart} theme={theme} disabled={!isOpen} isAdded={addedItemId === product.id} />
                     ))}
                   </div>
                 </div>
@@ -1030,7 +1050,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 <h2 className="mb-4 text-xl font-semibold" style={{ color: theme.text }}>{cat.name}</h2>
                 <div className="space-y-3">
                   {products.map((product) => (
-                    <ProductCard key={product.id} product={product} onAdd={addToCart} theme={theme} disabled={!isOpen} />
+                    <ProductCard key={product.id} product={product} onAdd={addToCart} theme={theme} disabled={!isOpen} isAdded={addedItemId === product.id} />
                   ))}
                 </div>
               </div>
@@ -1046,7 +1066,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           <div className="mx-auto flex max-w-3xl items-center justify-between">
             <button
               onClick={() => setShowBusinessHours(true)}
-              className="flex items-center gap-1.5 text-xs transition-colors hover:opacity-70"
+              className={`flex items-center gap-1.5 text-xs transition-colors hover:opacity-70 ${!isOpen ? "animate-hr-blink" : ""}`}
               style={{ color: theme.textMuted }}
             >
               <Clock className="h-3.5 w-3.5" />
@@ -1061,15 +1081,27 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
       {/* Cart FAB */}
       {cart.length > 0 && !showCart && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 border-t backdrop-blur-xl p-4 transition-colors duration-300" style={{ borderColor: theme.borderSubtle, backgroundColor: theme.bgHeader }}>
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <div>
-              <p className="text-sm" style={{ color: theme.textSubtle }}>{totalItems} itens</p>
-              <p className="text-lg font-bold" style={{ color: theme.text }}>{formatCurrency(total)}</p>
+        <div className="fixed bottom-0 left-0 right-0 z-20 border-t backdrop-blur-xl p-3 transition-colors duration-300" style={{ borderColor: theme.borderSubtle, backgroundColor: theme.bgHeader }}>
+          <div className="mx-auto flex max-w-3xl items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 overflow-hidden">
+                {cart.slice(0, 3).map((item) => (
+                  <span key={item.id} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0" style={{ backgroundColor: theme.bgCard, color: theme.textSubtle, borderWidth: 1, borderStyle: "solid", borderColor: theme.borderCard }}>
+                    {item.quantity}x {item.name.length > 12 ? item.name.substring(0, 12) + "…" : item.name}
+                  </span>
+                ))}
+                {cart.length > 3 && (
+                  <span className="text-[10px] shrink-0" style={{ color: theme.textMutedMore }}>+{cart.length - 3}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs" style={{ color: theme.textMuted }}>{totalItems} {totalItems === 1 ? "item" : "itens"}</p>
+                <p className="text-base font-bold" style={{ color: theme.primary }}>{formatCurrency(total)}</p>
+              </div>
             </div>
-            <button onClick={() => setShowCart(true)} className="flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: theme.primary, boxShadow: `0 0 30px ${theme.shadowPrimary}` }} disabled={!isOpen}>
-              <ShoppingBag className="h-5 w-5" />
-              Revisar pedido
+            <button onClick={() => setShowCart(true)} className="flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 shrink-0" style={{ backgroundColor: theme.primary, boxShadow: `0 0 30px ${theme.shadowPrimary}` }} disabled={!isOpen}>
+              <ShoppingBag className="h-4 w-4" />
+              Ver carrinho
             </button>
           </div>
         </div>
@@ -1114,7 +1146,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 />
               </div>
               {customerData && (
-                <p className="text-xs text-green-400">Cliente encontrado! Dados preenchidos automaticamente.</p>
+                <p className="text-xs" style={{ color: theme.accent }}>Cliente encontrado! Dados preenchidos automaticamente.</p>
               )}
               <Button
                 onClick={() => {
@@ -1145,10 +1177,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             </div>
             <div className="space-y-2">
               {parsedBusinessHours?.map((h: any) => (
-                <div key={h.day} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: h.active ? "rgba(34,197,94,0.06)" : theme.bgCard }}>
+                <div key={h.day} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: h.active ? theme.accentLight : theme.bgCard }}>
                   <span className="text-sm font-medium" style={{ color: h.active ? theme.text : theme.textMutedMore }}>{h.day?.trim()}</span>
                   {h.active ? (
-                    <span className="text-sm text-green-300">{h.open} – {h.close}</span>
+                    <span className="text-sm" style={{ color: theme.accent }}>{h.open} – {h.close}</span>
                   ) : (
                     <span className="text-sm" style={{ color: theme.textMutedMore }}>Fechado</span>
                   )}
@@ -1203,17 +1235,18 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             </div>
 
             {orderType === "pickup" && establishment.address && (
-              <div className="mb-3 rounded-lg bg-green-500/[0.06] border border-green-500/20 p-3">
+              <div className="mb-3 rounded-lg border p-3" style={{ backgroundColor: theme.accentLight, borderColor: theme.accentLight }}>
                 <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: theme.accent }} />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-green-300">Retirada em:</p>
-                    <p className="text-sm text-green-400/80">{establishment.address}</p>
+                    <p className="text-sm font-medium" style={{ color: theme.accent }}>Retirada em:</p>
+                    <p className="text-sm" style={{ color: theme.accentMid }}>{establishment.address}</p>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(establishment.address)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-green-400 hover:text-green-300"
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-medium"
+                      style={{ color: theme.accent }}
                     >
                       <ExternalLink className="h-3 w-3" />
                       Ver no mapa
@@ -1235,7 +1268,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               </div>
             )}
             {orderType === "delivery" && deliveryFee === 0 && (
-              <div className="mb-3 rounded-lg bg-green-500/[0.06] p-3 text-sm text-green-300">
+              <div className="mb-3 rounded-lg p-3 text-sm" style={{ backgroundColor: theme.accentLight, color: theme.accent }}>
                 <p className="font-medium">Entrega grátis!</p>
               </div>
             )}
@@ -1251,11 +1284,11 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                       <p className="text-sm" style={{ color: theme.textMuted }}>{formatCurrency(item.price)}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="flex h-7 w-7 items-center justify-center rounded-full hover:opacity-80" style={{ border: `1px solid ${theme.borderInputColor}`, color: theme.textSubtle }}>
+                      <button onClick={() => updateQuantity(item.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full hover:opacity-80 active:scale-95 transition-all" style={{ border: `1px solid ${theme.borderInputColor}`, color: theme.textSubtle }}>
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="w-6 text-center font-medium" style={{ color: theme.text }}>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="flex h-7 w-7 items-center justify-center rounded-full hover:opacity-80" style={{ border: `1px solid ${theme.borderInputColor}`, color: theme.textSubtle }}>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full hover:opacity-80 active:scale-95 transition-all" style={{ border: `1px solid ${theme.borderInputColor}`, color: theme.textSubtle }}>
                         <Plus className="h-3 w-3" />
                       </button>
                       <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-500">
@@ -1286,13 +1319,13 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between rounded-lg bg-green-500/[0.06] border border-green-500/20 px-3 py-2 pt-3">
-                    <div className="flex items-center gap-2 text-sm text-green-300">
+                  <div className="flex items-center justify-between rounded-lg border px-3 py-2 pt-3" style={{ backgroundColor: theme.accentLight, borderColor: theme.accentLight }}>
+                    <div className="flex items-center gap-2 text-sm" style={{ color: theme.accent }}>
                       <Tag className="h-4 w-4" />
                       <span className="font-medium">{couponData.code}</span>
                       <span>-{couponData.discountType === "percentage" ? `${couponData.discountValue}%` : formatCurrency(couponData.discountValue)}</span>
                     </div>
-                    <button onClick={removeCoupon} className="text-green-400 hover:text-green-300">
+                    <button onClick={removeCoupon} style={{ color: theme.accent }}>
                       <X className="h-4 w-4" />
                     </button>
                   </div>
@@ -1328,10 +1361,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                       </p>
                     )}
                     {useLoyalty && loyaltyDiscount > 0 && (
-                      <p className="mt-1 text-xs text-green-400">-{formatCurrency(loyaltyDiscount)} de desconto aplicado</p>
+                      <p className="mt-1 text-xs" style={{ color: theme.accent }}>-{formatCurrency(loyaltyDiscount)} de desconto aplicado</p>
                     )}
                     {useLoyalty && loyaltyFreeProduct && (
-                      <p className="mt-1 text-xs text-green-400">+{loyaltyFreeProduct.name} (Produto grátis!)</p>
+                      <p className="mt-1 text-xs" style={{ color: theme.accent }}>+{loyaltyFreeProduct.name} (Produto grátis!)</p>
                     )}
                     {parsedLoyalty.redeemType === "product" && parsedLoyalty.redeemProductId && !loyaltyFreeProduct && customerLoyaltyPoints >= (parsedLoyalty.redeemPoints || 100) && (
                       <p className="mt-1 text-xs" style={{ color: theme.textMuted }}>Adicione o produto ao carrinho para resgatar</p>
@@ -1351,7 +1384,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     </div>
                   )}
                   {couponDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-green-400">
+                    <div className="flex justify-between text-sm" style={{ color: theme.accent }}>
                       <span>Desconto (cupom)</span>
                       <span>-{formatCurrency(couponDiscount)}</span>
                     </div>
@@ -1363,14 +1396,14 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     </div>
                   )}
                   {loyaltyFreeProduct && (
-                    <div className="flex justify-between text-sm text-green-400">
+                    <div className="flex justify-between text-sm" style={{ color: theme.accent }}>
                       <span>Produto grátis ({loyaltyFreeProduct.name})</span>
                       <span>-{formatCurrency(loyaltyFreeProduct.price)}</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t pt-2 text-lg font-bold" style={{ borderColor: theme.borderCard }}>
                     <span style={{ color: theme.text }}>Total</span>
-                    <span className="text-green-400">{formatCurrency(total)}</span>
+                    <span style={{ color: theme.accent }}>{formatCurrency(total)}</span>
                   </div>
                 </div>
 
@@ -1408,7 +1441,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   {addressSaved && cepAddress ? (
                     <div className="rounded-lg p-3 text-sm space-y-2" style={{ backgroundColor: theme.bgCard, color: theme.textSubtle }}>
                       <p>{cepAddress.logradouro}, {customer.address} - {cepAddress.bairro}, {cepAddress.localidade} - {cepAddress.uf}</p>
-                      <button type="button" onClick={() => setAddressSaved(false)} className="text-xs text-green-400 hover:underline">
+                      <button type="button" onClick={() => setAddressSaved(false)} className="text-xs hover:underline" style={{ color: theme.accent }}>
                         Alterar endereço
                       </button>
                     </div>
@@ -1420,7 +1453,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                         <input id="cep" placeholder="00000-000" value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, "").slice(0, 8))} className="w-32 h-10 rounded-lg border px-3 py-2 text-sm placeholder:opacity-40 focus:outline-none focus:ring-2 focus:ring-green-500" style={{ backgroundColor: theme.bgInput, color: theme.text, borderColor: theme.borderInput, borderWidth: 1 }} disabled={addressSaved} />
                       </div>
                         {cep.length === 8 && !cepLoading && (
-                          <button type="button" onClick={lookupCep} className="mt-6 text-xs text-green-400 hover:underline self-start">
+                          <button type="button" onClick={lookupCep} className="mt-6 text-xs hover:underline self-start" style={{ color: theme.accent }}>
                             Buscar
                           </button>
                         )}
@@ -1444,7 +1477,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   <input type="hidden" name="fullAddress" value={fullAddress} />
                 </div>
               ) : (
-                <div className="rounded-lg bg-green-500/[0.06] p-3 text-sm text-green-300 border border-green-500/20">
+                <div className="rounded-lg p-3 text-sm border" style={{ backgroundColor: theme.accentLight, color: theme.accent, borderColor: theme.accentLight }}>
                   <StoreIcon className="inline h-4 w-4 mr-1" />
                   Retirada no local: {establishment.address || "Consulte o estabelecimento"}
                 </div>
@@ -1506,14 +1539,14 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     </div>
                   )}
                   {couponDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-green-400">
+                    <div className="flex justify-between text-sm" style={{ color: theme.accent }}>
                       <span>Desconto ({couponData?.code})</span>
                       <span>-{formatCurrency(couponDiscount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-bold" style={{ color: theme.text }}>
                     <span>Total</span>
-                    <span className="text-green-400">{formatCurrency(total)}</span>
+                    <span style={{ color: theme.accent }}>{formatCurrency(total)}</span>
                   </div>
                 </div>
               </div>
@@ -1563,13 +1596,13 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 <div className="text-center py-8">
                   <User className="mx-auto h-8 w-8" style={{ color: theme.textMutedMore }} />
                   <p className="mt-2 text-sm" style={{ color: theme.textMuted }}>Identifique-se para ver seus pedidos</p>
-                  <button onClick={() => { setShowOrdersList(false); setShowIdentifyModal(true) }} className="mt-2 text-sm text-green-400 hover:underline">
+                  <button onClick={() => { setShowOrdersList(false); setShowIdentifyModal(true) }} className="mt-2 text-sm hover:underline" style={{ color: theme.accent }}>
                     Identificar-se
                   </button>
                 </div>
               ) : loadingOrders ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-green-400" />
+                  <Loader2 className="h-6 w-6 animate-spin" style={{ color: theme.accent }} />
                 </div>
               ) : customerOrders.length === 0 ? (
                 <div className="text-center py-8">
@@ -1620,7 +1653,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                             </p>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-green-400">{formatCurrency(order.total)}</p>
+                            <p className="text-sm font-bold" style={{ color: theme.accent }}>{formatCurrency(order.total)}</p>
                             <span className={`inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[order.status] || ""}`} style={!statusColors[order.status] ? { backgroundColor: theme.bgCard, color: theme.textMuted } : {}}>
                               {statusLabels[order.status] || order.status}
                             </span>
@@ -1663,7 +1696,8 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     loadCustomerOrders()
                     setShowOrdersList(true)
                   }}
-                  className="text-xs text-green-400 hover:text-green-300 font-medium"
+                  className="text-xs font-medium"
+                  style={{ color: theme.accent }}
                 >
                   Ver outros
                 </button>
@@ -1696,7 +1730,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   </div>
 
                   <div className="border-t pt-3" style={{ borderColor: theme.borderCard }}>
-                    <p className="text-xs" style={{ color: theme.textMutedMore }}>Total: <span className="font-semibold text-green-400">R$ {trackingOrder.total?.toFixed(2)}</span></p>
+                    <p className="text-xs" style={{ color: theme.textMutedMore }}>Total: <span className="font-semibold" style={{ color: theme.accent }}>R$ {trackingOrder.total?.toFixed(2)}</span></p>
                   </div>
                 </>
               )}
@@ -1728,7 +1762,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
                     style={{ backgroundColor: theme.bgInput, color: theme.text, borderColor: theme.borderInput, borderWidth: 1 }}
                   />
-                  <Button size="sm" onClick={sendTrackingMessage} disabled={!trackingInput.trim() || trackingSending}>
+                  <Button size="sm" onClick={sendTrackingMessage} disabled={!trackingInput.trim() || trackingSending} loading={trackingSending}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -1741,18 +1775,19 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   )
 }
 
-function ProductCard({ product, onAdd, theme, disabled }: { product: Product; onAdd: (p: Product) => void; theme: { primary: string; bgCard: string; bgCardHover: string; borderCard: string; borderCardHover: string; text: string; textMuted: string; shadowPrimary: string }; disabled?: boolean }) {
+function ProductCard({ product, onAdd, theme, disabled, isAdded }: { product: Product; onAdd: (p: Product) => void; theme: { primary: string; bgCard: string; bgCardHover: string; borderCard: string; borderCardHover: string; text: string; textMuted: string; shadowPrimary: string }; disabled?: boolean; isAdded?: boolean }) {
   return (
-    <div className={`flex items-center gap-4 rounded-xl p-4 transition-all duration-300 backdrop-blur-sm ${disabled ? "opacity-50" : ""}`} style={{ backgroundColor: theme.bgCard, borderWidth: 1, borderStyle: "solid", borderColor: theme.borderCard }}>
+    <div className={`flex items-center gap-4 rounded-xl p-4 transition-all duration-300 backdrop-blur-sm ${disabled ? "opacity-50" : ""}`} style={{ backgroundColor: theme.bgCard, borderWidth: 1, borderStyle: "solid", borderColor: isAdded ? theme.primary : theme.borderCard }}>
       {product.image ? (
         <img
           src={product.image}
           alt={product.name}
-          className="h-20 w-20 flex-shrink-0 rounded-xl object-cover"
+          loading="lazy"
+          className={`h-20 w-20 flex-shrink-0 rounded-xl object-cover transition-transform duration-300 ${isAdded ? "scale-105" : ""}`}
         />
       ) : (
-        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl text-3xl" style={{ backgroundColor: theme.bgCardHover }}>
-          🍕
+        <div className={`flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl transition-transform duration-300 ${isAdded ? "scale-105" : ""}`} style={{ backgroundColor: theme.bgCardHover }}>
+          <svg className="h-8 w-8" style={{ color: theme.textMuted }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
         </div>
       )}
       <div className="flex-1 min-w-0">
@@ -1765,7 +1800,23 @@ function ProductCard({ product, onAdd, theme, disabled }: { product: Product; on
         )}
         <p className="mt-1 font-bold" style={{ color: theme.primary }}>{formatCurrency(product.price)}</p>
       </div>
-      <button onClick={() => onAdd(product)} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white font-bold text-lg transition-opacity hover:opacity-90" style={{ backgroundColor: theme.primary, boxShadow: `0 0 20px ${theme.shadowPrimary}` }} disabled={disabled}>+</button>
+      <button
+        onClick={() => onAdd(product)}
+        aria-label={`Adicionar ${product.name} ao carrinho`}
+        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-white font-bold text-lg transition-all duration-200 active:scale-90 ${isAdded ? "animate-bounce-once" : ""}`}
+        style={{
+          backgroundColor: isAdded ? "#22c55e" : theme.primary,
+          boxShadow: isAdded ? "0 0 25px rgba(34,197,94,0.5)" : `0 0 20px ${theme.shadowPrimary}`,
+          transform: isAdded ? "scale(1.15)" : "scale(1)",
+        }}
+        disabled={disabled}
+      >
+        {isAdded ? (
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+        ) : (
+          "+"
+        )}
+      </button>
     </div>
   )
 }

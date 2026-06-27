@@ -46,6 +46,7 @@ export default function ConfigPage() {
     deliveryFeeAmount: "0",
     deliveryFreeAbove: "0",
     defaultTheme: "dark",
+    tableCount: "10",
   })
   const [paymentConfig, setPaymentConfig] = useState({ online: true, delivery: true, pickup: true })
   const [orderConfig, setOrderConfig] = useState({ delivery: true, pickup: true })
@@ -78,6 +79,7 @@ export default function ConfigPage() {
             deliveryFeeAmount: String(data.deliveryFeeAmount || "0"),
             deliveryFreeAbove: String(data.deliveryFreeAbove || "0"),
             defaultTheme: data.defaultTheme || "dark",
+            tableCount: String(data.tableCount || 10),
           })
           if (data.paymentConfig) {
             try { setPaymentConfig(JSON.parse(data.paymentConfig)) } catch {}
@@ -109,6 +111,7 @@ export default function ConfigPage() {
           orderConfig: JSON.stringify(orderConfig),
           businessHours: JSON.stringify(businessHours),
           defaultTheme: form.defaultTheme,
+          tableCount: Number(form.tableCount) || 10,
         }),
       })
 
@@ -186,6 +189,25 @@ export default function ConfigPage() {
                   <p className="text-xs text-zinc-500">Cliente busca no local</p>
                 </div>
               </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Configuração de Mesas */}
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-semibold text-zinc-900">Mesas</h3>
+            <p className="text-sm text-zinc-500">Quantidade de mesas fixas disponíveis no caixa. As mesas são numeradas de 1 a N.</p>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Número de Mesas</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={form.tableCount}
+                onChange={(e) => setForm({ ...form, tableCount: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+              />
             </div>
           </CardContent>
         </Card>

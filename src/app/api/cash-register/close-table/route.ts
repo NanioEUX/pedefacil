@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const { tableNumber, establishmentId, paymentMethod } = await req.json()
+    const { tableNumber, establishmentId, paymentMethod, cartItems, customerName } = await req.json()
 
     if (!tableNumber || !establishmentId || !paymentMethod) {
       return NextResponse.json({ error: "Dados incompletos (tableNumber, establishmentId, paymentMethod)" }, { status: 400 })
@@ -17,6 +17,24 @@ export async function POST(req: NextRequest) {
 
     if (authUser.establishmentId !== establishmentId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 })
+    }
+
+    // If there are cart items, create an order from them first
+    if (cartItems && cartItems.length > 0) {
+      const cartTotal = cartItems.reduce((s: number, i: any) => s + i.price * i.quantity, 0)
+      await prisma.order.create({
+        data: {
+          establishmentId,
+          customerName: customerName || `Mesa ${tableNumber}`,
+          items: JSON.stringify(cartItems),
+          total: cartTotal,
+          orderType: "presencial",
+          paymentMethod: "pending",
+          method: "caixa",
+          status: "new",
+          tableNumber: parseInt(tableNumber),
+        },
+      })
     }
 
     // Find all orders for this table that are not yet cancelled

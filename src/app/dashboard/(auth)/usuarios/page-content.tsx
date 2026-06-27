@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
 import { Users, Plus, Pencil, Trash2, X, Loader2, Shield, Eye, EyeOff, Check, Copy, ExternalLink } from "lucide-react"
@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { fetchAuth } from "@/lib/fetch-auth"
+import { useToast } from "@/components/toast"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const ALL_PERMISSIONS = [
   { value: "dashboard", label: "Dashboard", desc: "Visão geral do dia" },
@@ -48,14 +50,16 @@ export default function UsuariosPage() {
   const hookEstablishmentId = useEstablishmentId()
   const searchParamsEstablishmentId = searchParams.get("establishment")
   const establishmentId = searchParamsEstablishmentId || hookEstablishmentId
+  const { toast } = useToast()
   const [users, setUsers] = useState<any[]>([])
   const [deliveryPersons, setDeliveryPersons] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "atendente", permissions: ["caixa"] as string[], canCloseRegister: false })
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "atendente", permissions: ["caixa", "pedidos"] as string[], canCloseRegister: false })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string; name: string; isAdmin: boolean }>({ open: false, id: "", name: "", isAdmin: false })
 
   async function loadUsers() {
     if (!establishmentId) return
@@ -73,7 +77,7 @@ export default function UsuariosPage() {
 
   function openNew() {
     setEditingUser(null)
-    setForm({ name: "", email: "", phone: "", password: "123456", role: "atendente", permissions: ["caixa"], canCloseRegister: false })
+    setForm({ name: "", email: "", phone: "", password: "123456", role: "atendente", permissions: ["caixa", "pedidos"], canCloseRegister: false })
     setError("")
     setShowForm(true)
   }
@@ -84,7 +88,7 @@ export default function UsuariosPage() {
     } else if (role === "admin") {
       setForm({ ...form, role, permissions: [...ALL_PERMISSIONS_VALUES] })
     } else {
-      setForm({ ...form, role, permissions: ["caixa"] })
+      setForm({ ...form, role, permissions: ["caixa", "pedidos"] })
     }
   }
 
@@ -180,17 +184,31 @@ export default function UsuariosPage() {
         }
       }
       setShowForm(false)
+      toast(editingUser ? "Usuário atualizado" : "Usuário criado com sucesso", "success")
       loadUsers()
     } catch {
       setError("Erro ao salvar")
+      toast("Erro ao salvar usuário", "error")
     } finally {
       setSaving(false)
     }
   }
 
-  async function deleteUser(id: string) {
-    if (!confirm("Remover este usuário?")) return
-    await fetchAuth(`/api/users/${id}`, { method: "DELETE" })
+  function handleDeleteUser(user: any) {
+    const adminCount = users.filter((u) => u.role === "admin" && u.isActive).length
+    const isLastAdmin = user.role === "admin" && adminCount <= 1
+    setDeleteConfirm({ open: true, id: user.id, name: user.name, isAdmin: isLastAdmin })
+  }
+
+  async function confirmDeleteUser() {
+    if (deleteConfirm.isAdmin) {
+      toast("Não é possível excluir o último administrador", "error")
+      setDeleteConfirm({ open: false, id: "", name: "", isAdmin: false })
+      return
+    }
+    await fetchAuth(`/api/users/${deleteConfirm.id}`, { method: "DELETE" })
+    toast("Usuário removido com sucesso", "success")
+    setDeleteConfirm({ open: false, id: "", name: "", isAdmin: false })
     loadUsers()
   }
 
@@ -259,7 +277,7 @@ export default function UsuariosPage() {
                       <button onClick={() => openEdit(user)} className="rounded p-1 text-zinc-400 hover:text-zinc-600">
                         <Pencil className="h-4 w-4" />
                       </button>
-                      <button onClick={() => deleteUser(user.id)} className="rounded p-1 text-red-400 hover:text-red-600">
+                      <button onClick={() => handleDeleteUser(user)} className="rounded p-1 text-red-400 hover:text-red-600">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -438,6 +456,20 @@ export default function UsuariosPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Remover usuário"
+        message={
+          deleteConfirm.isAdmin
+            ? "Não é possível excluir o último administrador do sistema. Crie outro admin antes de excluir este."
+            : `Tem certeza que deseja remover o usuário "${deleteConfirm.name}"? Esta ação não pode ser desfeita.`
+        }
+        confirmLabel={deleteConfirm.isAdmin ? "Entendi" : "Remover"}
+        variant="danger"
+        onConfirm={confirmDeleteUser}
+        onCancel={() => setDeleteConfirm({ open: false, id: "", name: "", isAdmin: false })}
+      />
     </div>
   )
 }
