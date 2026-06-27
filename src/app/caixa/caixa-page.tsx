@@ -1365,7 +1365,6 @@ export default function CaixaPOSPage() {
                   Pedido #{lastOrder.orderNumber || lastOrder.id?.slice(0, 8)}
                 </p>
               )}
-              {activeTable && !needsPrep && <p className="text-sm text-zinc-500">Pagamento será cobrado no fechamento da mesa</p>}
               {activeTable && needsPrep && <p className="text-sm text-zinc-500">Acompanhe no módulo Pedidos</p>}
             </div>
           </div>
