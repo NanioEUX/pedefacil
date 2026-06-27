@@ -202,8 +202,8 @@ export default function CaixaPOSPage() {
     loadData(userData.establishmentId)
 
     const refreshInterval = setInterval(() => {
-      loadData(userData.establishmentId)
-    }, 15000)
+      refreshOrders(userData.establishmentId)
+    }, 10000)
 
     function handleStorage(e: StorageEvent) {
       if (e.key === "pedefacil-last-action" && e.newValue) {
@@ -216,6 +216,25 @@ export default function CaixaPOSPage() {
       window.removeEventListener("storage", handleStorage)
     }
   }, [router])
+
+  async function refreshOrders(establishmentId: string) {
+    try {
+      const res = await fetchAuth(`/api/orders?establishmentId=${establishmentId}`)
+      if (res.ok) {
+        const allOrders = await res.json()
+        setOrders(allOrders)
+        const today = new Date().toDateString()
+        const todayOrders = allOrders.filter((o: any) => {
+          const d = new Date(o.createdAt)
+          return d.toDateString() === today && o.status !== "cancelled" && o.orderType === "presencial"
+        })
+        setTodayStats({
+          count: todayOrders.length,
+          total: todayOrders.reduce((s: number, o: any) => s + o.total, 0),
+        })
+      }
+    } catch {}
+  }
 
   async function loadData(establishmentId: string) {
     const promises: Promise<any>[] = [
