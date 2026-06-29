@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { useToast } from "@/components/toast"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { FlowOSLogo } from "@/components/flowos-logo"
+import QRCode from "qrcode"
 
 const ALL_PERMISSIONS = [
   { value: "dashboard", label: "Dashboard" },
@@ -54,6 +56,10 @@ interface TableData {
   cart: CartItem[]
   name?: string
   participants?: any[]
+}
+
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
 }
 
 export default function CaixaPOSPage() {
@@ -126,6 +132,9 @@ export default function CaixaPOSPage() {
     }
     return {}
   })
+  const [paymentRequests, setPaymentRequests] = useState<any[]>([])
+  const [showStaffQr, setShowStaffQr] = useState(false)
+  const [staffQrImage, setStaffQrImage] = useState<string | null>(null)
 
   useEffect(() => {
     localStorage.setItem("pedefacil-caixa-theme", darkMode ? "dark" : "light")
@@ -216,11 +225,24 @@ export default function CaixaPOSPage() {
     }
   }, [router])
 
+  async function generateStaffQr() {
+    if (!user?.establishment?.slug) return
+    const url = `${window.location.origin}/${user.establishment.slug}/staff`
+    try {
+      const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: "#000000", light: "#ffffff" } })
+      setStaffQrImage(dataUrl)
+      setShowStaffQr(true)
+    } catch {}
+  }
+
   async function refreshOrders(establishmentId: string) {
     try {
-      const res = await fetchAuth(`/api/orders?establishmentId=${establishmentId}`)
-      if (res.ok) {
-        const allOrders = await res.json()
+      const [ordersRes, paymentRes] = await Promise.all([
+        fetchAuth(`/api/orders?establishmentId=${establishmentId}`),
+        fetchAuth(`/api/payment-request?establishmentId=${establishmentId}`),
+      ])
+      if (ordersRes.ok) {
+        const allOrders = await ordersRes.json()
         setOrders(allOrders)
         const today = new Date().toDateString()
         const todayOrders = allOrders.filter((o: any) => {
@@ -231,6 +253,10 @@ export default function CaixaPOSPage() {
           count: todayOrders.length,
           total: todayOrders.reduce((s: number, o: any) => s + o.total, 0),
         })
+      }
+      if (paymentRes.ok) {
+        const requests = await paymentRes.json()
+        setPaymentRequests(requests)
       }
     } catch {}
   }
@@ -860,7 +886,7 @@ export default function CaixaPOSPage() {
               {user.establishment.logo ? (
                 <img src={user.establishment.logo} alt={user.establishment.name} className="h-8 w-8 rounded-lg object-cover" />
               ) : (
-                <img src={darkMode ? "/icons/pedefacil-logo.svg" : "/icons/pedefacil-logo-dark.svg"} alt="PedeFácil" className="h-8" />
+                <FlowOSLogo size={32} variant="icon" className="h-8 w-8" />
               )}
               <span className={`text-sm font-semibold ${darkMode ? "text-zinc-100" : "text-zinc-900"}`}>{user.establishment.name}</span>
             </>
@@ -1098,11 +1124,52 @@ export default function CaixaPOSPage() {
                 </button>
               </div>
 
+              {/* Payment Requests */}
+              {paymentRequests.length > 0 && (
+                <div className="mb-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 dark:border-amber-600 dark:bg-amber-950">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white animate-pulse">{paymentRequests.length}</div>
+                    <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Mesa(s) pedindo a conta</p>
+                  </div>
+                  <div className="space-y-2">
+                    {paymentRequests.map((req: any) => (
+                      <div key={req.tableNumber} className="flex items-center justify-between rounded-lg bg-white p-2.5 dark:bg-zinc-800">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-sm font-extrabold text-amber-700 dark:bg-amber-900 dark:text-amber-300">{req.tableNumber}</span>
+                          <div>
+                            <p className="text-xs font-bold">Mesa {req.tableNumber}</p>
+                            <p className="text-[10px] text-zinc-500">{req.orders.length} pedido(s) • {formatTime(req.requestedAt)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-extrabold text-amber-600">{formatCurrency(req.total)}</span>
+                          <button
+                            onClick={() => {
+                              setClosingTableNumber(req.tableNumber)
+                              setClosingTableCart(req.orders.flatMap((o: any) => { try { return typeof o.items === "string" ? JSON.parse(o.items) : o.items } catch { return [] } }))
+                              setClosingTableModal(true)
+                            }}
+                            className="rounded-lg bg-green-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-green-700 active:scale-95"
+                          >
+                            Atender
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tables */}
               <div className="mt-3">
                 <div className="mb-1.5 flex items-center justify-between">
                   <p className={`text-xs font-medium ${darkMode ? "text-zinc-400" : "text-zinc-500"}`}>Mesas</p>
-                  <p className={`text-[10px] ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}>Toque na mesa para atender · Botões abaixo para abater/fechar</p>
+                  <div className="flex items-center gap-2">
+                    <button onClick={generateStaffQr} className={`rounded-lg px-2 py-1 text-[10px] font-bold transition-colors ${darkMode ? "bg-zinc-700 text-zinc-300 hover:bg-zinc-600" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>
+                      QR Garcom
+                    </button>
+                    <p className={`text-[10px] ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}>Toque na mesa para atender</p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-5 gap-2 pb-2">
                   {Array.from({ length: tableCount }, (_, i) => i + 1).map((num) => {
@@ -1857,6 +1924,21 @@ export default function CaixaPOSPage() {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ open: false, title: "", message: "", onConfirm: () => {}, confirmed: false, successTitle: "", successMessage: "" })}
       />
+
+      {/* Staff QR Code Modal */}
+      {showStaffQr && staffQrImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowStaffQr(false) }}>
+          <div className={`rounded-2xl p-6 text-center shadow-2xl ${darkMode ? "bg-zinc-800" : "bg-white"}`}>
+            <p className={`mb-1 text-sm font-bold ${darkMode ? "text-white" : "text-zinc-900"}`}>QR Code — Garcom</p>
+            <p className={`mb-4 text-xs ${darkMode ? "text-zinc-400" : "text-zinc-500"}`}>Escaneie com o celular do garcom</p>
+            <img src={staffQrImage} alt="QR Code Garcom" className="mx-auto rounded-xl border-4 border-white shadow-lg" />
+            <p className={`mt-3 text-[10px] ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}>{`/{${user?.establishment?.slug}}/staff`}</p>
+            <button onClick={() => setShowStaffQr(false)} className={`mt-4 rounded-xl px-6 py-2 text-sm font-bold ${darkMode ? "bg-zinc-700 text-zinc-300 hover:bg-zinc-600" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"}`}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

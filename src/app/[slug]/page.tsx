@@ -21,13 +21,13 @@ export async function generateMetadata({
   const imageUrl = establishment.cover || establishment.logo || `${baseUrl}/og-default.png`
 
   return {
-    title: `${establishment.name} - Cardápio Digital | PedeFácil`,
+    title: `${establishment.name} - Cardápio Digital | FlowOS`,
     description: establishment.description || `Faça seu pedido no ${establishment.name}. Cardápio digital com delivery e retirada.`,
     openGraph: {
       title: establishment.name,
       description: establishment.description || `Faça seu pedido no ${establishment.name}`,
       images: [{ url: imageUrl, width: 1200, height: 630 }],
-      siteName: "PedeFácil",
+      siteName: "FlowOS",
       locale: "pt_BR",
       type: "website",
     },

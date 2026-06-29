@@ -12,7 +12,7 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-zinc-50 p-8">
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-8 text-3xl font-bold text-zinc-900">Admin PedeFácil</h1>
+        <h1 className="mb-8 text-3xl font-bold text-zinc-900">Admin FlowOS</h1>
 
         <div className="mb-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-zinc-200 bg-white p-4">

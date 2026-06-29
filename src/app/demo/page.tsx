@@ -104,7 +104,7 @@ export default function DemoPage() {
                 Voltar
               </Button>
             </Link>
-            <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="h-8" />
+            <FlowOSLogo size={32} className="h-8" />
           </div>
           <Link href="/cadastro">
             <Button className="bg-[#FF6B35] hover:bg-[#E55A2B]">
@@ -117,7 +117,7 @@ export default function DemoPage() {
       {/* Hero */}
       <section className="py-12 text-center">
         <h1 className="text-3xl font-bold text-zinc-900 sm:text-4xl">
-          Conheça o PedeFácil
+          Conheça o FlowOS
         </h1>
         <p className="mt-3 text-lg text-zinc-600">
           Um sistema completo para gerenciar seu restaurante

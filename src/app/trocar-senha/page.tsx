@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Lock, Eye, EyeOff } from "lucide-react"
+import { FlowOSLogo } from "@/components/flowos-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -86,7 +87,7 @@ export default function TrocarSenhaPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#FFF7F3] to-white p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="mx-auto h-16" />
+          <FlowOSLogo size={64} className="mx-auto" />
         </div>
 
         <Card className="border-zinc-200 shadow-lg">

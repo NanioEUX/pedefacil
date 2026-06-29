@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Store, ShoppingBag, Bike, UtensilsCrossed, Settings, BarChart3, LogOut, Menu, X, Package, DollarSign, Boxes, Users, Tag, Landmark, ChevronDown, ChevronRight, LayoutDashboard, CreditCard, Clock, Megaphone, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { FlowOSLogo } from "@/components/flowos-logo"
 import { fetchAuth } from "@/lib/fetch-auth"
 
 const mainNavItems = [
@@ -94,7 +94,6 @@ export default function DashboardLayout({
         if (data.error) throw new Error(data.error)
         setEstablishment(data)
 
-        // Check subscription — redirect to planos if expired
         if (userData.role === "admin" && !pathname.startsWith("/dashboard/planos")) {
           const now = new Date()
           const isExpired =
@@ -120,132 +119,111 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-green-600 border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-flow-bg">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-flow-blue border-t-transparent" />
       </div>
     )
   }
 
   if (!establishment) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 gap-4">
-        <Store className="h-12 w-12 text-zinc-300" />
-        <p className="text-zinc-600">Nenhum estabelecimento vinculado</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-flow-bg gap-4">
+        <Store className="h-12 w-12 text-flow-muted" />
+        <p className="text-flow-gray">Nenhum estabelecimento vinculado</p>
         <Link href="/cadastro">
-          <Button>Criar estabelecimento</Button>
+          <button className="btn-primary px-6 py-2.5 text-sm">Criar estabelecimento</button>
         </Link>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-50">
+    <div className="flex min-h-screen bg-flow-bg">
       {/* Sidebar — desktop */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 transform border-r border-zinc-200 bg-white transition-transform",
+          "fixed inset-y-0 left-0 z-40 w-64 transform border-r border-white/[.06] bg-flow-surface transition-transform",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className="flex h-16 items-center gap-3 border-b border-zinc-200 px-4">
+        <div className="flex h-16 items-center gap-3 border-b border-white/[.06] px-4">
           <div className="flex-shrink-0">
             {establishment?.logo ? (
               <img src={establishment.logo} alt={establishment.name} className="h-8 w-8 rounded-lg object-cover" />
             ) : (
-              <img src="/icons/pedefacil-logo-dark.svg" alt="PedeFácil" className="h-8" />
+              <FlowOSLogo size={28} variant="icon" />
             )}
           </div>
           <div className="min-w-0 flex-1">
-            {establishment?.name ? (
-              <p className="text-sm font-semibold text-zinc-900 leading-tight">{establishment.name}</p>
-            ) : (
-              <p className="text-sm font-semibold text-zinc-900">PedeFácil</p>
-            )}
+            <p className="text-sm font-bold text-flow-white leading-tight truncate">
+              {establishment?.name || "FlowOS"}
+            </p>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden flex-shrink-0">
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-flow-gray" />
           </button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-3 space-y-0.5">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setSidebarOpen(false)}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                pathname === item.href
-                  ? "bg-green-50 text-green-700"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                "sidebar-item",
+                pathname === item.href ? "active" : ""
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-[18px] w-[18px]" />
               {item.label}
             </Link>
           ))}
 
-          {/* Caixa */}
           {user?.permissions?.includes("caixa") && (
             <>
               <Link
                 href="/caixa"
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === "/caixa"
-                    ? "bg-green-50 text-green-700"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                )}
+                onClick={() => setSidebarOpen(false)}
+                className={cn("sidebar-item", pathname === "/caixa" ? "active" : "")}
               >
-                <DollarSign className="h-5 w-5" />
+                <DollarSign className="h-[18px] w-[18px]" />
                 Frente de Caixa
               </Link>
               {user?.role === "admin" && (
                 <Link
                   href="/dashboard/caixa-gerencial"
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    pathname === "/dashboard/caixa-gerencial"
-                      ? "bg-green-50 text-green-700"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                  )}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn("sidebar-item", pathname === "/dashboard/caixa-gerencial" ? "active" : "")}
                 >
-                  <Landmark className="h-5 w-5" />
+                  <Landmark className="h-[18px] w-[18px]" />
                   Caixa Gerencial
                 </Link>
               )}
             </>
           )}
 
-          {/* Financeiro submenu */}
           {(user?.role === "admin" || user?.permissions?.includes("relatorios")) && (
             <div>
               <button
                 onClick={() => setFinanceiroOpen(!financeiroOpen)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname.startsWith("/dashboard/financeiro") || pathname === "/dashboard/relatorios"
-                    ? "bg-green-50 text-green-700"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                  "sidebar-item w-full",
+                  (pathname.startsWith("/dashboard/financeiro") || pathname === "/dashboard/relatorios") ? "active" : ""
                 )}
               >
-                <Landmark className="h-5 w-5" />
+                <Landmark className="h-[18px] w-[18px]" />
                 Financeiro
                 {financeiroOpen ? <ChevronDown className="ml-auto h-4 w-4" /> : <ChevronRight className="ml-auto h-4 w-4" />}
               </button>
               {financeiroOpen && (
-                <div className="ml-4 mt-1 space-y-1 border-l border-zinc-200 pl-3">
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/[.06] pl-3">
                   {financeiroSubItems.filter((item) => !item.perm || user?.role === "admin" || user?.permissions?.includes(item.perm)).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
-                        pathname === item.href
-                          ? "bg-green-50 text-green-700"
-                          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                      )}
+                      className={cn("sidebar-item text-xs", pathname === item.href ? "active" : "")}
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
@@ -256,35 +234,24 @@ export default function DashboardLayout({
             </div>
           )}
 
-          {/* Marketing submenu */}
           {(user?.role === "admin" || user?.permissions?.includes("config")) && (
             <div>
               <button
                 onClick={() => setMarketingOpen(!marketingOpen)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === "/dashboard/cupons"
-                    ? "bg-green-50 text-green-700"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                )}
+                className={cn("sidebar-item w-full", pathname === "/dashboard/cupons" ? "active" : "")}
               >
-                <Megaphone className="h-5 w-5" />
+                <Megaphone className="h-[18px] w-[18px]" />
                 Marketing
                 {marketingOpen ? <ChevronDown className="ml-auto h-4 w-4" /> : <ChevronRight className="ml-auto h-4 w-4" />}
               </button>
               {marketingOpen && (
-                <div className="ml-4 mt-1 space-y-1 border-l border-zinc-200 pl-3">
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/[.06] pl-3">
                   {marketingSubItems.filter((item) => !item.perm || user?.role === "admin" || user?.permissions?.includes(item.perm)).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
-                        pathname === item.href
-                          ? "bg-green-50 text-green-700"
-                          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                      )}
+                      className={cn("sidebar-item text-xs", pathname === item.href ? "active" : "")}
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
@@ -295,35 +262,27 @@ export default function DashboardLayout({
             </div>
           )}
 
-          {/* Configuracoes submenu */}
           {(user?.role === "admin" || user?.permissions?.includes("config")) && (
             <div>
               <button
                 onClick={() => setConfigOpen(!configOpen)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === "/dashboard/config" || pathname === "/dashboard/usuarios" || pathname === "/dashboard/planos"
-                    ? "bg-green-50 text-green-700"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                  "sidebar-item w-full",
+                  (pathname === "/dashboard/config" || pathname === "/dashboard/usuarios" || pathname === "/dashboard/planos") ? "active" : ""
                 )}
               >
-                <Settings className="h-5 w-5" />
+                <Settings className="h-[18px] w-[18px]" />
                 Configurações
                 {configOpen ? <ChevronDown className="ml-auto h-4 w-4" /> : <ChevronRight className="ml-auto h-4 w-4" />}
               </button>
               {configOpen && (
-                <div className="ml-4 mt-1 space-y-1 border-l border-zinc-200 pl-3">
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/[.06] pl-3">
                   {configSubItems.filter((item) => !item.perm || user?.role === "admin" || user?.permissions?.includes(item.perm)).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
-                        pathname === item.href
-                          ? "bg-green-50 text-green-700"
-                          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                      )}
+                      className={cn("sidebar-item text-xs", pathname === item.href ? "active" : "")}
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
@@ -333,52 +292,46 @@ export default function DashboardLayout({
               )}
             </div>
           )}
-
         </nav>
 
-        {/* Subscription status */}
         {user?.role === "admin" && (
-          <div className="px-4 pb-2">
+          <div className="px-3 pb-2">
             <SubscriptionBadge establishment={establishment} />
           </div>
         )}
 
-        <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-200 p-4">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-white/[.06] p-3">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+            className="sidebar-item w-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-[18px] w-[18px]" />
             Sair
           </button>
         </div>
       </aside>
 
-      {/* Overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Main */}
       <div className="flex-1 pb-20 lg:pb-0 lg:ml-64">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-b border-zinc-200 bg-white px-4 lg:h-16 lg:px-8">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-b border-white/[.06] bg-flow-bg/80 backdrop-blur-xl px-4 lg:h-16 lg:px-8">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5 text-flow-gray" />
           </button>
           <div className="flex-1" />
-          <span className="hidden text-sm text-zinc-500 lg:block">
-            <a href={`/${establishment.slug}`} target="_blank" className="text-green-600 underline">/{establishment.slug}</a>
+          <span className="hidden text-sm text-flow-muted lg:block">
+            <a href={`/${establishment.slug}`} target="_blank" className="text-flow-blue hover:text-flow-cyan transition-colors">/{establishment.slug}</a>
           </span>
-          <div className="hidden items-center gap-3 text-sm text-zinc-500 lg:flex">
+          <div className="hidden items-center gap-3 text-sm text-flow-muted lg:flex">
             <span>{currentTime}</span>
             <div className="flex items-center gap-1.5">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-[10px] font-bold text-green-700">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-flow-blue/10 text-[10px] font-bold text-flow-blue">
                 {user?.name?.charAt(0)?.toUpperCase()}
               </div>
-              <span className="font-medium text-zinc-700">{user?.name}</span>
+              <span className="font-medium text-flow-gray">{user?.name}</span>
             </div>
           </div>
         </header>
@@ -386,7 +339,7 @@ export default function DashboardLayout({
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-200 bg-white lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/[.06] bg-flow-surface/95 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-around py-2">
           {mobileNavItems.map((item) => (
             <Link
@@ -394,9 +347,7 @@ export default function DashboardLayout({
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium transition-colors",
-                pathname === item.href
-                  ? "text-green-600"
-                  : "text-zinc-400"
+                pathname === item.href ? "text-flow-blue" : "text-flow-muted"
               )}
             >
               <item.icon className="h-5 w-5" />
@@ -406,7 +357,7 @@ export default function DashboardLayout({
           {navItems.length > 5 && (
             <button
               onClick={() => setSidebarOpen(true)}
-              className="flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium text-zinc-400"
+              className="flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium text-flow-muted"
             >
               <Menu className="h-5 w-5" />
               Mais
@@ -423,36 +374,28 @@ function SubscriptionBadge({ establishment }: { establishment: any }) {
   const trialEnds = establishment?.trialEndsAt ? new Date(establishment.trialEndsAt) : null
   const daysLeft = trialEnds ? Math.max(0, Math.ceil((trialEnds.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
 
-  if (status === "active") {
-    return null // Don't show badge when active
-  }
+  if (status === "active") return null
 
   if (status === "trial" && daysLeft > 0) {
     return (
-      <a
-        href="/dashboard/planos"
-        className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs transition-colors hover:bg-amber-100"
-      >
-        <Clock className="h-4 w-4 text-amber-600" />
+      <a href="/dashboard/planos" className="flex items-center gap-2 rounded-btn border border-amber-500/20 bg-amber-500/[.06] px-3 py-2 text-xs transition-colors hover:bg-amber-500/10">
+        <Clock className="h-4 w-4 text-amber-400" />
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-amber-800">Teste: {daysLeft}d restante{daysLeft > 1 ? "s" : ""}</p>
-          <p className="text-[10px] text-amber-600">Ver planos →</p>
+          <p className="font-medium text-amber-300">Teste: {daysLeft}d restante{daysLeft > 1 ? "s" : ""}</p>
+          <p className="text-[10px] text-amber-400/70">Ver planos →</p>
         </div>
       </a>
     )
   }
 
   return (
-    <a
-      href="/dashboard/planos"
-      className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs transition-colors hover:bg-red-100"
-    >
-      <CreditCard className="h-4 w-4 text-red-600" />
+    <a href="/dashboard/planos" className="flex items-center gap-2 rounded-btn border border-red-500/20 bg-red-500/[.06] px-3 py-2 text-xs transition-colors hover:bg-red-500/10">
+      <CreditCard className="h-4 w-4 text-red-400" />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-red-800">
+        <p className="font-medium text-red-300">
           {status === "expired" ? "Assinatura expirada" : "Pagamento pendente"}
         </p>
-        <p className="text-[10px] text-red-600">Ativar plano →</p>
+        <p className="text-[10px] text-red-400/70">Ativar plano →</p>
       </div>
     </a>
   )

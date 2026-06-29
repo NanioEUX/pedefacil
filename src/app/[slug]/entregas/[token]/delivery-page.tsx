@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Bike, Phone, MapPin, CheckCircle, Clock, Package, X, DollarSign, TrendingUp, Calendar, Loader2, Eye, EyeOff } from "lucide-react"
+import { FlowOSLogo } from "@/components/flowos-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -310,7 +311,7 @@ export function DeliveryPage({ token }: { token: string }) {
             {person.establishment.logo ? (
               <img src={person.establishment.logo} alt={person.establishment.name} className="h-10 w-10 rounded-lg object-cover" />
             ) : (
-              <img src="/icons/pedefacil-icon.svg" alt="PedeFácil" className="h-10 w-10" />
+              <FlowOSLogo size={40} variant="icon" className="h-10 w-10" />
             )}
             <div>
               <h1 className="text-lg font-bold text-zinc-900">Olá, {person.name}!</h1>

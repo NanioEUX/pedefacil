@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Eye, EyeOff, ChevronDown } from "lucide-react"
+import { FlowOSLogo } from "@/components/flowos-logo"
 import { slugify } from "@/lib/utils"
 import Link from "next/link"
 
@@ -96,33 +97,30 @@ export default function CadastroPage() {
     }
   }
 
-  const inputClass = "w-full border-0 border-b border-white/[0.15] bg-transparent pb-3 text-[15px] text-white placeholder:text-white/40 focus:border-[#FF6B35]/50 focus:outline-none transition-colors"
-  const labelClass = "mb-2 block text-[11px] font-semibold uppercase tracking-[0.15em] text-white/50"
+  const inputClass = "input-flow w-full"
+  const labelClass = "mb-2 block text-[11px] font-semibold uppercase tracking-[0.15em] text-flow-muted"
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-black px-5 py-12 overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center bg-flow-bg px-5 py-12 overflow-hidden">
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-[#FF6B35]/[0.07] blur-[150px]" />
-        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-purple-600/[0.05] blur-[130px]" />
+        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-flow-blue/[0.07] blur-[150px]" />
+        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-flow-cyan/[0.05] blur-[130px]" />
       </div>
 
       <div className="relative z-10 w-full max-w-[520px]">
         <div className="mb-10 text-center">
           <Link href="/" className="inline-block">
-            <div className="relative inline-block">
-              <div className="absolute inset-0 rounded-2xl bg-[#FF6B35]/15 blur-[40px]" />
-              <img src="/icons/pedefacil-logo.svg" alt="PedeFácil" className="relative h-16 md:h-20" />
-            </div>
+            <FlowOSLogo size={72} />
           </Link>
         </div>
 
-        <div className="rounded-[20px] border border-white/[0.08] bg-white/[0.03] p-8 md:p-10 backdrop-blur-xl">
+        <div className="glass-card p-8 md:p-10">
           <div className="mb-8 text-center">
-            <h1 className="text-[28px] font-semibold tracking-[-0.8px] text-white">Criar sua conta</h1>
-            <p className="mt-2 text-[15px] text-white/50 font-light">Seu cardápio online em 2 minutos</p>
+            <h1 className="text-[28px] font-bold tracking-[-0.04em] text-flow-white">Criar sua conta</h1>
+            <p className="mt-2 text-[15px] text-flow-gray font-light">Seu cardápio online em 2 minutos</p>
             <div className="mt-4 flex items-center justify-center gap-2">
-              <div className={`h-1.5 w-12 rounded-full transition-colors ${step === 1 ? "bg-[#FF6B35]" : "bg-white/20"}`} />
-              <div className={`h-1.5 w-12 rounded-full transition-colors ${step === 2 ? "bg-[#FF6B35]" : "bg-white/20"}`} />
+              <div className={`h-1.5 w-12 rounded-full transition-colors ${step === 1 ? "bg-gradient-flow" : "bg-white/10"}`} />
+              <div className={`h-1.5 w-12 rounded-full transition-colors ${step === 2 ? "bg-gradient-flow" : "bg-white/10"}`} />
             </div>
           </div>
 
@@ -194,7 +192,7 @@ export default function CadastroPage() {
 
               <button
                 type="submit"
-                className="flex h-[52px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] text-[15px] font-semibold text-white transition-opacity hover:opacity-90 shadow-[0_0_30px_rgba(255,107,53,0.25)] mt-2"
+                className="btn-primary flex h-[52px] w-full items-center justify-center text-[15px] font-semibold mt-2"
               >
                 Próximo
               </button>
@@ -213,8 +211,8 @@ export default function CadastroPage() {
                   className={inputClass}
                 />
                 {form.name && (
-                  <p className="mt-2 text-[12px] text-white/40">
-                    Seu link: <span className="text-[#FF6B35]">{slug}.pedefacil.com</span>
+                  <p className="mt-2 text-[12px] text-flow-muted">
+                    Seu link: <span className="text-flow-blue">{slug}.flowos.com</span>
                   </p>
                 )}
               </div>
@@ -290,23 +288,23 @@ export default function CadastroPage() {
                 </div>
               )}
 
-              <div className="flex items-start gap-2 rounded-lg bg-white/[0.03] p-3 border border-white/[0.06]">
-                <svg className="h-4 w-4 mt-0.5 flex-shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                <p className="text-[12px] text-white/50">7 dias grátis. Sem cartão de crédito. Cancele quando quiser.</p>
+              <div className="flex items-start gap-2 rounded-input bg-white/[0.03] p-3 border border-white/[.06]">
+                <svg className="h-4 w-4 mt-0.5 flex-shrink-0 text-flow-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                <p className="text-[12px] text-flow-gray">7 dias grátis. Sem cartão de crédito. Cancele quando quiser.</p>
               </div>
 
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex h-[52px] items-center justify-center rounded-full border border-white/[0.15] px-6 text-[15px] font-medium text-white/60 hover:text-white hover:border-white/[0.3] transition-all"
+                  className="btn-ghost flex h-[52px] items-center justify-center border border-white/[.06] px-6 text-[15px]"
                 >
                   Voltar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] text-[15px] font-semibold text-white transition-opacity hover:opacity-90 shadow-[0_0_30px_rgba(255,107,53,0.25)] disabled:opacity-50"
+                  className="btn-primary flex h-[52px] flex-1 items-center justify-center text-[15px] font-semibold disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {loading ? "Criando..." : "Testar 7 dias grátis"}
@@ -315,16 +313,16 @@ export default function CadastroPage() {
             </form>
           )}
 
-          <div className="mt-8 text-center text-[14px] text-white/40">
+          <div className="mt-8 text-center text-[14px] text-flow-muted">
             Já tem conta?{" "}
-            <Link href="/login" className="font-medium text-[#FF6B35] hover:opacity-80 transition-opacity">
+            <Link href="/login" className="font-medium text-flow-blue hover:text-flow-cyan transition-colors">
               Entrar
             </Link>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[13px] text-white/25">
-          <Link href="/" className="hover:text-white/40 transition-colors">
+        <p className="mt-6 text-center text-[13px] text-flow-muted/50">
+          <Link href="/" className="hover:text-flow-gray transition-colors">
             ← Voltar para o início
           </Link>
         </p>

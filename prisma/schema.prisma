@@ -61,6 +61,7 @@ model Establishment {
   deliveryPeople      DeliveryPerson[]
   expenses            Expense[]
   orders              Order[]
+  paymentRequests     PaymentRequest[]
   products            Product[]
   stockCategories     StockCategory[]
   stockItems          StockItem[]
@@ -155,7 +156,7 @@ model Order {
   couponId          String?
   trackingToken     String?         @unique
   assignedAt        DateTime?
-  deliveredAt       DateTime?
+  deliveredAt        DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   coupon            Coupon?         @relation(fields: [couponId], references: [id])
@@ -338,4 +339,17 @@ model OrderMessage {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model PaymentRequest {
+  id              String   @id @default(cuid())
+  tableNumber     Int
+  establishmentId String
+  status          String   @default("pending")
+  paymentMethod   String?
+  createdAt       DateTime @default(now())
+  resolvedAt      DateTime?
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId, status])
 }

@@ -96,6 +96,8 @@ export function MesaPage({ establishment: est, tableNumber }: Props) {
   const [discountAmount, setDiscountAmount] = useState("")
   const [orderNotes, setOrderNotes] = useState("")
   const [showNotes, setShowNotes] = useState(false)
+  const [paymentRequested, setPaymentRequested] = useState(false)
+  const [requestingPayment, setRequestingPayment] = useState(false)
 
   const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0)
 
@@ -188,6 +190,19 @@ export function MesaPage({ establishment: est, tableNumber }: Props) {
       }
     } catch {}
     setSending(false)
+  }
+
+  async function requestPayment() {
+    setRequestingPayment(true)
+    try {
+      const res = await fetch("/api/payment-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tableNumber, establishmentId: est.id }),
+      })
+      if (res.ok) setPaymentRequested(true)
+    } catch {}
+    setRequestingPayment(false)
   }
 
   async function generatePix(amount: number, description: string) {
@@ -294,10 +309,23 @@ export function MesaPage({ establishment: est, tableNumber }: Props) {
               Aberto — {formatCurrency(tableStatus.totalPending)}
             </span>
           )}
-          <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-green-700 active:scale-95">
-            <Banknote className="h-4 w-4" />
-            Pedir a Conta
-          </button>
+          {tableStatus && tableStatus.totalPending > 0 && (
+            <button onClick={() => { setPayMethod("pix"); setShowPaymentModal(true) }} className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-green-700 active:scale-95">
+              <QrCode className="h-4 w-4" />
+              Pagar com Pix
+            </button>
+          )}
+          {paymentRequested ? (
+            <span className="flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-3 text-sm font-bold text-white">
+              <Clock className="h-4 w-4 animate-pulse" />
+              Aguardando atendente...
+            </span>
+          ) : (
+            <button onClick={requestPayment} disabled={requestingPayment || !tableStatus || tableStatus.totalPending <= 0} className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-green-700 active:scale-95 disabled:opacity-50">
+              {requestingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-4 w-4" />}
+              Pedir a Conta
+            </button>
+          )}
           <button onClick={() => setDarkMode(!darkMode)} className={`rounded-xl p-3 transition-colors ${darkMode ? "bg-zinc-800 hover:bg-zinc-700" : "bg-zinc-100 hover:bg-zinc-200"}`}>
             {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>

@@ -6,14 +6,14 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "PedeFácil - Cardápio Digital",
+  title: "FlowOS - Cardápio Digital",
   description: "Sistema de pedidos online para seu estabelecimento",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "PedeFácil" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "FlowOS" },
 }
 
 export const viewport: Viewport = {
-  themeColor: "#FF6B35",
+  themeColor: "#1E7BFF",
 }
 
 export default function RootLayout({

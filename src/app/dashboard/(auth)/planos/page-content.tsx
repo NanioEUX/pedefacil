@@ -147,7 +147,7 @@ export default function PlanosPageContent() {
             </div>
             <h1 className="text-2xl font-bold text-zinc-900">Assinatura expirada</h1>
             <p className="mt-2 text-zinc-500">
-              Seu período de teste ou assinatura expirou. Escolha um plano para continuar usando o PedeFácil.
+              Seu período de teste ou assinatura expirou. Escolha um plano para continuar usando o FlowOS.
             </p>
           </>
         ) : isActive ? (
