@@ -27,6 +27,7 @@ interface Establishment {
   slug: string
   phone: string
   logo: string | null
+  description: string | null
   cover: string | null
   primaryColor: string
   backgroundColor: string
