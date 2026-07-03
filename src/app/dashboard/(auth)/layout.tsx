@@ -190,8 +190,8 @@ export default function DashboardLayout({
               >
                 <item.icon className="h-[18px] w-[18px]" />
                 {item.label}
-                {alertLevel === "danger" && <span className="ml-auto h-2 w-2 rounded-full bg-red-400 flex-shrink-0" />}
-                {alertLevel === "warning" && <span className="ml-auto h-2 w-2 rounded-full bg-yellow-400 flex-shrink-0" />}
+                {alertLevel === "danger" && <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white flex-shrink-0">Atenção</span>}
+                {alertLevel === "warning" && <span className="ml-auto rounded-full bg-yellow-400 px-1.5 py-0.5 text-[9px] font-bold text-white flex-shrink-0">Atenção</span>}
               </Link>
             )
           })}
@@ -230,8 +230,8 @@ export default function DashboardLayout({
               >
                 <Landmark className="h-[18px] w-[18px]" />
                 Financeiro
-                {expenseAlert === "danger" && <span className="h-2 w-2 rounded-full bg-red-400 flex-shrink-0" />}
-                {expenseAlert === "warning" && <span className="h-2 w-2 rounded-full bg-yellow-400 flex-shrink-0" />}
+                {expenseAlert === "danger" && <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white flex-shrink-0">Atenção</span>}
+                {expenseAlert === "warning" && <span className="rounded-full bg-yellow-400 px-1.5 py-0.5 text-[9px] font-bold text-white flex-shrink-0">Atenção</span>}
                 {financeiroOpen ? <ChevronDown className="ml-auto h-4 w-4" /> : <ChevronRight className="ml-auto h-4 w-4" />}
               </button>
               {financeiroOpen && (
