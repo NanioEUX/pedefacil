@@ -731,7 +731,15 @@ export default function CaixaPOSPage() {
       if (!orderData) {
         console.error("Pedido criado mas dados não retornados:", data)
         alert("Pedido registrado, mas houve um erro ao exibir. Atualize a página.")
-        loadData(establishmentId)
+      loadData(establishmentId)
+      window.dispatchEvent(new Event("stock-updated"))
+
+      if (data.lowStockItems && data.lowStockItems.length > 0) {
+        const names = data.lowStockItems.map((i: any) => `${i.name} (${i.quantity <= 0 ? "zerado" : i.quantity + " " + (i.quantity === 1 ? "un" : "un")})`).join(", ")
+        setTimeout(() => {
+          toast(`Estoque baixo: ${names}`, "warning")
+        }, 3000)
+      }
         setCart([])
         if (!isMesa) setActiveTable(null)
         return

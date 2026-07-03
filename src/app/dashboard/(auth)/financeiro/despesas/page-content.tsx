@@ -240,10 +240,10 @@ export default function DespesasPage() {
       if (linkToCash && cashRegister) payload.cashRegisterId = cashRegister.id
       if (editingId) {
         const res = await fetchAuth(`/api/expenses/${editingId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        if (res.ok) { toast("Despesa atualizada", "success") } else { toast("Erro ao atualizar", "error") }
+        if (res.ok) { toast("Despesa atualizada", "success"); window.dispatchEvent(new Event("expenses-updated")) } else { toast("Erro ao atualizar", "error") }
       } else {
         const res = await fetchAuth("/api/expenses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        if (res.ok) { const r = await res.json(); toast(`${r.count || 1} despesa(s) criada(s)`, "success") } else { toast("Erro ao criar", "error") }
+        if (res.ok) { const r = await res.json(); toast(`${r.count || 1} despesa(s) criada(s)`, "success"); window.dispatchEvent(new Event("expenses-updated")) } else { toast("Erro ao criar", "error") }
       }
       // Reload
       const params = new URLSearchParams({ establishmentId: establishmentId! })
@@ -255,7 +255,7 @@ export default function DespesasPage() {
 
   async function handleDelete() {
     const res = await fetchAuth(`/api/expenses/${confirmDelete.id}`, { method: "DELETE" })
-    if (res.ok) { setExpenses(expenses.filter((e) => e.id !== confirmDelete.id)); toast("Despesa excluída", "success") }
+    if (res.ok) { setExpenses(expenses.filter((e) => e.id !== confirmDelete.id)); toast("Despesa excluída", "success"); window.dispatchEvent(new Event("expenses-updated")) }
   }
 
   function exportCSV() {

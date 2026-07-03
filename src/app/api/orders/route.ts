@@ -152,6 +152,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Decrement stock for products
+    const lowStockItems: { name: string; quantity: number; minQuantity: number }[] = []
     try {
       const parsedItems = typeof items === "string" ? JSON.parse(items) : items
       for (const item of parsedItems) {
@@ -161,10 +162,11 @@ export async function POST(req: NextRequest) {
           // Direct sale: product linked to a stock item
           if (product?.stockItemId) {
             const stockItem = await prisma.stockItem.findUnique({ where: { id: product.stockItemId } })
-            if (stockItem && stockItem.quantity >= item.quantity) {
+            if (stockItem) {
+              const newQty = stockItem.quantity - item.quantity
               await prisma.stockItem.update({
                 where: { id: product.stockItemId },
-                data: { quantity: stockItem.quantity - item.quantity },
+                data: { quantity: newQty },
               })
               await prisma.stockMovement.create({
                 data: {
@@ -174,6 +176,9 @@ export async function POST(req: NextRequest) {
                   itemId: product.stockItemId,
                 },
               })
+              if (stockItem.minQuantity > 0 && newQty <= stockItem.minQuantity) {
+                lowStockItems.push({ name: stockItem.name, quantity: newQty, minQuantity: stockItem.minQuantity })
+              }
             }
           }
 
@@ -182,10 +187,11 @@ export async function POST(req: NextRequest) {
           for (const link of links) {
             const deduction = link.quantity * item.quantity
             const stockItem = await prisma.stockItem.findUnique({ where: { id: link.stockItemId } })
-            if (stockItem && stockItem.quantity >= deduction) {
+            if (stockItem) {
+              const newQty = stockItem.quantity - deduction
               await prisma.stockItem.update({
                 where: { id: link.stockItemId },
-                data: { quantity: stockItem.quantity - deduction },
+                data: { quantity: newQty },
               })
               await prisma.stockMovement.create({
                 data: {
@@ -195,6 +201,9 @@ export async function POST(req: NextRequest) {
                   itemId: link.stockItemId,
                 },
               })
+              if (stockItem.minQuantity > 0 && newQty <= stockItem.minQuantity && !lowStockItems.find((l) => l.name === stockItem.name)) {
+                lowStockItems.push({ name: stockItem.name, quantity: newQty, minQuantity: stockItem.minQuantity })
+              }
             }
           }
         }
@@ -203,7 +212,7 @@ export async function POST(req: NextRequest) {
       console.error("Error decrementing stock:", e)
     }
 
-    return NextResponse.json({ order: fullOrder, paymentLink, trackingUrl: `/pedido/${trackingToken}` })
+    return NextResponse.json({ order: fullOrder, paymentLink, trackingUrl: `/pedido/${trackingToken}`, lowStockItems })
   } catch (error) {
     console.error(error)
     return NextResponse.json({ error: "Erro ao criar pedido" }, { status: 500 })

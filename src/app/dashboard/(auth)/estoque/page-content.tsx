@@ -96,6 +96,7 @@ export default function EstoquePage() {
     setEditingItem(null)
     setShowItemForm(false)
     loadAll()
+    window.dispatchEvent(new Event("stock-updated"))
   }
 
   function editItem(item: any) {
@@ -118,7 +119,7 @@ export default function EstoquePage() {
 
   async function confirmDeleteItem() {
     await fetchAuth(`/api/stock/${deleteConfirm.id}`, { method: "DELETE" })
-    toast("Item removido com sucesso", "success")
+    toast("Item removido com sucesso", "success"); window.dispatchEvent(new Event("stock-updated"))
     setDeleteConfirm({ open: false, id: "", name: "" })
     loadAll()
   }
@@ -149,7 +150,7 @@ export default function EstoquePage() {
       }),
     })
     if (res.ok) {
-      toast("Movimentação registrada", "success")
+      toast("Movimentação registrada", "success"); window.dispatchEvent(new Event("stock-updated"))
     } else {
       const data = await res.json()
       toast(data.error || "Erro ao registrar movimentação", "error")

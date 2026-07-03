@@ -57,6 +57,8 @@ export default function DashboardLayout({
   const [establishment, setEstablishment] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<UserData | null>(null)
+  const [expenseAlert, setExpenseAlert] = useState<"none" | "warning" | "danger">("none")
+  const [stockAlert, setStockAlert] = useState<"none" | "warning" | "danger">("none")
 
   useEffect(() => {
     const stored = localStorage.getItem("pedefacil-user")
@@ -93,6 +95,26 @@ export default function DashboardLayout({
       .catch(() => router.replace("/login"))
       .finally(() => setLoading(false))
   }, [router, pathname])
+
+  useEffect(() => {
+    if (!user?.establishmentId) return
+    function loadAlerts() {
+      fetchAuth(`/api/alerts?establishmentId=${user!.establishmentId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setExpenseAlert(data.expenseAlert || "none")
+          setStockAlert(data.stockAlert || "none")
+        })
+        .catch(() => {})
+    }
+    loadAlerts()
+    window.addEventListener("expenses-updated", loadAlerts)
+    window.addEventListener("stock-updated", loadAlerts)
+    return () => {
+      window.removeEventListener("expenses-updated", loadAlerts)
+      window.removeEventListener("stock-updated", loadAlerts)
+    }
+  }, [user?.establishmentId])
 
   const navItems = mainNavItems.filter((item) => user?.role === "admin" || user?.permissions?.includes(item.perm))
   const mobileNavItems = navItems.slice(0, 5)
@@ -154,20 +176,25 @@ export default function DashboardLayout({
         </div>
 
         <nav className="relative p-3 space-y-0.5">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                "sidebar-item",
-                pathname === item.href ? "active" : ""
-              )}
-            >
-              <item.icon className="h-[18px] w-[18px]" />
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const alertLevel = item.perm === "estoque" ? stockAlert : "none"
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "sidebar-item",
+                  pathname === item.href ? "active" : ""
+                )}
+              >
+                <item.icon className="h-[18px] w-[18px]" />
+                {item.label}
+                {alertLevel === "danger" && <span className="ml-auto h-2 w-2 rounded-full bg-red-400 flex-shrink-0" />}
+                {alertLevel === "warning" && <span className="ml-auto h-2 w-2 rounded-full bg-yellow-400 flex-shrink-0" />}
+              </Link>
+            )
+          })}
 
           {user?.permissions?.includes("caixa") && (
             <>
@@ -203,6 +230,8 @@ export default function DashboardLayout({
               >
                 <Landmark className="h-[18px] w-[18px]" />
                 Financeiro
+                {expenseAlert === "danger" && <span className="h-2 w-2 rounded-full bg-red-400 flex-shrink-0" />}
+                {expenseAlert === "warning" && <span className="h-2 w-2 rounded-full bg-yellow-400 flex-shrink-0" />}
                 {financeiroOpen ? <ChevronDown className="ml-auto h-4 w-4" /> : <ChevronRight className="ml-auto h-4 w-4" />}
               </button>
               {financeiroOpen && (
