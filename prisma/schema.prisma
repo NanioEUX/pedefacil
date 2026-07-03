@@ -330,6 +330,7 @@ model Expense {
   recurrenceFreq  String?
   receiptUrl      String?
   date            DateTime      @default(now())
+  dueDate         DateTime?
   cashRegisterId  String?
   establishmentId String
   createdAt       DateTime      @default(now())
