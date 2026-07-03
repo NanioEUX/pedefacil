@@ -67,7 +67,15 @@ export async function GET(req: NextRequest) {
     variavel: expenses.filter((e) => e.category === "variavel").reduce((sum, e) => sum + e.amount, 0),
     motoboy: expenses.filter((e) => e.category === "motoboy").reduce((sum, e) => sum + e.amount, 0),
     insumo: expenses.filter((e) => e.category === "insumo").reduce((sum, e) => sum + e.amount, 0),
-    outro: expenses.filter((e) => e.category === "outro").reduce((sum, e) => sum + e.amount, 0),
+    salario: expenses.filter((e) => e.category === "salario").reduce((sum, e) => sum + e.amount, 0),
+    aluguel: expenses.filter((e) => e.category === "aluguel").reduce((sum, e) => sum + e.amount, 0),
+    energia: expenses.filter((e) => e.category === "energia").reduce((sum, e) => sum + e.amount, 0),
+    agua: expenses.filter((e) => e.category === "agua").reduce((sum, e) => sum + e.amount, 0),
+    internet: expenses.filter((e) => e.category === "internet").reduce((sum, e) => sum + e.amount, 0),
+    imposto: expenses.filter((e) => e.category === "imposto").reduce((sum, e) => sum + e.amount, 0),
+    manutencao: expenses.filter((e) => e.category === "manutencao").reduce((sum, e) => sum + e.amount, 0),
+    marketing: expenses.filter((e) => e.category === "marketing").reduce((sum, e) => sum + e.amount, 0),
+    outro: expenses.filter((e) => !["fixa","variavel","motoboy","insumo","salario","aluguel","energia","agua","internet","imposto","manutencao","marketing"].includes(e.category)).reduce((sum, e) => sum + e.amount, 0),
   }
   const totalExpenses = Object.values(expensesByCategory).reduce((sum, v) => sum + v, 0)
 

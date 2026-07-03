@@ -125,6 +125,14 @@ export default function FinanceiroPage() {
                 { label: "Variáveis", value: b.expensesByCategory.variavel },
                 { label: "Motoboy", value: b.expensesByCategory.motoboy },
                 { label: "Insumos", value: b.expensesByCategory.insumo },
+                { label: "Salários", value: b.expensesByCategory.salario },
+                { label: "Aluguel", value: b.expensesByCategory.aluguel },
+                { label: "Energia", value: b.expensesByCategory.energia },
+                { label: "Água", value: b.expensesByCategory.agua },
+                { label: "Internet", value: b.expensesByCategory.internet },
+                { label: "Impostos", value: b.expensesByCategory.imposto },
+                { label: "Manutenção", value: b.expensesByCategory.manutencao },
+                { label: "Marketing", value: b.expensesByCategory.marketing },
                 { label: "Outros", value: b.expensesByCategory.outro },
               ].filter((c) => c.value > 0).map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
