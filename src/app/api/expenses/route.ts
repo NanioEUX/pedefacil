@@ -15,9 +15,14 @@ export async function GET(req: NextRequest) {
 
   const where: any = { establishmentId }
   if (from || to) {
-    where.date = {}
-    if (from) where.date.gte = new Date(from)
-    if (to) where.date.lte = new Date(to + "T23:59:59")
+    const dateFilter: any = {}
+    if (from) dateFilter.gte = new Date(from)
+    if (to) dateFilter.lte = new Date(to + "T23:59:59")
+    where.OR = [
+      { type: "lancamento", date: dateFilter },
+      { type: "agendada", dueDate: dateFilter },
+      { type: "recorrente", recurrenceStart: dateFilter },
+    ]
   }
   if (category && category !== "all") where.category = category
   if (paymentMethod && paymentMethod !== "all") where.paymentMethod = paymentMethod
