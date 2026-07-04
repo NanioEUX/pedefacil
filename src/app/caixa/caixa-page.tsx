@@ -1049,12 +1049,12 @@ export default function CaixaPOSPage() {
             onClick={() => setActiveTab("caixa")}
             className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
               activeTab === "caixa"
-                ? "border-b-2 border-green-500 text-green-500"
-                : darkMode ? "text-white/50 hover:text-white/90" : "text-white/40 hover:text-zinc-700"
+                ? "border-b-2 border-green-500 text-green-600"
+                : darkMode ? "text-white/50 hover:text-white/90" : "text-zinc-500 hover:text-zinc-700"
             }`}
           >
             <div className="flex items-center justify-center gap-1.5">
-              <ShoppingBag className="h-4 w-4" />
+              <ShoppingBag className="h-5 w-5" />
               Caixa
             </div>
           </button>
@@ -1062,12 +1062,12 @@ export default function CaixaPOSPage() {
             onClick={() => setActiveTab("mesas")}
             className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
               activeTab === "mesas"
-                ? "border-b-2 border-green-500 text-green-500"
-                : darkMode ? "text-white/50 hover:text-white/90" : "text-white/40 hover:text-zinc-700"
+                ? "border-b-2 border-green-500 text-green-600"
+                : darkMode ? "text-white/50 hover:text-white/90" : "text-zinc-500 hover:text-zinc-700"
             }`}
           >
             <div className="flex items-center justify-center gap-1.5">
-              <Users className="h-4 w-4" />
+              <Users className="h-5 w-5" />
               Mesas
               {paymentRequests.length > 0 && (
                 <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -1081,12 +1081,12 @@ export default function CaixaPOSPage() {
               onClick={() => setActiveTab("balcao")}
               className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === "balcao"
-                  ? "border-b-2 border-green-500 text-green-500"
-                  : darkMode ? "text-white/50 hover:text-white/90" : "text-white/40 hover:text-zinc-700"
+                  ? "border-b-2 border-green-500 text-green-600"
+                  : darkMode ? "text-white/50 hover:text-white/90" : "text-zinc-500 hover:text-zinc-700"
               }`}
             >
               <div className="flex items-center justify-center gap-1.5">
-                <Store className="h-4 w-4" />
+                <Store className="h-5 w-5" />
                 Pedidos Balcão
                 {balcaoReadyCount > 0 && (
                   <span className="ml-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white animate-pulse">
@@ -1101,12 +1101,12 @@ export default function CaixaPOSPage() {
               onClick={() => setActiveTab("pedidos")}
               className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === "pedidos"
-                  ? "border-b-2 border-green-500 text-green-500"
-                  : darkMode ? "text-white/50 hover:text-white/90" : "text-white/40 hover:text-zinc-700"
+                  ? "border-b-2 border-green-500 text-green-600"
+                  : darkMode ? "text-white/50 hover:text-white/90" : "text-zinc-500 hover:text-zinc-700"
               }`}
             >
               <div className="flex items-center justify-center gap-1.5">
-                <Package className="h-4 w-4" />
+                <Package className="h-5 w-5" />
                 Pedidos Externos
                 {externalOrders.length > 0 && (
                   <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
@@ -1190,17 +1190,17 @@ export default function CaixaPOSPage() {
                   </button>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7">
                 {filteredProducts.map((product) => (
                   <button
                     key={product.id}
                     onClick={() => addToCart(product)}
-                    className={`flex flex-col items-center rounded-xl border p-3 transition-all hover:border-green-400 hover:shadow-md active:scale-95 ${darkMode ? "border-white/[.1] bg-[#1a3a5c]" : "border-zinc-200 bg-white"}`}
-                  >
-                    {product.image ? (
-                      <img src={product.image} alt={product.name} className="mb-2 h-14 w-14 rounded-lg object-cover" />
-                    ) : (
-                      <div className={`mb-2 flex h-14 w-14 items-center justify-center rounded-lg text-2xl ${darkMode ? "bg-[#1a3a5c]" : "bg-zinc-100"}`}>🍕</div>
+                  className={`flex flex-col items-center rounded-xl border p-3 transition-all hover:border-green-400 hover:shadow-md active:scale-95 ${darkMode ? "border-white/[.1] bg-[#1a3a5c]" : "border-zinc-200 bg-white"}`}
+                >
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="mb-2 h-16 w-16 rounded-lg object-cover" />
+                  ) : (
+                    <div className={`mb-2 flex h-16 w-16 items-center justify-center rounded-lg text-2xl ${darkMode ? "bg-[#1a3a5c]" : "bg-zinc-100"}`}>🍕</div>
                     )}
                     <p className={`w-full truncate text-center text-xs font-medium ${darkMode ? "text-white/90" : "text-zinc-800"}`}>{product.name}</p>
                     <p className="text-xs font-bold text-green-600">{formatCurrency(product.price)}</p>
@@ -1227,7 +1227,7 @@ export default function CaixaPOSPage() {
                   <h2 className={`text-sm font-semibold ${
                     activeTable
                       ? darkMode ? "text-amber-200" : "text-amber-700"
-                      : darkMode ? "text-blue-200" : "text-blue-700"
+                      : darkMode ? "text-green-200" : "text-green-700"
                   }`}>
                     {activeTable ? `Mesa ${activeTable}` : "Venda Balcão"}
                   </h2>
