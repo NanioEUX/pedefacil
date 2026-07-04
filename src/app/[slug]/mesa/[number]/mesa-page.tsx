@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Minus, Plus, X, ShoppingBag, CheckCircle, Loader2, Sun, Moon, Banknote, QrCode, Users, MinusCircle, Clock, UtensilsCrossed, ChevronDown, MessageSquare, CreditCard } from "lucide-react"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { formatCurrency } from "@/lib/utils"
 import type { CartItem } from "@/types"
 import QRCode from "qrcode"
@@ -99,6 +100,7 @@ export function MesaPage({ establishment: est, tableNumber }: Props) {
   const [showNotes, setShowNotes] = useState(false)
   const [paymentRequested, setPaymentRequested] = useState(false)
   const [requestingPayment, setRequestingPayment] = useState(false)
+  const [showConfirmBill, setShowConfirmBill] = useState(false)
   const [partialPaid, setPartialPaid] = useState(0)
 
   const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0)
@@ -337,7 +339,7 @@ export function MesaPage({ establishment: est, tableNumber }: Props) {
               Aguardando atendente...
             </span>
           ) : (
-            <button onClick={requestPayment} disabled={requestingPayment || !tableStatus || tableStatus.totalPending <= 0} className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-green-700 active:scale-95 disabled:opacity-50">
+            <button onClick={() => setShowConfirmBill(true)} disabled={requestingPayment || !tableStatus || tableStatus.totalPending <= 0} className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-green-700 active:scale-95 disabled:opacity-50">
               {requestingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-4 w-4" />}
               Pedir a Conta
             </button>
@@ -721,6 +723,16 @@ export function MesaPage({ establishment: est, tableNumber }: Props) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showConfirmBill}
+        title="Pedir a Conta"
+        message="Deseja solicitar a conta? Um atendente será notificado."
+        confirmLabel="Sim, pedir conta"
+        variant="warning"
+        onConfirm={() => { setShowConfirmBill(false); requestPayment() }}
+        onCancel={() => setShowConfirmBill(false)}
+      />
     </div>
   )
 }

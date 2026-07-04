@@ -1208,42 +1208,6 @@ export default function CaixaPOSPage() {
                 </button>
               </div>
 
-              {/* Payment Requests */}
-              {paymentRequests.length > 0 && (
-                <div className="mb-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 dark:border-amber-600 dark:bg-amber-950">
-                  <div className="mb-2 flex items-center gap-2">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white animate-pulse">{paymentRequests.length}</div>
-                    <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Mesa(s) pedindo a conta</p>
-                  </div>
-                  <div className="space-y-2">
-                    {paymentRequests.map((req: any) => (
-                      <div key={req.tableNumber} className="flex items-center justify-between rounded-lg bg-white p-2.5 dark:bg-[#1a3a5c]">
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-sm font-extrabold text-amber-700 dark:bg-amber-900 dark:text-amber-300">{req.tableNumber}</span>
-                          <div>
-                            <p className="text-xs font-bold">Mesa {req.tableNumber}</p>
-                            <p className="text-[10px] text-white/40">{req.orders.length} pedido(s) • {formatTime(req.requestedAt)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-extrabold text-amber-600">{formatCurrency(req.total)}</span>
-                          <button
-                            onClick={() => {
-                              setClosingTableNumber(req.tableNumber)
-                              setClosingTableCart(req.orders.flatMap((o: any) => { try { return typeof o.items === "string" ? JSON.parse(o.items) : o.items } catch { return [] } }))
-                              setClosingTableModal(true)
-                            }}
-                            className="rounded-lg bg-green-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-green-700 active:scale-95"
-                          >
-                            Atender
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Tables */}
               <div className="mt-3">
                 <div className="mb-1.5 flex items-center justify-between">
@@ -1268,12 +1232,15 @@ export default function CaixaPOSPage() {
                     const remaining = total - partialPaid
                     const isFullyPaid = total > 0 && remaining <= 0.01
                     const isOccupied = total > 0 || committedCartTotal > 0
+                    const hasBillRequest = paymentRequests.some((r: any) => r.tableNumber === num)
 
                     return (
                       <div
                         key={num}
                         className={`relative flex flex-col rounded-xl border-2 transition-all cursor-pointer overflow-hidden ${
-                          isActive
+                          hasBillRequest
+                            ? "border-amber-400 bg-amber-50 shadow-md dark:border-amber-500 dark:bg-amber-950 animate-pulse"
+                            : isActive
                             ? "border-green-500 bg-green-50 shadow-lg dark:border-green-400 dark:bg-green-950"
                             : isFullyPaid
                             ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950"
@@ -1286,11 +1253,14 @@ export default function CaixaPOSPage() {
                         {/* Table info area */}
                         <div className="flex flex-1 flex-col items-center justify-center py-2 px-1">
                           <span className={`text-xl font-bold leading-none ${
-                            isActive ? "text-green-700 dark:text-green-300"
+                            hasBillRequest ? "text-amber-700 dark:text-amber-300"
+                            : isActive ? "text-green-700 dark:text-green-300"
                             : isOccupied ? "text-amber-700 dark:text-amber-300"
                             : darkMode ? "text-white/50" : "text-white/50"
                           }`}>{num}</span>
-                          {isOccupied && total > 0 ? (
+                          {hasBillRequest ? (
+                            <span className="text-[9px] font-bold mt-0.5 text-amber-600 dark:text-amber-400">Pediu a conta</span>
+                          ) : isOccupied && total > 0 ? (
                             <span className={`text-[10px] font-medium mt-0.5 ${isFullyPaid ? "text-green-600" : "text-amber-600 dark:text-amber-400"}`}>
                               {isFullyPaid ? "Paga" : formatCurrency(total)}
                             </span>
