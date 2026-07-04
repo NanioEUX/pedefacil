@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { fetchAuth } from "@/lib/fetch-auth"
 import { useToast } from "@/components/toast"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { SearchableSelect } from "@/components/searchable-select"
 
 interface Coupon {
   id: string
@@ -159,14 +160,15 @@ export default function CuponsPage() {
               </div>
               <div>
                 <label className="text-xs text-zinc-500">Tipo</label>
-                <select
+                <SearchableSelect
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                >
-                  <option value="percent">Percentual (%)</option>
-                  <option value="fixed">Fixo (R$)</option>
-                </select>
+                  onChange={(v) => setForm({ ...form, type: v })}
+                  options={[
+                    { value: "percent", label: "Percentual (%)" },
+                    { value: "fixed", label: "Fixo (R$)" },
+                  ]}
+                  placeholder="Selecionar..."
+                />
               </div>
               <div>
                 <label className="text-xs text-zinc-500">Valor</label>

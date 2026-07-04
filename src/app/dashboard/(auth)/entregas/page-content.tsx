@@ -11,6 +11,7 @@ import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
 import { useToast } from "@/components/toast"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { SearchableSelect } from "@/components/searchable-select"
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
@@ -520,17 +521,12 @@ function OrderRow({ order, deliveryPeople, onReassign, onCancel }: { order: any;
         <p className="text-xs text-zinc-500 mt-0.5">{formatCurrency(order.total)}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0 ml-3">
-        <select
+        <SearchableSelect
           value={order.deliveryPersonId || ""}
-          onChange={(e) => onReassign(order.id, e.target.value)}
-          disabled={isLocked}
-          className="rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <option value="">Sem motoboy</option>
-          {deliveryPeople.map((p: any) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+          onChange={(id) => onReassign(order.id, id)}
+          options={[{ value: "", label: "Sem motoboy" }, ...deliveryPeople.map((p: any) => ({ value: p.id, label: p.name }))]}
+          placeholder="Motoboy..."
+        />
         <button
           onClick={() => onCancel(order.id)}
           disabled={isLocked}

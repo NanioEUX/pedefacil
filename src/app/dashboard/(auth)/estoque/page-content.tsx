@@ -415,16 +415,11 @@ export default function EstoquePage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-700">Unidade</label>
-                    <select value={itemForm.unit} onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })} className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm">
-                      {units.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
-                    </select>
+                    <SearchableSelect value={itemForm.unit} onChange={(v) => setItemForm({ ...itemForm, unit: v })} options={units} placeholder="Selecionar..." />
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-700">Categoria</label>
-                    <select value={itemForm.categoryId} onChange={(e) => setItemForm({ ...itemForm, categoryId: e.target.value })} className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm">
-                      <option value="">Selecionar...</option>
-                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                    <SearchableSelect value={itemForm.categoryId} onChange={(v) => setItemForm({ ...itemForm, categoryId: v })} options={[{ value: "", label: "Selecionar..." }, ...categories.map((c) => ({ value: c.id, label: c.name }))]} placeholder="Selecionar..." />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -526,10 +521,7 @@ export default function EstoquePage() {
               <div className="space-y-3">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-zinc-700">Item</label>
-                  <select value={movementForm.itemId} onChange={(e) => setMovementForm({ ...movementForm, itemId: e.target.value })} className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm">
-                    <option value="">Selecionar item...</option>
-                    {items.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.quantity} {i.unit})</option>)}
-                  </select>
+                  <SearchableSelect value={movementForm.itemId} onChange={(v) => setMovementForm({ ...movementForm, itemId: v })} options={items.map((i) => ({ value: i.id, label: `${i.name} (${i.quantity} ${i.unit})` }))} placeholder="Selecionar item..." />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setMovementForm({ ...movementForm, movementType: "entry" })} className={`flex-1 flex items-center justify-center gap-2 rounded-lg border p-3 text-sm font-medium transition-colors ${movementForm.movementType === "entry" ? "border-green-600 bg-green-600/10 text-green-600" : "border-zinc-200 text-zinc-400"}`}>

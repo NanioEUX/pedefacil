@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 
 import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
+import { SearchableSelect } from "@/components/searchable-select"
 
 interface CashRegister {
   id: string
@@ -307,13 +308,18 @@ export default function CaixaFinanceiroPage() {
             </div>
             <input placeholder="Descrição" value={expenseForm.description} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })} className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none" />
             <input type="number" placeholder="Valor (R$)" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none" />
-            <select value={expenseForm.category} onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm">
-              <option value="fixa">Fixa</option>
-              <option value="variavel">Variável</option>
-              <option value="motoboy">Motoboy</option>
-              <option value="insumo">Insumo</option>
-              <option value="outro">Outro</option>
-            </select>
+            <SearchableSelect
+              value={expenseForm.category}
+              onChange={(v) => setExpenseForm({ ...expenseForm, category: v })}
+              options={[
+                { value: "fixa", label: "Fixa" },
+                { value: "variavel", label: "Variável" },
+                { value: "motoboy", label: "Motoboy" },
+                { value: "insumo", label: "Insumo" },
+                { value: "outro", label: "Outro" },
+              ]}
+              placeholder="Categoria..."
+            />
             <Button onClick={addExpense} disabled={saving} className="bg-red-600 hover:bg-red-700">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Registrar"}
             </Button>
@@ -342,16 +348,12 @@ export default function CaixaFinanceiroPage() {
               onChange={(e) => setTransferAmount(e.target.value)}
               className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
             />
-            <select
+            <SearchableSelect
               value={transferToUser}
-              onChange={(e) => setTransferToUser(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-            >
-              <option value="">Selecione o atendente</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
+              onChange={setTransferToUser}
+              options={[{ value: "", label: "Selecione o atendente" }, ...users.map((u) => ({ value: u.id, label: u.name }))]}
+              placeholder="Selecione o atendente"
+            />
             <input
               placeholder="Observações (opcional)"
               value={transferNotes}

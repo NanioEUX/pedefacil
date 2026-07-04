@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { fetchAuth } from "@/lib/fetch-auth"
 import { formatCurrency } from "@/lib/utils"
+import { SearchableSelect } from "@/components/searchable-select"
 
 export default function FidelidadePageContent() {
   const searchParams = useSearchParams()
@@ -162,16 +163,12 @@ export default function FidelidadePageContent() {
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-700">Produto para resgate</label>
-                    <select
+                    <SearchableSelect
                       value={loyaltyConfig.redeemProductId || ""}
-                      onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, redeemProductId: e.target.value })}
-                      className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
-                    >
-                      <option value="">Selecionar produto...</option>
-                      {allProducts.map((p: any) => (
-                        <option key={p.id} value={p.id}>{p.name} ({formatCurrency(p.price)})</option>
-                      ))}
-                    </select>
+                      onChange={(v) => setLoyaltyConfig({ ...loyaltyConfig, redeemProductId: v })}
+                      options={[{ value: "", label: "Selecionar produto..." }, ...allProducts.map((p: any) => ({ value: p.id, label: `${p.name} (${formatCurrency(p.price)})` }))]}
+                      placeholder="Selecionar produto..."
+                    />
                   </div>
                 </div>
               )}

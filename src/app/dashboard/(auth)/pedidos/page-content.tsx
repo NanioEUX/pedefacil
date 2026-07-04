@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 
 import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
+import { SearchableSelect } from "@/components/searchable-select"
 
 const statusLabels: Record<string, string> = {
   new: "Novo",
@@ -243,19 +244,20 @@ export default function PedidosPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-zinc-400">Status:</span>
-          <select
+          <SearchableSelect
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg border border-zinc-300 px-2 py-1 text-xs font-medium focus:border-green-600 focus:outline-none"
-          >
-            <option value="all">Todos</option>
-            <option value="pending">Pendente</option>
-            <option value="preparing">Preparando</option>
-            <option value="ready">Pronto</option>
-            <option value="out_for_delivery">Em entrega</option>
-            <option value="delivered">Entregue</option>
-            <option value="cancelled">Cancelado</option>
-          </select>
+            onChange={setFilterStatus}
+            options={[
+              { value: "all", label: "Todos" },
+              { value: "pending", label: "Pendente" },
+              { value: "preparing", label: "Preparando" },
+              { value: "ready", label: "Pronto" },
+              { value: "out_for_delivery", label: "Em entrega" },
+              { value: "delivered", label: "Entregue" },
+              { value: "cancelled", label: "Cancelado" },
+            ]}
+            placeholder="Status..."
+          />
         </div>
       </div>
 
@@ -645,21 +647,15 @@ win.close()
             {!isPresencial && (
               <div className="mt-2 flex items-center gap-2">
                 <Bike className="h-3 w-3 text-zinc-400" />
-                <select
+                <SearchableSelect
                   value={order.deliveryPersonId || ""}
-                  onChange={(e) => {
-                    const id = e.target.value
+                  onChange={(id) => {
                     const person = deliveryPeople.find((p: any) => p.id === id)
                     onUpdateDelivery(order.id, id, person?.name || "")
-                }}
-                disabled={isLocked}
-                className="rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value=""></option>
-                {deliveryPeople.map((p: any) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+                  }}
+                  options={[{ value: "", label: "Sem entregador" }, ...deliveryPeople.map((p: any) => ({ value: p.id, label: p.name }))]}
+                  placeholder="Entregador..."
+                />
             </div>
             )}
           </div>
@@ -681,18 +677,16 @@ win.close()
                   </span>
                 )}
               </button>
-              <select
+              <SearchableSelect
                 value={isNewOrder ? "" : order.status}
-                onChange={(e) => onUpdateStatus(order.id, e.target.value)}
-                disabled={isLocked}
-                className="rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isNewOrder && <option value="" disabled>Selecionar status...</option>}
-                {selectableStatuses.map((key) => (
-                  <option key={key} value={key}>{statusLabels[key]}</option>
-                ))}
-                <option value="cancelled" disabled={isLocked}>Cancelar</option>
-              </select>
+                onChange={(val) => onUpdateStatus(order.id, val)}
+                options={[
+                  ...(isNewOrder ? [{ value: "", label: "Selecionar status..." }] : []),
+                  ...selectableStatuses.map((key) => ({ value: key, label: statusLabels[key] })),
+                  { value: "cancelled", label: "Cancelar" },
+                ]}
+                placeholder="Status..."
+              />
               {nextStatus && !isLocked && (
                 <Button size="sm" onClick={() => onUpdateStatus(order.id, nextStatus)}>
                   {nextLabel[order.status] || "Próximo"}
