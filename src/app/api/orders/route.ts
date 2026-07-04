@@ -78,14 +78,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create order with atomic orderNumber inside transaction
+    // Create order with atomic orderNumber using raw SQL (works with Vercel Postgres pooling)
     const order = await prisma.$transaction(async (tx) => {
-      const lastOrder = await tx.order.findFirst({
-        where: { establishmentId },
-        orderBy: { orderNumber: "desc" },
-        select: { orderNumber: true },
-      })
-      const orderNumber = (lastOrder?.orderNumber || 0) + 1
+      // Atomic: get next number in a single query
+      const result: any[] = await tx.$queryRawUnsafe(
+        `SELECT COALESCE(MAX("orderNumber"), 0) + 1 as next FROM "Order" WHERE "establishmentId" = $1`,
+        establishmentId
+      )
+      const orderNumber = Number(result[0]?.next || 1)
 
       return tx.order.create({
         data: {

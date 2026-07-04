@@ -168,6 +168,7 @@ model Order {
   establishment     Establishment   @relation(fields: [establishmentId], references: [id])
   messages          OrderMessage[]
 
+  @@unique([establishmentId, orderNumber])
   @@index([establishmentId, orderNumber])
 }
 
