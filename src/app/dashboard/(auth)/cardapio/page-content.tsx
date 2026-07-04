@@ -7,7 +7,7 @@ import { Plus, Pencil, Trash2, UtensilsCrossed, X, GripVertical, Star, Sparkles,
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
-import { Textarea } from "@/components/ui/textarea"
+
 import { formatCurrency } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { fetchAuth } from "@/lib/fetch-auth"
@@ -742,19 +742,23 @@ export default function CardapioPage() {
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-zinc-700">Mensagem de Retirada</label>
-                  <Textarea
+                  <textarea
                     placeholder="Vai ser um prazer recebê-lo. Estamos lhe aguardando!"
                     value={form.pickupMessage}
                     onChange={(e) => setForm({ ...form, pickupMessage: e.target.value })}
+                    rows={3}
+                    className="flex w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
                   />
                   <p className="mt-1 text-xs text-zinc-400">Mensagem exibida ao cliente ao finalizar um pedido de retirada</p>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-zinc-700">Mensagem de Entrega</label>
-                  <Textarea
+                  <textarea
                     placeholder="Obrigado pelo seu pedido!"
                     value={form.deliveryMessage}
                     onChange={(e) => setForm({ ...form, deliveryMessage: e.target.value })}
+                    rows={3}
+                    className="flex w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
                   />
                   <p className="mt-1 text-xs text-zinc-400">Mensagem exibida ao cliente ao finalizar um pedido de entrega</p>
                 </div>
@@ -1049,12 +1053,16 @@ export default function CardapioPage() {
                     className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
                   />
                 </div>
-                <Textarea
-                  label="Descrição"
-                  placeholder="Ex: Molho, mussarela, calabresa..."
-                  value={productForm.description}
-                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                />
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Descrição</label>
+                  <textarea
+                    placeholder="Ex: Molho, mussarela, calabresa..."
+                    value={productForm.description}
+                    onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                    rows={2}
+                    className="flex w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                  />
+                </div>
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-zinc-700">Preço</label>
                   <input

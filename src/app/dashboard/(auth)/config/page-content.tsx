@@ -185,7 +185,7 @@ export default function ConfigPage() {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Ex: Os melhores sorvetes da cidade!"
                 rows={2}
-                className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-green-600 focus:outline-none resize-none"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none resize-none"
               />
               <p className="text-xs text-zinc-400">Aparece no cardápio, mesa e frente de caixa</p>
             </div>
