@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { fetchAuth } from "@/lib/fetch-auth"
 import { useToast } from "@/components/toast"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { SearchableSelect } from "@/components/searchable-select"
 
 interface Product {
   id: string
@@ -1160,18 +1161,12 @@ export default function CardapioPage() {
                   <label className="mb-1 block text-sm font-medium text-zinc-700">
                     Vincular ao Estoque (venda direta)
                   </label>
-                  <select
+                  <SearchableSelect
                     value={productForm.stockItemId}
-                    onChange={(e) => setProductForm({ ...productForm, stockItemId: e.target.value })}
-                    className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 focus:border-green-600 focus:outline-none"
-                  >
-                    <option value="">Nenhum (sem controle de estoque)</option>
-                    {stockItems.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} ({item.quantity} {item.unit} disponível)
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setProductForm({ ...productForm, stockItemId: v })}
+                    options={[{ value: "", label: "Nenhum (sem controle de estoque)" }, ...stockItems.map((item) => ({ value: item.id, label: item.name, sub: `(${item.quantity} ${item.unit})` }))]}
+                    placeholder="Buscar item de estoque..."
+                  />
                   <p className="mt-1 text-xs text-zinc-400">
                     Selecione um item do estoque para debitar automaticamente ao vender
                   </p>
@@ -1185,46 +1180,51 @@ export default function CardapioPage() {
                   {stockItems.length === 0 ? (
                     <p className="text-xs text-zinc-400">Cadastre insumos no estoque primeiro</p>
                   ) : (
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {stockItems.map((item) => {
-                        const link = productLinks.find((l) => l.stockItemId === item.id)
-                        return (
-                          <div key={item.id} className="flex items-center gap-2">
-                            <label className="flex items-center gap-2 flex-1 text-sm text-zinc-700">
-                              <input
-                                type="checkbox"
-                                checked={!!link}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setProductLinks([...productLinks, { stockItemId: item.id, quantity: "1" }])
-                                  } else {
-                                    setProductLinks(productLinks.filter((l) => l.stockItemId !== item.id))
-                                  }
-                                }}
-                                className="rounded"
-                              />
-                              {item.name}
-                            </label>
-                            {link && (
-                              <input
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                value={link.quantity}
-                                onChange={(e) =>
-                                  setProductLinks(
-                                    productLinks.map((l) =>
-                                      l.stockItemId === item.id ? { ...l, quantity: e.target.value } : l
+                    <div className="space-y-2">
+                      {productLinks.length > 0 && (
+                        <div className="space-y-1.5">
+                          {productLinks.map((link) => {
+                            const item = stockItems.find((s) => s.id === link.stockItemId)
+                            if (!item) return null
+                            return (
+                              <div key={link.stockItemId} className="flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-1.5">
+                                <span className="flex-1 text-xs text-zinc-700">{item.name}</span>
+                                <input
+                                  type="number"
+                                  min="0.01"
+                                  step="0.01"
+                                  value={link.quantity}
+                                  onChange={(e) =>
+                                    setProductLinks(
+                                      productLinks.map((l) =>
+                                        l.stockItemId === link.stockItemId ? { ...l, quantity: e.target.value } : l
+                                      )
                                     )
-                                  )
-                                }
-                                className="flex h-10 w-20 items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
-                                placeholder="Qtd"
-                              />
-                            )}
-                          </div>
-                        )
-                      })}
+                                  }
+                                  className="h-7 w-16 rounded border border-zinc-200 bg-white px-1.5 text-xs text-center text-zinc-700 focus:border-green-600 focus:outline-none"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setProductLinks(productLinks.filter((l) => l.stockItemId !== link.stockItemId))}
+                                  className="text-zinc-400 hover:text-red-500"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                      <SearchableSelect
+                        value=""
+                        onChange={(v) => {
+                          if (v && !productLinks.find((l) => l.stockItemId === v)) {
+                            setProductLinks([...productLinks, { stockItemId: v, quantity: "1" }])
+                          }
+                        }}
+                        options={stockItems.filter((s) => !productLinks.find((l) => l.stockItemId === s.id)).map((item) => ({ value: item.id, label: item.name, sub: `(${item.quantity} ${item.unit})` }))}
+                        placeholder="Adicionar insumo..."
+                      />
                     </div>
                   )}
                 </div>

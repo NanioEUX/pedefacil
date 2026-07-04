@@ -12,6 +12,7 @@ import { formatCurrency } from "@/lib/utils"
 import { fetchAuth } from "@/lib/fetch-auth"
 import { useToast } from "@/components/toast"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { SearchableSelect } from "@/components/searchable-select"
 
 const units = [
   { value: "un", label: "Unidade" },
@@ -47,6 +48,8 @@ export default function EstoquePage() {
   const [products, setProducts] = useState<any[]>([])
   const [linkProductId, setLinkProductId] = useState("")
   const [linkQuantity, setLinkQuantity] = useState("1")
+  const [linkSearch, setLinkSearch] = useState("")
+  const [linkDropdownOpen, setLinkDropdownOpen] = useState(false)
 
   const [showMovementForm, setShowMovementForm] = useState(false)
   const [movementForm, setMovementForm] = useState({ itemId: "", movementType: "entry", quantity: "1", unitCost: "0", notes: "" })
@@ -115,9 +118,11 @@ export default function EstoquePage() {
     })
     setLinkProductId("")
     setLinkQuantity("1")
+    setLinkSearch("")
+    setLinkDropdownOpen(false)
     setShowItemForm(true)
     if (establishmentId) {
-      fetchAuth(`/api/products?establishmentId=${establishmentId}`).then((r) => r.json()).then((data) => setProducts(Array.isArray(data) ? data : [])).catch(() => setProducts([]))
+      fetchAuth(`/api/products?establishmentId=${establishmentId}&limit=15`).then((r) => r.json()).then((data) => setProducts(Array.isArray(data) ? data : [])).catch(() => setProducts([]))
     }
   }
 
@@ -485,13 +490,17 @@ export default function EstoquePage() {
                         ))}
                       </div>
                     )}
-                    <div className="flex gap-2">
-                      <select value={linkProductId} onChange={(e) => setLinkProductId(e.target.value)} className="flex-1 h-8 rounded-lg border border-zinc-200 bg-zinc-50 px-2 text-xs text-zinc-700 focus:border-green-600 focus:outline-none">
-                        <option value="">Selecionar produto...</option>
-                        {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                      <input type="number" min="0.01" step="0.01" value={linkQuantity} onChange={(e) => setLinkQuantity(e.target.value)} className="w-16 h-8 rounded-lg border border-zinc-200 bg-zinc-50 px-2 text-xs text-zinc-700 text-center focus:border-green-600 focus:outline-none" />
-                      <Button size="sm" onClick={linkProduct} disabled={!linkProductId || !linkQuantity} className="h-8 bg-green-600 hover:bg-green-700"><Plus className="h-3 w-3" /></Button>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <SearchableSelect
+                          value={linkProductId}
+                          onChange={setLinkProductId}
+                          options={products.map((p) => ({ value: p.id, label: p.name }))}
+                          placeholder="Buscar produto..."
+                        />
+                      </div>
+                      <input type="number" min="0.01" step="0.01" value={linkQuantity} onChange={(e) => setLinkQuantity(e.target.value)} className="w-16 h-10 rounded-lg border border-zinc-200 bg-zinc-50 px-2 text-xs text-zinc-700 text-center focus:border-green-600 focus:outline-none" />
+                      <Button size="sm" onClick={linkProduct} disabled={!linkProductId || !linkQuantity} className="h-10 bg-green-600 hover:bg-green-700"><Plus className="h-3 w-3" /></Button>
                     </div>
                   </div>
                 )}
