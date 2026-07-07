@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useEstablishmentId } from "@/hooks/use-establishment-id"
-import { DollarSign, ShoppingBag, Users, Bike, TrendingUp, TrendingDown, RefreshCw, Package, Clock, AlertTriangle, Wallet, Store, CreditCard, Banknote, Smartphone, Globe, Plus, BarChart3, ArrowRight, Zap } from "lucide-react"
+import { DollarSign, ShoppingBag, Users, Bike, TrendingUp, TrendingDown, RefreshCw, Package, Clock, AlertTriangle, Wallet, Store, CreditCard, Banknote, Smartphone, Globe, Plus, BarChart3, ArrowRight, Zap, CircleDollarSign, CalendarClock, Skull, PackageX } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
@@ -10,7 +10,6 @@ import { fetchAuth } from "@/lib/fetch-auth"
 import { Sparkline } from "@/components/charts/sparkline"
 import { Donut } from "@/components/charts/donut"
 import { AreaChart } from "@/components/charts/area-chart"
-import { Ring } from "@/components/charts/ring"
 
 export default function DashboardHomePage() {
   const establishmentId = useEstablishmentId()
@@ -34,6 +33,7 @@ export default function DashboardHomePage() {
 
   const salesPercent = data.today.vsYesterday.percentTotal
   const sparkData = data.weekSales?.map((d: any) => d.total) || []
+  const hasAlerts = data.alerts.lowStock > 0 || data.alerts.overdueExpenses > 0 || data.alerts.noMotoboy > 0
 
   return (
     <div className="space-y-4">
@@ -49,7 +49,7 @@ export default function DashboardHomePage() {
         </Button>
       </div>
 
-      {/* Linha 1 — Cards de resumo com sparkline */}
+      {/* Linha 1 — 4 cards de resumo */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {/* Vendas Hoje */}
         <Card className="relative overflow-hidden">
@@ -69,32 +69,51 @@ export default function DashboardHomePage() {
               )}
             </div>
             <p className="text-xl font-bold text-zinc-900">{formatCurrency(data.today.total)}</p>
-            <p className="text-[10px] text-zinc-400">{data.today.count} vendas hoje</p>
+            <div className="mt-1 flex items-center gap-2 text-[10px]">
+              <span className="text-green-600">✓ {formatCurrency(data.today.paid)} pago</span>
+              {data.today.pending > 0 && <span className="text-amber-500">⏳ {formatCurrency(data.today.pending)} a receber</span>}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Ticket Médio */}
-        <Card className="relative overflow-hidden">
+        {/* Receita vs Despesas */}
+        <Card>
           <CardContent className="p-4">
-            <div className="absolute right-2 top-2 opacity-30">
-              <Sparkline data={sparkData.map((v: number, i: number) => data.weekSales[i]?.count ? v / data.weekSales[i].count : 0)} color="#8b5cf6" height={32} className="w-20" />
-            </div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10">
-                <ShoppingBag className="h-4 w-4 text-purple-500" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
+                <CircleDollarSign className="h-4 w-4 text-blue-500" />
               </div>
             </div>
-            <p className="text-xl font-bold text-zinc-900">{formatCurrency(data.today.ticketMedio)}</p>
-            <p className="text-[10px] text-zinc-400">Ticket médio</p>
+            <p className="text-[10px] text-zinc-400 mb-1">Receita vs Despesas</p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm font-bold text-green-600">{formatCurrency(data.today.total)}</span>
+              <span className="text-[10px] text-zinc-400">vs</span>
+              <span className="text-sm font-bold text-red-500">{formatCurrency(data.profit.expenses)}</span>
+            </div>
+            <div className="mt-2 h-2 bg-zinc-100 rounded-full overflow-hidden flex">
+              <div className="h-full bg-green-500 rounded-l-full" style={{ width: `${data.today.total > 0 ? (data.today.total / (data.today.total + data.profit.expenses)) * 100 : 50}%` }} />
+              <div className="h-full bg-red-400 rounded-r-full" style={{ width: `${data.profit.expenses > 0 ? (data.profit.expenses / (data.today.total + data.profit.expenses)) * 100 : 0}%` }} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lucro Líquido */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${data.profit.today >= 0 ? "bg-green-600/10" : "bg-red-500/10"}`}>
+                <Wallet className={`h-4 w-4 ${data.profit.today >= 0 ? "text-green-600" : "text-red-500"}`} />
+              </div>
+            </div>
+            <p className="text-[10px] text-zinc-400 mb-1">Lucro Líquido</p>
+            <p className={`text-xl font-bold ${data.profit.today >= 0 ? "text-green-600" : "text-red-500"}`}>{formatCurrency(data.profit.today)}</p>
+            <p className="text-[10px] text-zinc-400">Mês: {formatCurrency(data.month?.total || 0)}</p>
           </CardContent>
         </Card>
 
         {/* Pedidos Ativos */}
-        <Card className="relative overflow-hidden">
+        <Card>
           <CardContent className="p-4">
-            <div className="absolute right-2 top-2 opacity-30">
-              <Sparkline data={[data.active.byStatus.preparing, data.active.byStatus.ready, data.active.byStatus.out_for_delivery]} color="#f59e0b" height={32} className="w-20" />
-            </div>
             <div className="flex items-center gap-2 mb-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
                 <Package className="h-4 w-4 text-amber-500" />
@@ -104,46 +123,27 @@ export default function DashboardHomePage() {
               </span>
             </div>
             <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[11px]">
-                <Clock className="h-2.5 w-2.5 text-amber-500" />
-                <span className="text-zinc-400">Preparando:</span>
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5"><Clock className="h-2.5 w-2.5 text-amber-500" /><span className="text-zinc-400">Preparando</span></div>
                 <span className="font-medium">{data.active.byStatus.preparing}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px]">
-                <Package className="h-2.5 w-2.5 text-green-600" />
-                <span className="text-zinc-400">Prontos:</span>
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5"><Package className="h-2.5 w-2.5 text-green-600" /><span className="text-zinc-400">Prontos</span></div>
                 <span className="font-medium">{data.active.byStatus.ready}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px]">
-                <Bike className="h-2.5 w-2.5 text-blue-500" />
-                <span className="text-zinc-400">Em entrega:</span>
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5"><Bike className="h-2.5 w-2.5 text-blue-500" /><span className="text-zinc-400">Em entrega</span></div>
                 <span className="font-medium">{data.active.byStatus.out_for_delivery}</span>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Lucro Hoje */}
-        <Card className="relative overflow-hidden">
-          <CardContent className="p-4">
-            <div className="absolute right-2 top-2 opacity-30">
-              <Sparkline data={sparkData} color={data.profit.today >= 0 ? "#16a34a" : "#ef4444"} height={32} className="w-20" />
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${data.profit.today >= 0 ? "bg-green-600/10" : "bg-red-500/10"}`}>
-                <Wallet className={`h-4 w-4 ${data.profit.today >= 0 ? "text-green-600" : "text-red-500"}`} />
-              </div>
-            </div>
-            <p className={`text-xl font-bold ${data.profit.today >= 0 ? "text-green-600" : "text-red-500"}`}>{formatCurrency(data.profit.today)}</p>
-            <p className="text-[10px] text-zinc-400">Lucro líquido hoje</p>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Linha 2 — Gráficos */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {/* Receita 7 dias — Área */}
-        <Card className="lg:col-span-1">
+      {/* Linha 2 — 2 gráficos */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {/* Receita 7 dias */}
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-zinc-700">Receita — 7 dias</h3>
@@ -153,51 +153,26 @@ export default function DashboardHomePage() {
           </CardContent>
         </Card>
 
-        {/* Pedidos por Tipo — Donut */}
+        {/* Pedidos por Tipo */}
         <Card>
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold text-zinc-700 mb-4">Pedidos por Tipo</h3>
             <div className="flex items-center justify-center gap-4">
-              <Donut value={data.byType.delivery} total={data.today.count} color="#3b82f6" size={90} label={`${data.byType.delivery}`} sublabel="Entrega" />
-              <Donut value={data.byType.pickup} total={data.today.count} color="#8b5cf6" size={90} label={`${data.byType.pickup}`} sublabel="Retirada" />
-              <Donut value={data.byType.mesa + data.byType.balcao} total={data.today.count} color="#16a34a" size={90} label={`${data.byType.mesa + data.byType.balcao}`} sublabel="Local" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pagamento — Donut */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-zinc-700 mb-4">Receita por Pagamento</h3>
-            <div className="flex items-center justify-center gap-3">
-              <div className="flex flex-col items-center gap-1">
-                <Donut value={data.byPayment.money} total={data.today.total || 1} color="#16a34a" size={70} strokeWidth={5} />
-                <span className="text-[10px] text-zinc-500">Dinheiro</span>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <Donut value={data.byPayment.card} total={data.today.total || 1} color="#3b82f6" size={70} strokeWidth={5} />
-                <span className="text-[10px] text-zinc-500">Cartão</span>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <Donut value={data.byPayment.pix} total={data.today.total || 1} color="#8b5cf6" size={70} strokeWidth={5} />
-                <span className="text-[10px] text-zinc-500">Pix</span>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <Donut value={data.byPayment.online} total={data.today.total || 1} color="#f59e0b" size={70} strokeWidth={5} />
-                <span className="text-[10px] text-zinc-500">Online</span>
-              </div>
+              <Donut value={data.byType.delivery} total={data.today.count || 1} color="#3b82f6" size={90} label={`${data.byType.delivery}`} sublabel="Entrega" />
+              <Donut value={data.byType.pickup} total={data.today.count || 1} color="#8b5cf6" size={90} label={`${data.byType.pickup}`} sublabel="Retirada" />
+              <Donut value={data.byType.mesa + data.byType.balcao} total={data.today.count || 1} color="#16a34a" size={90} label={`${data.byType.mesa + data.byType.balcao}`} sublabel="Local" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Linha 3 — Status + Ações + Alertas */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {/* Caixa + Motoboys */}
+      {/* Linha 3 — Status + Alertas */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {/* Status Operacional */}
         <Card>
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold text-zinc-700 mb-3">Status Operacional</h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Caixa */}
               <div className="flex items-center justify-between rounded-lg bg-zinc-50 p-3">
                 <div className="flex items-center gap-2">
@@ -219,10 +194,12 @@ export default function DashboardHomePage() {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-zinc-900">Motoboys</p>
-                    <p className="text-[10px] text-zinc-400">{data.motoboys.busy} em entrega</p>
+                    <p className="text-[10px] text-zinc-400">{data.motoboys.free} livres / {data.motoboys.total} total</p>
                   </div>
                 </div>
-                <Ring value={data.motoboys.free} total={data.motoboys.total || 1} color="#3b82f6" size={36} strokeWidth={4} />
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-500/10 rounded-full px-1.5 py-0.5">{data.motoboys.busy} ocupados</span>
+                </div>
               </div>
               {/* Clientes */}
               <div className="flex items-center justify-between rounded-lg bg-zinc-50 p-3">
@@ -236,82 +213,74 @@ export default function DashboardHomePage() {
                   </div>
                 </div>
                 {data.customers.newToday > 0 && (
-                  <span className="text-[10px] font-bold text-green-600 bg-green-600/10 rounded-full px-1.5 py-0.5">+{data.customers.newToday}</span>
+                  <span className="text-[10px] font-bold text-green-600 bg-green-600/10 rounded-full px-1.5 py-0.5">+{data.customers.newToday} hoje</span>
                 )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Ações Rápidas */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-zinc-700 mb-3">Ações Rápidas</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <a href="/dashboard/caixa" className="flex flex-col items-center gap-1.5 rounded-lg border border-zinc-200 p-3 text-center hover:bg-green-600/5 hover:border-green-600/30 transition-colors">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-600/10">
-                  <Wallet className="h-4 w-4 text-green-600" />
-                </div>
-                <span className="text-[11px] font-medium text-zinc-700">Caixa</span>
-              </a>
-              <a href="/dashboard/pedidos" className="flex flex-col items-center gap-1.5 rounded-lg border border-zinc-200 p-3 text-center hover:bg-blue-500/5 hover:border-blue-500/30 transition-colors">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
-                  <ShoppingBag className="h-4 w-4 text-blue-500" />
-                </div>
-                <span className="text-[11px] font-medium text-zinc-700">Pedidos</span>
-              </a>
-              <a href="/dashboard/entregas" className="flex flex-col items-center gap-1.5 rounded-lg border border-zinc-200 p-3 text-center hover:bg-amber-500/5 hover:border-amber-500/30 transition-colors">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-                  <Bike className="h-4 w-4 text-amber-500" />
-                </div>
-                <span className="text-[11px] font-medium text-zinc-700">Entregas</span>
-              </a>
-              <a href="/dashboard/cardapio" className="flex flex-col items-center gap-1.5 rounded-lg border border-zinc-200 p-3 text-center hover:bg-purple-500/5 hover:border-purple-500/30 transition-colors">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10">
-                  <Store className="h-4 w-4 text-purple-500" />
-                </div>
-                <span className="text-[11px] font-medium text-zinc-700">Cardápio</span>
-              </a>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Alertas */}
-        <Card>
+        <Card className={hasAlerts ? "border-amber-500/30" : ""}>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-zinc-700 mb-3">Alertas</h3>
+            <h3 className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
+              Alertas
+              {hasAlerts && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
+            </h3>
             <div className="space-y-2">
+              {/* Estoque Baixo */}
               {data.alerts.lowStock > 0 && (
                 <a href="/dashboard/estoque" className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 hover:bg-amber-500/10 transition-colors">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  <div className="flex-1">
+                  <PackageX className="h-4 w-4 text-amber-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-zinc-900">Estoque baixo</p>
-                    <p className="text-[10px] text-zinc-400">{data.alerts.lowStock} item(ns) abaixo do mínimo</p>
+                    {data.alerts.lowStockItems?.map((item: any, i: number) => (
+                      <p key={i} className="text-[10px] text-zinc-400 truncate">{item.name}: {item.quantity} (mín: {item.min})</p>
+                    ))}
                   </div>
-                  <ArrowRight className="h-3 w-3 text-zinc-400" />
+                  <ArrowRight className="h-3 w-3 text-zinc-400 shrink-0" />
                 </a>
               )}
-              {data.active.byStatus.ready > 0 && (
+
+              {/* Despesas Atrasadas */}
+              {data.alerts.overdueExpenses > 0 && (
+                <a href="/dashboard/financeiro/despesas" className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 p-2.5 hover:bg-red-500/10 transition-colors">
+                  <Skull className="h-4 w-4 text-red-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-zinc-900">{data.alerts.overdueExpenses} despesa(s) atrasada(s)</p>
+                    {data.alerts.overdueItems?.map((item: any, i: number) => (
+                      <p key={i} className="text-[10px] text-zinc-400 truncate">{item.description}: {formatCurrency(item.amount)}</p>
+                    ))}
+                  </div>
+                  <ArrowRight className="h-3 w-3 text-zinc-400 shrink-0" />
+                </a>
+              )}
+
+              {/* Despesas a Vencer */}
+              {data.alerts.upcomingExpenses > 0 && (
+                <a href="/dashboard/financeiro/despesas" className="flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/5 p-2.5 hover:bg-orange-500/10 transition-colors">
+                  <CalendarClock className="h-4 w-4 text-orange-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-zinc-900">{data.alerts.upcomingExpenses} despesa(s) a vencer</p>
+                    <p className="text-[10px] text-zinc-400">Total: {formatCurrency(data.alerts.totalUpcoming)}</p>
+                  </div>
+                  <ArrowRight className="h-3 w-3 text-zinc-400 shrink-0" />
+                </a>
+              )}
+
+              {/* Pedidos sem Motoboy */}
+              {data.alerts.noMotoboy > 0 && (
                 <a href="/dashboard/entregas" className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 p-2.5 hover:bg-blue-500/10 transition-colors">
-                  <Package className="h-4 w-4 text-blue-500" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-zinc-900">Pedidos prontos</p>
-                    <p className="text-[10px] text-zinc-400">{data.active.byStatus.ready} aguardando retirada/entrega</p>
+                  <Bike className="h-4 w-4 text-blue-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-zinc-900">{data.alerts.noMotoboy} pedido(s) pronto(s) sem motoboy</p>
                   </div>
-                  <ArrowRight className="h-3 w-3 text-zinc-400" />
+                  <ArrowRight className="h-3 w-3 text-zinc-400 shrink-0" />
                 </a>
               )}
-              {data.active.byStatus.preparing > 0 && (
-                <a href="/dashboard/pedidos" className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 hover:bg-amber-500/10 transition-colors">
-                  <Clock className="h-4 w-4 text-amber-500" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-zinc-900">Em preparo</p>
-                    <p className="text-[10px] text-zinc-400">{data.active.byStatus.preparing} pedidos sendo preparados</p>
-                  </div>
-                  <ArrowRight className="h-3 w-3 text-zinc-400" />
-                </a>
-              )}
-              {data.alerts.lowStock === 0 && data.active.byStatus.ready === 0 && data.active.byStatus.preparing === 0 && (
+
+              {/* Tudo ok */}
+              {!hasAlerts && (
                 <div className="flex flex-col items-center justify-center py-6 text-center">
                   <Zap className="h-6 w-6 text-green-500 mb-2" />
                   <p className="text-xs font-medium text-green-600">Tudo tranquilo!</p>
@@ -323,77 +292,37 @@ export default function DashboardHomePage() {
         </Card>
       </div>
 
-      {/* Linha 4 — Top Produtos + Últimos pedidos */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {/* Top Produtos */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-zinc-700 mb-3">Produtos mais vendidos (hoje)</h3>
-            {data.topProducts.length === 0 ? (
-              <p className="text-xs text-zinc-400 text-center py-6">Nenhuma venda ainda hoje</p>
-            ) : (
-              <div className="space-y-2">
-                {data.topProducts.map((product: any, i: number) => {
-                  const maxCount = data.topProducts[0]?.count || 1
-                  const pct = (product.count / maxCount) * 100
-                  return (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600/10 text-[10px] font-bold text-green-600">{i + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <p className="text-xs font-medium text-zinc-900 truncate">{product.name}</p>
-                          <span className="text-[10px] font-medium text-green-600 ml-2">{formatCurrency(product.total)}</span>
-                        </div>
-                        <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-600 rounded-full" style={{ width: `${pct}%`, transition: "width 0.8s ease" }} />
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-zinc-400 w-6 text-right">{product.count}x</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Últimos pedidos */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-zinc-700">Últimos pedidos</h3>
-              <a href="/dashboard/pedidos" className="text-[10px] text-green-600 hover:underline">Ver todos</a>
-            </div>
-            <div className="space-y-1.5">
-              {data.recentOrders.map((order: any) => {
-                const statusLabels: Record<string, string> = { pending: "Pendente", preparing: "Preparando", ready: "Pronto", out_for_delivery: "Em entrega", delivered: "Entregue", cancelled: "Cancelado", new: "Novo", payment_pending: "Aguard. Pgto", confirmed: "Confirmado" }
-                const statusColors: Record<string, string> = { pending: "bg-zinc-100 text-zinc-500", preparing: "bg-amber-100 text-amber-700", ready: "bg-green-100 text-green-700", out_for_delivery: "bg-blue-100 text-blue-700", delivered: "bg-green-100 text-green-700", cancelled: "bg-red-100 text-red-700", new: "bg-zinc-100 text-zinc-500", payment_pending: "bg-red-100 text-red-700", confirmed: "bg-blue-100 text-blue-700" }
-                const typeLabels: Record<string, string> = { delivery: "Entrega", pickup: "Retirada", presencial: "Mesa", mesa: "Mesa", balcao: "Balcão" }
+      {/* Linha 4 — Top Produtos */}
+      <Card>
+        <CardContent className="p-4">
+          <h3 className="text-sm font-semibold text-zinc-700 mb-3">Produtos mais vendidos (hoje)</h3>
+          {data.topProducts.length === 0 ? (
+            <p className="text-xs text-zinc-400 text-center py-6">Nenhuma venda ainda hoje</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
+              {data.topProducts.map((product: any, i: number) => {
+                const maxCount = data.topProducts[0]?.count || 1
+                const pct = (product.count / maxCount) * 100
                 return (
-                  <div key={order.id} className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      {order.orderNumber && <span className="text-[10px] font-bold text-green-600">#{order.orderNumber}</span>}
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-zinc-900 truncate">{order.customerName}</p>
-                        <p className="text-[10px] text-zinc-400">
-                          {new Date(order.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                          {order.orderType && <span className="ml-1 text-zinc-300">• {typeLabels[order.orderType] || order.orderType}</span>}
-                        </p>
+                  <div key={i} className="flex items-center gap-2 rounded-lg bg-zinc-50 p-2.5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600/10 text-[10px] font-bold text-green-600 shrink-0">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-medium text-zinc-900 truncate">{product.name}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex-1 h-1 bg-zinc-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-green-500 rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-[9px] text-zinc-400 shrink-0">{product.count}x</span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${statusColors[order.status] || "bg-zinc-100 text-zinc-500"}`}>
-                        {statusLabels[order.status] || order.status}
-                      </span>
-                      <span className="text-xs font-bold text-green-600">{formatCurrency(order.total)}</span>
+                      <p className="text-[10px] font-medium text-green-600">{formatCurrency(product.total)}</p>
                     </div>
                   </div>
                 )
               })}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

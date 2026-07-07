@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
     weekSales,
     deliveryPeople,
     monthOrders,
-    expenses,
+    todayExpenses,
+    pendingExpenses,
+    overdueExpenses,
+    upcomingExpenses,
     cashRegister,
     stockItems,
   ] = await Promise.all([
@@ -64,6 +67,18 @@ export async function GET(req: NextRequest) {
       where: { establishmentId, date: { gte: todayStart } },
       select: { amount: true, category: true },
     }),
+    prisma.expense.findMany({
+      where: { establishmentId, type: "lancamento", date: { gte: todayStart } },
+      select: { id: true, description: true, amount: true, dueDate: true, category: true },
+    }),
+    prisma.expense.findMany({
+      where: { establishmentId, dueDate: { lt: now }, type: { not: "lancamento" } },
+      select: { id: true, description: true, amount: true, dueDate: true, category: true },
+    }),
+    prisma.expense.findMany({
+      where: { establishmentId, dueDate: { gte: now, lte: new Date(now.getTime() + 7 * 86400000) }, type: { not: "lancamento" } },
+      select: { id: true, description: true, amount: true, dueDate: true, category: true },
+    }),
     prisma.cashRegister.findFirst({
       where: { establishmentId, status: "open" },
       select: { id: true, createdAt: true, openingAmount: true },
@@ -79,8 +94,11 @@ export async function GET(req: NextRequest) {
   const todayCount = todayOrders.length
   const ticketMedio = todayCount > 0 ? todayTotal / todayCount : 0
   const monthTotal = monthOrders.reduce((sum, o) => sum + o.total, 0)
-  const todayExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
-  const todayProfit = todayTotal - todayExpenses
+  const totalExpenses = todayExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const todayProfit = todayTotal - totalExpenses
+
+  const paidTotal = todayOrders.filter((o) => o.paymentMethod !== "online" || o.status === "delivered").reduce((s, o) => s + o.total, 0)
+  const pendingTotal = todayTotal - paidTotal
 
   const activeByStatus = {
     preparing: activeOrders.filter((o) => o.status === "preparing").length,
@@ -97,13 +115,6 @@ export async function GET(req: NextRequest) {
     pickup: todayOrders.filter((o) => o.orderType === "pickup").length,
     mesa: todayOrders.filter((o) => o.orderType === "presencial" || o.orderType === "mesa").length,
     balcao: todayOrders.filter((o) => !o.orderType || o.orderType === "balcao").length,
-  }
-
-  const byPayment = {
-    money: todayOrders.filter((o) => o.paymentMethod === "money").reduce((s, o) => s + o.total, 0),
-    card: todayOrders.filter((o) => o.paymentMethod === "card").reduce((s, o) => s + o.total, 0),
-    pix: todayOrders.filter((o) => o.paymentMethod === "pix").reduce((s, o) => s + o.total, 0),
-    online: todayOrders.filter((o) => o.paymentMethod === "online").reduce((s, o) => s + o.total, 0),
   }
 
   const productCount: Record<string, { name: string; count: number; total: number }> = {}
@@ -131,18 +142,29 @@ export async function GET(req: NextRequest) {
 
   const lowStockItems = (stockItems as any[]).filter((s) => s.quantity <= s.minQuantity)
 
+  const totalOverdue = overdueExpenses.reduce((s, e) => s + e.amount, 0)
+  const totalUpcoming = upcomingExpenses.reduce((s, e) => s + e.amount, 0)
+
   return NextResponse.json({
-    today: { total: todayTotal, count: todayCount, ticketMedio, vsYesterday: { total: todayTotal - yesterdayTotal, count: todayCount - yesterdayOrders.length, percentTotal: yesterdayTotal > 0 ? Math.round(((todayTotal - yesterdayTotal) / yesterdayTotal) * 100) : 0 } },
+    today: { total: todayTotal, count: todayCount, ticketMedio, paid: paidTotal, pending: pendingTotal, vsYesterday: { total: todayTotal - yesterdayTotal, count: todayCount - yesterdayOrders.length, percentTotal: yesterdayTotal > 0 ? Math.round(((todayTotal - yesterdayTotal) / yesterdayTotal) * 100) : 0 } },
     month: { total: monthTotal },
-    profit: { today: todayProfit, expenses: todayExpenses },
+    profit: { today: todayProfit, expenses: totalExpenses },
     active: { total: activeOrders.length, byStatus: activeByStatus },
     customers: { total: totalCustomers, newToday: newCustomersToday },
     motoboys: { total: deliveryPeople, free: deliveryPeople - busyMotoboys.size, busy: busyMotoboys.size },
     byType,
-    byPayment,
     cashRegister: cashRegister ? { isOpen: true, openedAt: cashRegister.createdAt, openingBalance: cashRegister.openingAmount } : { isOpen: false },
-    alerts: { lowStock: lowStockItems.length, pendingExpenses: expenses.length },
-    recentOrders,
+    alerts: {
+      lowStock: lowStockItems.length,
+      lowStockItems: lowStockItems.slice(0, 3).map((s: any) => ({ name: s.name, quantity: s.quantity, min: s.minQuantity })),
+      overdueExpenses: overdueExpenses.length,
+      totalOverdue,
+      overdueItems: overdueExpenses.slice(0, 3).map((e) => ({ description: e.description, amount: e.amount, dueDate: e.dueDate })),
+      upcomingExpenses: upcomingExpenses.length,
+      totalUpcoming,
+      readyOrders: activeByStatus.ready,
+      noMotoboy: activeOrders.filter((o) => o.status === "ready" && !o.deliveryPersonId).length,
+    },
     topProducts,
     weekSales: Object.values(salesByDay),
   })
