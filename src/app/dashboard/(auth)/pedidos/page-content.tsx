@@ -211,44 +211,37 @@ export default function PedidosPage() {
       )}
 
       {/* Period + Type + Status filters */}
-      <div className="flex flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-zinc-400" />
-          <div className="flex gap-1">
-            {[
-              { value: "all", label: "Todos" },
-              { value: "today", label: "Hoje" },
-              { value: "7days", label: "7 dias" },
-              { value: "30days", label: "30 dias" },
-            ].map((p) => (
-              <button key={p.value} onClick={() => setFilterPeriod(p.value)} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${filterPeriod === p.value ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-500 hover:bg-white/[.08]"}`}>
-                {p.label}
-              </button>
-            ))}
-          </div>
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex items-center rounded-lg bg-zinc-100 p-0.5 border border-zinc-200/60">
+          {[
+            { value: "all", label: "Todos" },
+            { value: "today", label: "Hoje" },
+            { value: "7days", label: "7 dias" },
+            { value: "30days", label: "30 dias" },
+          ].map((p) => (
+            <button key={p.value} onClick={() => setFilterPeriod(p.value)} className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${filterPeriod === p.value ? "bg-white text-zinc-800 shadow-sm font-semibold" : "text-zinc-500 hover:text-zinc-800"}`}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center rounded-lg bg-zinc-100 p-0.5 border border-zinc-200/60">
+          {[
+            { value: "all", label: "Todos" },
+            { value: "delivery", label: "Entrega" },
+            { value: "pickup", label: "Retirada" },
+            { value: "presencial", label: "Caixa" },
+          ].map((t) => (
+            <button key={t.value} onClick={() => setFilterType(t.value)} className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${filterType === t.value ? "bg-white text-zinc-800 shadow-sm font-semibold" : "text-zinc-500 hover:text-zinc-800"}`}>
+              {t.label}
+            </button>
+          ))}
         </div>
         <div className="flex items-center gap-2">
-          <Package className="h-4 w-4 text-zinc-400" />
-          <div className="flex gap-1">
-            {[
-              { value: "all", label: "Todos" },
-              { value: "delivery", label: "Entrega" },
-              { value: "pickup", label: "Retirada" },
-              { value: "presencial", label: "Caixa" },
-            ].map((t) => (
-              <button key={t.value} onClick={() => setFilterType(t.value)} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${filterType === t.value ? "bg-green-600 text-white" : "bg-zinc-100 text-zinc-500 hover:bg-white/[.08]"}`}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-400">Status:</span>
           <SearchableSelect
             value={filterStatus}
             onChange={setFilterStatus}
             options={[
-              { value: "all", label: "Todos" },
+              { value: "all", label: "Todos status" },
               { value: "pending", label: "Pendente" },
               { value: "preparing", label: "Preparando" },
               { value: "ready", label: "Pronto" },
@@ -547,7 +540,7 @@ win.close()
 }
 
   return (
-    <Card id={`order-${order.id}`} className={`${unreadCount > 0 ? "border-red-300 border-2 shadow-md shadow-red-100" : ""} ${highlight ? "ring-2 ring-amber-400 ring-offset-2" : ""} transition-all duration-300`}>
+    <Card id={`order-${order.id}`} className={`${isNewOrder ? "border-l-4 border-l-blue-500" : ""} ${unreadCount > 0 ? "border-red-300 border-2 shadow-md shadow-red-100" : ""} ${highlight ? "ring-2 ring-amber-400 ring-offset-2" : ""} transition-all duration-300`}>
       <CardContent className="p-4">
         {unreadCount > 0 && (
           <div className="mb-3 flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
@@ -565,27 +558,37 @@ win.close()
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               {order.orderNumber && (
-                <span className="inline-flex items-center rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-bold text-green-600">
+                <span className="inline-flex items-center rounded-md bg-green-600 px-2 py-0.5 text-xs font-bold text-white">
                   #{order.orderNumber}
                 </span>
               )}
               <p className="font-semibold text-zinc-900">{order.customerName}</p>
               {["pending", "confirmed"].includes(order.status) ? (
-                <span className="inline-flex items-center rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-semibold text-green-600">Novo pedido</span>
+                <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-600/20 animate-pulse">Novo</span>
+              ) : order.status === "preparing" ? (
+                <span className="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700 ring-1 ring-inset ring-orange-600/20">Preparando</span>
+              ) : order.status === "ready" ? (
+                <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 ring-1 ring-inset ring-green-600/20">Pronto</span>
+              ) : order.status === "out_for_delivery" ? (
+                <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-600/20">Em entrega</span>
+              ) : order.status === "delivered" ? (
+                <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 ring-1 ring-inset ring-green-600/20">Entregue</span>
+              ) : order.status === "cancelled" ? (
+                <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/20">Cancelado</span>
               ) : (
                 <Badge variant={statusColors[order.status] || "default"}>{statusLabels[order.status] || order.status}</Badge>
               )}
-              {order.paymentStatus === "paid" && <Badge variant="success">Pago</Badge>}
-              {order.method === "whatsapp" && <Badge variant="info">WhatsApp</Badge>}
+              {order.paymentStatus === "paid" && <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 ring-1 ring-inset ring-green-600/20">Pago</span>}
+              {order.method === "whatsapp" && <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">WhatsApp</span>}
               {unreadCount > 0 && (
-                <Badge variant="danger" className="animate-pulse">{unreadCount} msg</Badge>
+                <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 ring-1 ring-inset ring-red-600/20 animate-pulse">{unreadCount} msg</span>
               )}
             </div>
 
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
               {order.orderType && (
                 <span className="flex items-center gap-1">
-                  {order.orderType === "delivery" ? <Bike className="h-3 w-3" /> : <Store className="h-3 w-3" />}
+                  {order.orderType === "delivery" ? "🛵" : order.orderType === "pickup" ? "🛍️" : "🍽️"}
                   {orderTypeLabels[order.orderType] || order.orderType}
                 </span>
               )}
@@ -595,11 +598,11 @@ win.close()
                   {paymentMethodLabels[order.paymentMethod] || order.paymentMethod}
                 </span>
               )}
+              <span className="text-zinc-400">•</span>
+              <span className="text-zinc-400">{new Date(order.createdAt).toLocaleString("pt-BR")}</span>
             </div>
 
-            <p className="mt-1 text-xs text-zinc-400">{new Date(order.createdAt).toLocaleString("pt-BR")}</p>
-
-            <div className="mt-1 flex flex-wrap gap-2 text-sm">
+            <div className="mt-1.5 flex flex-wrap gap-2 text-sm">
               {order.customerPhone && (
                 <a href={`https://wa.me/55${order.customerPhone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-green-600 hover:underline">
                   <MessageCircle className="h-3 w-3" />{order.customerPhone}
@@ -618,17 +621,17 @@ win.close()
             {order.orderType === "delivery" && order.customerAddress && <p className="mt-1 text-sm text-zinc-500">📍 {order.customerAddress}</p>}
 
             {items.length > 0 && (
-              <div className="mt-2 space-y-0.5 text-sm text-zinc-400">
+              <div className="mt-2 rounded-lg bg-zinc-50 border border-zinc-100 p-2.5 space-y-0.5 text-sm text-zinc-600">
                 {items.map((item: any, i: number) => (
-                  <p key={i}>{item.quantity}x {item.name} — {formatCurrency(item.price * item.quantity)}</p>
+                  <p key={i} className="font-medium">{item.quantity}x {item.name} — <span className="text-zinc-400">{formatCurrency(item.price * item.quantity)}</span></p>
                 ))}
                 {!isPresencial && order.deliveryFee > 0 && (
-                  <p className="text-xs text-zinc-400">Taxa de entrega: {formatCurrency(order.deliveryFee)}</p>
+                  <p className="text-xs text-zinc-400 pt-1 border-t border-zinc-100">Taxa de entrega: {formatCurrency(order.deliveryFee)}</p>
                 )}
               </div>
             )}
 
-            {order.notes && <p className="mt-1 text-sm text-zinc-400 italic">Obs: {order.notes}</p>}
+            {order.notes && <p className="mt-1.5 text-sm text-zinc-400 italic">Obs: {order.notes}</p>}
 
             {lastCustomerMsg && (
               <div className={`mt-2 flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${unreadCount > 0 ? "bg-red-500/10 border border-red-500/20" : "bg-zinc-50 border border-zinc-200"}`}>
@@ -660,37 +663,16 @@ win.close()
             )}
           </div>
 
-          <div className="flex items-center gap-3 lg:flex-col lg:items-end">
-            <p className="text-lg font-bold text-green-600">{formatCurrency(order.total)}</p>
+          <div className="flex flex-col items-end justify-between gap-3 lg:min-h-[90px]">
+            <p className="text-xl font-black text-green-600 tracking-tight">{formatCurrency(order.total)}</p>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={printReceipt} className="gap-1">
-                <Printer className="h-3 w-3" />
-              </Button>
-              <button
-                onClick={() => setChatOpen(!chatOpen)}
-                className={`relative rounded-lg border p-1.5 transition-colors ${chatOpen ? "border-green-600 bg-green-600/10 text-green-600" : unreadCount > 0 ? "border-red-300 bg-red-500/10 text-red-400 animate-pulse" : "border-zinc-200 text-zinc-500 hover:bg-zinc-100"}`}
-              >
-                <MessageCircle className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500/100 text-[10px] font-bold text-white">
-                    {unreadCount}
-                  </span>
-                )}
+              <button onClick={printReceipt} className="rounded-lg p-2 text-zinc-400 border border-zinc-200 bg-white hover:bg-zinc-50 hover:text-zinc-600 transition-colors" title="Imprimir">
+                <Printer className="h-4 w-4" />
               </button>
-              <SearchableSelect
-                value={isNewOrder ? "" : order.status}
-                onChange={(val) => onUpdateStatus(order.id, val)}
-                options={[
-                  ...(isNewOrder ? [{ value: "", label: "Selecionar status..." }] : []),
-                  ...selectableStatuses.map((key) => ({ value: key, label: statusLabels[key] })),
-                  { value: "cancelled", label: "Cancelar" },
-                ]}
-                placeholder="Status..."
-              />
-              {nextStatus && !isLocked && (
-                <Button size="sm" onClick={() => onUpdateStatus(order.id, nextStatus)}>
-                  {nextLabel[order.status] || "Próximo"}
-                </Button>
+              {nextStatus && (
+                <button onClick={() => onUpdateStatus(order.id, nextStatus!)} className="rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700 shadow-sm transition-colors flex items-center gap-1">
+                  {nextLabel[order.status] || "Avançar"}
+                </button>
               )}
             </div>
           </div>
