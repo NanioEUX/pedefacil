@@ -54,14 +54,13 @@ export default function DashboardHomePage() {
         {/* Vendas Hoje */}
         <Card className="relative overflow-hidden min-h-[140px]">
           <CardContent className="p-4 flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-zinc-400">Faturamento</span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600/10">
-                <DollarSign className="h-4 w-4 text-green-600" />
+            <div className="flex items-start justify-between">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-600/10">
+                <DollarSign className="h-5 w-5 text-green-600" />
               </div>
-            </div>
-            <div className="absolute right-2 top-2 opacity-30">
-              <Sparkline data={sparkData} color="#16a34a" height={32} className="w-20" />
+              <div className="opacity-40">
+                <Sparkline data={sparkData} color="#16a34a" height={36} className="w-24" />
+              </div>
             </div>
             <div className="mt-2">
               <p className="text-xl font-bold text-zinc-900">{formatCurrency(data.today.total)}</p>
