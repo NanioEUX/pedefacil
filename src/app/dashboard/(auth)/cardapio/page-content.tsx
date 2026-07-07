@@ -70,6 +70,8 @@ export default function CardapioPage() {
   const [showProductForm, setShowProductForm] = useState(false)
   const [showCategoryForm, setShowCategoryForm] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [editingCategoryName, setEditingCategoryName] = useState("")
   const [productForm, setProductForm] = useState({
     name: "",
     description: "",
@@ -167,6 +169,19 @@ export default function CardapioPage() {
     })
     setNewCategoryName("")
     setShowCategoryForm(false)
+    loadData()
+  }
+
+  async function renameCategory(id: string) {
+    if (!editingCategoryName.trim()) return
+    await fetchAuth(`/api/categories/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editingCategoryName }),
+    })
+    setEditingCategoryId(null)
+    setEditingCategoryName("")
+    toast("Categoria renomeada", "success")
     loadData()
   }
 
@@ -477,7 +492,26 @@ export default function CardapioPage() {
               <Card key={cat.id}>
                 <CardContent className="p-4">
                   <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-zinc-900">{cat.name}</h3>
+                    {editingCategoryId === cat.id ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <input
+                          value={editingCategoryName}
+                          onChange={(e) => setEditingCategoryName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") renameCategory(cat.id)
+                            if (e.key === "Escape") setEditingCategoryId(null)
+                          }}
+                          className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-lg font-semibold text-zinc-900 focus:border-green-600 focus:outline-none"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={() => renameCategory(cat.id)}>Salvar</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingCategoryId(null)}>Cancelar</Button>
+                      </div>
+                    ) : (
+                      <h3 className="text-lg font-semibold text-zinc-900 cursor-pointer hover:text-green-600" onClick={() => { setEditingCategoryId(cat.id); setEditingCategoryName(cat.name) }}>
+                        {cat.name}
+                      </h3>
+                    )}
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="ghost" onClick={() => openNewProduct(cat.id)}>
                         <Plus className="h-4 w-4" />
