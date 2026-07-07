@@ -40,8 +40,8 @@ export async function GET(req: NextRequest) {
     orderBy: { date: "desc" },
   })
 
-  // Enrich with computed status
-  const today = new Date().toISOString().split("T")[0]
+  // Enrich with computed status (use local date, not UTC)
+  const today = new Date().toLocaleDateString("en-CA")
   const enriched = expenses.map((e) => {
     let computedStatus = "pago"
     if (e.type === "lancamento") {
@@ -89,8 +89,7 @@ export async function POST(req: NextRequest) {
   }
 
   const expenseType = type || "lancamento"
-  const today = new Date()
-  const todayISO = today.toISOString().split("T")[0]
+  const todayISO = new Date().toLocaleDateString("en-CA")
 
   // For recorrente type without explicit recurrenceStart, use date
   const recStart = recurrenceStart || (expenseType === "recorrente" ? (date || todayISO) : null)
@@ -158,7 +157,7 @@ export async function POST(req: NextRequest) {
   }
 
   // For agendada: set dueDate
-  const finalDueDate = expenseType === "agendada" && dueDate ? new Date(dueDate) : null
+  const finalDueDate = expenseType === "agendada" && dueDate ? new Date(dueDate + "T00:00:00") : null
 
   const expense = await prisma.expense.create({
     data: {
@@ -169,10 +168,10 @@ export async function POST(req: NextRequest) {
       paymentMethod: paymentMethod || "dinheiro",
       isRecurring: expenseType === "recorrente",
       recurrenceFreq: expenseType === "recorrente" ? (recurrenceFreq || "mensal") : null,
-      recurrenceStart: recStart ? new Date(recStart) : null,
-      recurrenceEnd: recEnd ? new Date(recEnd) : null,
+      recurrenceStart: recStart ? new Date(recStart + "T00:00:00") : null,
+      recurrenceEnd: recEnd ? new Date(recEnd + "T00:00:00") : null,
       receiptUrl: receiptUrl || null,
-      date: date ? new Date(date) : new Date(),
+      date: date ? new Date(date + "T00:00:00") : new Date(),
       dueDate: finalDueDate,
       cashRegisterId: cashRegisterId || null,
       establishmentId,
