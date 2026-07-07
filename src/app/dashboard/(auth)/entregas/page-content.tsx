@@ -144,7 +144,7 @@ export default function EntregasPage() {
   const [createdPassword, setCreatedPassword] = useState<string | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState<{ open: boolean; orderId: string }>({ open: false, orderId: "" })
 
-  const [dateFilter, setDateFilter] = useState<DateFilter>("today")
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all")
   const [customStart, setCustomStart] = useState("")
   const [customEnd, setCustomEnd] = useState("")
 

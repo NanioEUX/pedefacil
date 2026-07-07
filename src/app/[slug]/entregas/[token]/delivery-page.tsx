@@ -57,7 +57,7 @@ export function DeliveryPage({ token }: { token: string }) {
   const [error, setError] = useState("")
   const [updating, setUpdating] = useState<string | null>(null)
   const [active, setActive] = useState(true)
-  const [period, setPeriod] = useState<Period>("today")
+  const [period, setPeriod] = useState<Period>("all")
 
   useEffect(() => {
     // Check main login (from /login page) - prefer this
