@@ -16,18 +16,40 @@ export async function GET(req: NextRequest) {
   // One-time cleanup: clear date for agendada/recorrente that have date set
   const cleanup = req.nextUrl.searchParams.get("cleanup")
   if (cleanup === "fix-dates") {
+    // First: clear date for agendada/recorrente (they shouldn't have payment date)
     await prisma.expense.updateMany({
       where: { establishmentId, type: { in: ["agendada", "recorrente"] }, date: { not: null } },
       data: { date: null },
     })
+    // Second: fix dueDate storage (shift from T00:00 to T12:00Z for correct UTC)
+    const allAgendada = await prisma.expense.findMany({
+      where: { establishmentId, type: "agendada", dueDate: { not: null } },
+      select: { id: true, dueDate: true },
+    })
+    for (const e of allAgendada) {
+      if (e.dueDate) {
+        const d = e.dueDate.toISOString().split("T")[0]
+        await prisma.expense.update({ where: { id: e.id }, data: { dueDate: new Date(d + "T12:00:00Z") } })
+      }
+    }
+    const allRecorrente = await prisma.expense.findMany({
+      where: { establishmentId, type: "recorrente" },
+      select: { id: true, recurrenceStart: true, dueDate: true },
+    })
+    for (const e of allRecorrente) {
+      if (e.recurrenceStart) {
+        const d = e.recurrenceStart.toISOString().split("T")[0]
+        await prisma.expense.update({ where: { id: e.id }, data: { recurrenceStart: new Date(d + "T12:00:00Z"), dueDate: new Date(d + "T12:00:00Z") } })
+      }
+    }
     return NextResponse.json({ cleaned: true })
   }
 
   const where: any = { establishmentId }
   if (from || to) {
     const dateFilter: any = {}
-    if (from) dateFilter.gte = new Date(from)
-    if (to) dateFilter.lte = new Date(to + "T23:59:59")
+    if (from) dateFilter.gte = new Date(from + "T12:00:00Z")
+    if (to) dateFilter.lte = new Date(to + "T12:00:00Z")
     where.OR = [
       { type: "lancamento", date: dateFilter },
       { type: "agendada", dueDate: dateFilter },
@@ -60,7 +82,7 @@ export async function GET(req: NextRequest) {
       if (e.date) {
         computedStatus = "pago"
       } else if (e.dueDate) {
-        const due = new Date(e.dueDate).toISOString().split("T")[0]
+        const due = e.dueDate instanceof Date ? e.dueDate.toISOString().split("T")[0] : String(e.dueDate).split("T")[0]
         if (due < today) computedStatus = "atrasada"
         else if (due === today) computedStatus = "vence_hoje"
         else computedStatus = "a_vencer"
@@ -71,7 +93,7 @@ export async function GET(req: NextRequest) {
       if (e.date) {
         computedStatus = "pago"
       } else if (e.recurrenceStart) {
-        const start = new Date(e.recurrenceStart).toISOString().split("T")[0]
+        const start = e.recurrenceStart instanceof Date ? e.recurrenceStart.toISOString().split("T")[0] : String(e.recurrenceStart).split("T")[0]
         if (start < today) computedStatus = "atrasada"
         else if (start === today) computedStatus = "vence_hoje"
         else computedStatus = "a_vencer"
@@ -122,14 +144,14 @@ export async function POST(req: NextRequest) {
   // For recorrente: generate monthly entries
   if (expenseType === "recorrente" && recStart) {
     const entries: any[] = []
-    const start = new Date(recStart + "T00:00:00")
-    const end = recEnd ? new Date(recEnd + "T00:00:00") : new Date(start.getFullYear(), start.getMonth() + 1, start.getDate())
+    const start = new Date(recStart + "T12:00:00Z")
+    const end = recEnd ? new Date(recEnd + "T12:00:00Z") : new Date(start.getFullYear(), start.getMonth() + 1, start.getDate())
     const maxIter = 120
     let i = 0
     const d = new Date(start)
 
     while (i < maxIter) {
-      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+      const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`
       entries.push({
         description,
         amount,
@@ -139,15 +161,15 @@ export async function POST(req: NextRequest) {
         isRecurring: true,
         recurrenceFreq: recurrenceFreq || "mensal",
         recurrenceStart: new Date(d),
-        recurrenceEnd: recEnd ? new Date(recEnd + "T00:00:00") : null,
+        recurrenceEnd: recEnd ? new Date(recEnd + "T12:00:00Z") : null,
         receiptUrl: receiptUrl || null,
         date: null,
-        dueDate: new Date(iso + "T00:00:00"),
+        dueDate: new Date(iso + "T12:00:00Z"),
         cashRegisterId: null,
         establishmentId,
       })
       if (d >= end) break
-      d.setMonth(d.getMonth() + 1)
+      d.setUTCMonth(d.getUTCMonth() + 1)
       i++
     }
 
@@ -156,10 +178,10 @@ export async function POST(req: NextRequest) {
   }
 
   // For agendada: set dueDate
-  const finalDueDate = (expenseType === "agendada" || expenseType === "recorrente") && dueDate ? new Date(dueDate + "T00:00:00") : null
+  const finalDueDate = (expenseType === "agendada" || expenseType === "recorrente") && dueDate ? new Date(dueDate + "T12:00:00Z") : null
 
   // Only lancamento has payment date; agendada/recorrente have null (paid later)
-  const paymentDate = expenseType === "lancamento" ? (date ? new Date(date + "T00:00:00") : new Date()) : null
+  const paymentDate = expenseType === "lancamento" ? (date ? new Date(date + "T12:00:00Z") : new Date()) : null
 
   const expense = await prisma.expense.create({
     data: {
@@ -170,8 +192,8 @@ export async function POST(req: NextRequest) {
       paymentMethod: paymentMethod || "dinheiro",
       isRecurring: expenseType === "recorrente",
       recurrenceFreq: expenseType === "recorrente" ? (recurrenceFreq || "mensal") : null,
-      recurrenceStart: recStart ? new Date(recStart + "T00:00:00") : null,
-      recurrenceEnd: recEnd ? new Date(recEnd + "T00:00:00") : null,
+      recurrenceStart: recStart ? new Date(recStart + "T12:00:00Z") : null,
+      recurrenceEnd: recEnd ? new Date(recEnd + "T12:00:00Z") : null,
       receiptUrl: receiptUrl || null,
       date: paymentDate,
       dueDate: finalDueDate,
