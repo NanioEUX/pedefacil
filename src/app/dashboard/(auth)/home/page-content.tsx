@@ -52,88 +52,93 @@ export default function DashboardHomePage() {
       {/* Linha 1 — 4 cards de resumo */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {/* Vendas Hoje */}
-        <Card className="relative overflow-hidden">
-          <CardContent className="p-4">
+        <Card className="relative overflow-hidden min-h-[140px]">
+          <CardContent className="p-4 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-zinc-400">Faturamento</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600/10">
+                <DollarSign className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
             <div className="absolute right-2 top-2 opacity-30">
               <Sparkline data={sparkData} color="#16a34a" height={32} className="w-20" />
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-600/10">
-                <DollarSign className="h-4 w-4 text-green-600" />
+            <div className="mt-2">
+              <p className="text-xl font-bold text-zinc-900">{formatCurrency(data.today.total)}</p>
+              <div className="mt-1 flex items-center gap-2 text-[10px]">
+                {salesPercent !== 0 && (
+                  <span className={`flex items-center gap-0.5 font-medium ${salesPercent > 0 ? "text-green-600" : "text-red-500"}`}>
+                    {salesPercent > 0 ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                    {salesPercent > 0 ? "+" : ""}{salesPercent}%
+                  </span>
+                )}
+                <span className="text-green-600">✓ {formatCurrency(data.today.paid)} pago</span>
+                {data.today.pending > 0 && <span className="text-amber-500">⏳ {formatCurrency(data.today.pending)}</span>}
               </div>
-              {salesPercent !== 0 && (
-                <span className={`flex items-center gap-0.5 text-[10px] font-medium ${salesPercent > 0 ? "text-green-600" : "text-red-500"}`}>
-                  {salesPercent > 0 ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
-                  {salesPercent > 0 ? "+" : ""}{salesPercent}%
-                </span>
-              )}
-            </div>
-            <p className="text-xl font-bold text-zinc-900">{formatCurrency(data.today.total)}</p>
-            <div className="mt-1 flex items-center gap-2 text-[10px]">
-              <span className="text-green-600">✓ {formatCurrency(data.today.paid)} pago</span>
-              {data.today.pending > 0 && <span className="text-amber-500">⏳ {formatCurrency(data.today.pending)}</span>}
             </div>
           </CardContent>
         </Card>
 
         {/* Receita vs Despesas */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
+        <Card className="min-h-[140px]">
+          <CardContent className="p-4 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-zinc-400">Receita vs Despesas</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
                 <CircleDollarSign className="h-4 w-4 text-blue-500" />
               </div>
             </div>
-            <p className="text-[10px] text-zinc-400 mb-1">Receita vs Despesas</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-bold text-green-600">{formatCurrency(data.today.total)}</span>
-              <span className="text-[10px] text-zinc-400">vs</span>
-              <span className="text-sm font-bold text-red-500">{formatCurrency(data.profit.expenses)}</span>
-            </div>
-            <div className="mt-2 h-2 bg-zinc-100 rounded-full overflow-hidden flex">
-              <div className="h-full bg-green-500 rounded-l-full" style={{ width: `${data.today.total > 0 ? (data.today.total / (data.today.total + data.profit.expenses)) * 100 : 50}%` }} />
-              <div className="h-full bg-red-400 rounded-r-full" style={{ width: `${data.profit.expenses > 0 ? (data.profit.expenses / (data.today.total + data.profit.expenses)) * 100 : 0}%` }} />
+            <div className="mt-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-bold text-green-600">{formatCurrency(data.today.total)}</span>
+                <span className="text-[10px] text-zinc-400">vs</span>
+                <span className="text-sm font-bold text-red-500">{formatCurrency(data.profit.expenses)}</span>
+              </div>
+              <div className="mt-2 h-1.5 bg-zinc-100 rounded-full overflow-hidden flex">
+                <div className="h-full bg-green-500 rounded-l-full" style={{ width: `${(data.today.total + data.profit.expenses) > 0 ? (data.today.total / (data.today.total + data.profit.expenses)) * 100 : 50}%` }} />
+                <div className="h-full bg-red-400 rounded-r-full" style={{ width: `${(data.today.total + data.profit.expenses) > 0 ? (data.profit.expenses / (data.today.total + data.profit.expenses)) * 100 : 0}%` }} />
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Lucro Líquido */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${data.profit.today >= 0 ? "bg-green-600/10" : "bg-red-500/10"}`}>
+        <Card className="min-h-[140px]">
+          <CardContent className="p-4 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-zinc-400">Lucro Líquido</span>
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${data.profit.today >= 0 ? "bg-green-600/10" : "bg-red-500/10"}`}>
                 <Wallet className={`h-4 w-4 ${data.profit.today >= 0 ? "text-green-600" : "text-red-500"}`} />
               </div>
             </div>
-            <p className="text-[10px] text-zinc-400 mb-1">Lucro Líquido</p>
-            <p className={`text-xl font-bold ${data.profit.today >= 0 ? "text-green-600" : "text-red-500"}`}>{formatCurrency(data.profit.today)}</p>
-            <p className="text-[10px] text-zinc-400">Mês: {formatCurrency(data.month?.total || 0)}</p>
+            <div className="mt-2">
+              <p className={`text-xl font-bold ${data.profit.today >= 0 ? "text-green-600" : "text-red-500"}`}>{formatCurrency(data.profit.today)}</p>
+              <p className="text-[10px] text-zinc-400 mt-1">Mês: {formatCurrency(data.month?.total || 0)}</p>
+            </div>
           </CardContent>
         </Card>
 
         {/* Pedidos Ativos */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
+        <Card className="min-h-[140px]">
+          <CardContent className="p-4 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-zinc-400">Pedidos Ativos</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
                 <Package className="h-4 w-4 text-amber-500" />
               </div>
-              <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 rounded-full px-1.5 py-0.5">
-                {data.active.total}
-              </span>
             </div>
-            <div className="space-y-0.5">
+            <div className="mt-2 space-y-0.5">
               <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-1.5"><Clock className="h-2.5 w-2.5 text-amber-500" /><span className="text-zinc-400">Preparando</span></div>
-                <span className="font-medium">{data.active.byStatus.preparing}</span>
+                <span className="font-bold">{data.active.byStatus.preparing}</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-1.5"><Package className="h-2.5 w-2.5 text-green-600" /><span className="text-zinc-400">Prontos</span></div>
-                <span className="font-medium">{data.active.byStatus.ready}</span>
+                <span className="font-bold">{data.active.byStatus.ready}</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-1.5"><Bike className="h-2.5 w-2.5 text-blue-500" /><span className="text-zinc-400">Em entrega</span></div>
-                <span className="font-medium">{data.active.byStatus.out_for_delivery}</span>
+                <span className="font-bold">{data.active.byStatus.out_for_delivery}</span>
               </div>
             </div>
           </CardContent>
@@ -269,7 +274,7 @@ export default function DashboardHomePage() {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-zinc-900">Caixa</p>
-                    <p className="text-[10px] text-zinc-400">{data.cashRegister.isOpen ? "Aberto" : "Fechado"}</p>
+                    <p className="text-[10px] text-zinc-400">{data.cashRegister.isOpen ? "🟢 Aberto" : "🔴 Fechado"}</p>
                   </div>
                 </div>
                 <div className={`h-2.5 w-2.5 rounded-full ${data.cashRegister.isOpen ? "bg-green-500 animate-pulse" : "bg-red-400"}`} />
@@ -281,7 +286,7 @@ export default function DashboardHomePage() {
                     <UtensilsCrossed className="h-4 w-4 text-amber-500" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-zinc-900">Mesas</p>
+                    <p className="text-xs font-medium text-zinc-900">🍽️ Mesas</p>
                     <p className="text-[10px] text-zinc-400">{data.tables.active} ativa(s) / {data.tables.total} total</p>
                   </div>
                 </div>
@@ -296,7 +301,7 @@ export default function DashboardHomePage() {
                     <Bike className="h-4 w-4 text-blue-500" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-zinc-900">Motoboys</p>
+                    <p className="text-xs font-medium text-zinc-900">🛵 Motoboys</p>
                     <p className="text-[10px] text-zinc-400">{data.motoboys.free} livres / {data.motoboys.total} total</p>
                   </div>
                 </div>
@@ -311,7 +316,7 @@ export default function DashboardHomePage() {
                     <Users className="h-4 w-4 text-purple-500" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-zinc-900">Clientes</p>
+                    <p className="text-xs font-medium text-zinc-900">👤 Clientes</p>
                     <p className="text-[10px] text-zinc-400">{data.customers.total} total</p>
                   </div>
                 </div>
