@@ -1,7 +1,7 @@
 const ASAAS_API_URL =
-  process.env.ASAAS_ENVIRONMENT === "production"
-    ? "https://api.asaas.com/v3"
-    : "https://sandbox.asaas.com/api/v3"
+  process.env.ASAAS_ENVIRONMENT === "sandbox"
+    ? "https://sandbox.asaas.com/api/v3"
+    : "https://api.asaas.com/v3"
 
 interface SplitRule {
   walletId: string
@@ -34,6 +34,8 @@ export async function createPaymentLink({
   splitRules?: SplitRule[]
 }): Promise<AsaasPaymentResponse> {
   const due = dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+
+  console.log("[Asaas] URL:", ASAAS_API_URL, "| Criando cliente para:", customerName, "| Valor:", value)
 
   const customerRes = await fetch(`${ASAAS_API_URL}/customers`, {
     method: "POST",
