@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createPaymentLink } from "@/lib/integrations/asaas"
+import { createEfiPixCharge } from "@/lib/integrations/efi"
 import crypto from "crypto"
 
 // Orders GET: 5s cache (frequent updates but reduces DB load)
@@ -127,49 +128,100 @@ export async function POST(req: NextRequest) {
 
     let paymentLink = ""
     let paymentError: string | null = null
+    const paymentProvider = establishment.paymentProvider || "asaas"
 
     if (paymentMethod === "asaas" || paymentMethod === "online") {
-      if (!establishment.asaasApiKey) {
-        return NextResponse.json({ error: "Pagamento online configurado, mas a API Key do Asaas não está configurada. Configure em Configurações." }, { status: 400 })
-      }
-      try {
-        const itemNames = (Array.isArray(parsedItems) ? parsedItems : [])
-          .map((i: any) => `${i.name} x${i.quantity}`)
-          .join(", ")
-
-        console.log("[Asaas] Criando pagamento:", { customerName, customerPhone, customerCpf: customerCpf ? "***" : "VAZIO", value: order.total })
-
-        const payment = await createPaymentLink({
-          apiKey: establishment.asaasApiKey,
-          customerName,
-          customerPhone: customerPhone || "",
-          customerCpf: customerCpf || "",
-          value: order.total,
-          description: `Pedido #${order.orderNumber} - ${establishment.name} - ${itemNames}`,
-        })
-
-        paymentLink = payment.invoiceUrl
-
-        const asaasToPaymentStatus: Record<string, string> = {
-          PENDING: "pending",
-          RECEIVED: "paid",
-          CONFIRMED: "paid",
-          OVERDUE: "overdue",
-          REFUNDED: "refunded",
+      if (paymentProvider === "efi") {
+        // Efi Pix payment
+        if (!establishment.efiClientId || !establishment.efiClientSecret || !establishment.efiCertificate) {
+          return NextResponse.json({ error: "Pagamento online configurado, mas a Efi não está Configure client ID, secret e certificado." }, { status: 400 })
         }
+        try {
+          const efiConfig = {
+            clientId: establishment.efiClientId,
+            clientSecret: establishment.efiClientSecret,
+            certificate: establishment.efiCertificate,
+            environment: (establishment.efiEnvironment || "sandbox") as "sandbox" | "production",
+          }
 
-        await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            paymentId: payment.id,
-            paymentLink: payment.invoiceUrl,
-            paymentStatus: asaasToPaymentStatus[payment.status] || "pending",
-            status: "payment_pending",
-          },
-        })
-      } catch (err: any) {
-        console.error("[Asaas] ERRO ao gerar pagamento:", err.message)
-        paymentError = err.message || "Erro ao gerar pagamento"
+          const itemNames = (Array.isArray(parsedItems) ? parsedItems : [])
+            .map((i: any) => `${i.name} x${i.quantity}`)
+            .join(", ")
+
+          const txid = `flo${order.id.substring(0, 20)}${Date.now()}`.replace(/[^a-zA-Z0-9]/g, "").substring(0, 35)
+
+          console.log("[Efi] Criando cobrança:", { txid, amount: order.total })
+
+          const charge = await createEfiPixCharge(efiConfig, {
+            amount: order.total,
+            description: `Pedido #${order.orderNumber} - ${establishment.name} - ${itemNames}`.substring(0, 140),
+            expiration: 3600,
+            txid,
+          })
+
+          const pixQrCodeUrl = charge.location
+            ? `https://pix.sejaefi.com.br/v2/${charge.location.split("/").pop()}`
+            : null
+
+          paymentLink = pixQrCodeUrl || `https://pix.sejaefi.com.br/v2/${charge.txid}`
+
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              paymentId: charge.txid,
+              paymentLink,
+              paymentStatus: "pending",
+              status: "payment_pending",
+            },
+          })
+        } catch (err: any) {
+          console.error("[Efi] ERRO ao gerar pagamento:", err.message)
+          paymentError = err.message || "Erro ao gerar pagamento Efi"
+        }
+      } else {
+        // Asaas payment (default)
+        if (!establishment.asaasApiKey) {
+          return NextResponse.json({ error: "Pagamento online configurado, mas a API Key do Asaas não está configurada. Configure em Configurações." }, { status: 400 })
+        }
+        try {
+          const itemNames = (Array.isArray(parsedItems) ? parsedItems : [])
+            .map((i: any) => `${i.name} x${i.quantity}`)
+            .join(", ")
+
+          console.log("[Asaas] Criando pagamento:", { customerName, customerPhone, customerCpf: customerCpf ? "***" : "VAZIO", value: order.total })
+
+          const payment = await createPaymentLink({
+            apiKey: establishment.asaasApiKey,
+            customerName,
+            customerPhone: customerPhone || "",
+            customerCpf: customerCpf || "",
+            value: order.total,
+            description: `Pedido #${order.orderNumber} - ${establishment.name} - ${itemNames}`,
+          })
+
+          paymentLink = payment.invoiceUrl
+
+          const asaasToPaymentStatus: Record<string, string> = {
+            PENDING: "pending",
+            RECEIVED: "paid",
+            CONFIRMED: "paid",
+            OVERDUE: "overdue",
+            REFUNDED: "refunded",
+          }
+
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              paymentId: payment.id,
+              paymentLink: payment.invoiceUrl,
+              paymentStatus: asaasToPaymentStatus[payment.status] || "pending",
+              status: "payment_pending",
+            },
+          })
+        } catch (err: any) {
+          console.error("[Asaas] ERRO ao gerar pagamento:", err.message)
+          paymentError = err.message || "Erro ao gerar pagamento"
+        }
       }
     }
 

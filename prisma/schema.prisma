@@ -31,6 +31,13 @@ model Establishment {
   isActive            Boolean           @default(true)
   asaasApiKey         String?
   asaasWalletId       String?
+  efiClientId         String?
+  efiClientSecret     String?
+  efiPixKey           String?
+  efiCertificate      String?
+  efiEnvironment      String            @default("sandbox")
+  efiWebhookToken     String?
+  paymentProvider     String            @default("asaas")
   paymentConfig       String            @default("{\"online\":true,\"delivery\":true,\"pickup\":true}")
   orderConfig         String            @default("{\"delivery\":true,\"pickup\":true}")
   deliveryFeeType     String            @default("free")
