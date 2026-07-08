@@ -150,12 +150,20 @@ export async function POST(req: NextRequest) {
 
         paymentLink = payment.invoiceUrl
 
+        const asaasToPaymentStatus: Record<string, string> = {
+          PENDING: "pending",
+          RECEIVED: "paid",
+          CONFIRMED: "paid",
+          OVERDUE: "overdue",
+          REFUNDED: "refunded",
+        }
+
         await prisma.order.update({
           where: { id: order.id },
           data: {
             paymentId: payment.id,
             paymentLink: payment.invoiceUrl,
-            paymentStatus: payment.status,
+            paymentStatus: asaasToPaymentStatus[payment.status] || "pending",
             status: "payment_pending",
           },
         })

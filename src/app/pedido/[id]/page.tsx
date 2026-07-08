@@ -70,7 +70,7 @@ export default async function OrderTrackingPage({
     notFound()
   }
 
-  if (order.paymentId && order.paymentStatus === "pending" && order.establishment.asaasApiKey) {
+  if (order.paymentId && (order.paymentStatus === "pending" || order.paymentStatus === "PENDING") && order.establishment.asaasApiKey) {
     await syncPaymentStatus(order.id, order.paymentId, order.establishment.asaasApiKey)
   }
 
