@@ -62,11 +62,15 @@ export async function createPaymentLink({
 
   const paymentBody: any = {
     customer: customer.id,
-    billingType: "UNDEFINED",
+    billingType: "PIX",
     value,
     dueDate: due,
     description: description.substring(0, 200),
     externalReference: description,
+  }
+
+  if (customerCpf) {
+    paymentBody.cpfCnpj = customerCpf.replace(/\D/g, "")
   }
 
   if (splitRules && splitRules.length > 0) {

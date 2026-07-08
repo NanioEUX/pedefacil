@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
           where: { id: customer.id },
           data: {
             name: customerName,
+            cpf: customerCpf || customer.cpf,
             address: customerComplement || customer.address,
             cep: customerCep || customer.cep,
             totalOrders: { increment: 1 },
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
           } catch {}
         }
         customer = await prisma.customer.create({
-          data: { phone: customerPhone, name: customerName, address: customerComplement, cep: customerCep, establishmentId, totalOrders: 1, totalSpent: calculatedTotal, loyaltyPoints: initialPoints },
+          data: { phone: customerPhone, name: customerName, cpf: customerCpf || null, address: customerComplement, cep: customerCep, establishmentId, totalOrders: 1, totalSpent: calculatedTotal, loyaltyPoints: initialPoints },
         })
         customerId = customer.id
       }
@@ -155,8 +156,9 @@ export async function POST(req: NextRequest) {
             status: "payment_pending",
           },
         })
-      } catch (paymentError) {
+      } catch (paymentError: any) {
         console.error("Erro ao gerar pagamento Asaas:", paymentError)
+        paymentLink = ""
       }
     }
 

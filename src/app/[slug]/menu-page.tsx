@@ -466,7 +466,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         const data = await res.json()
         if (data && !data.notFound) {
           setCustomerData(data)
-          setCustomer((prev) => ({ ...prev, name: data.name || prev.name, phone: data.phone, address: data.address || prev.address }))
+          setCustomer((prev) => ({ ...prev, name: data.name || prev.name, phone: data.phone, address: data.address || prev.address, cpf: data.cpf || prev.cpf }))
           setCustomerLoyaltyPoints(data.loyaltyPoints || 0)
           if (data.cep && data.address) {
             setAddressSaved(true)
@@ -1473,7 +1473,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                       <div className="flex gap-2">
                       <div className="space-y-1">
                         <label htmlFor="cep" className="block text-sm font-medium" style={{ color: theme.textSubtle }}>CEP</label>
-                        <input id="cep" placeholder="00000-000" value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, "").slice(0, 8))} className="w-32 h-10 rounded-lg border px-3 py-2 text-sm placeholder:opacity-40 focus:outline-none focus:ring-2 focus:ring-green-500" style={{ backgroundColor: theme.bgInput, color: theme.text, borderColor: theme.borderInput, borderWidth: 1 }} disabled={addressSaved} />
+                        <input id="cep" placeholder="00000-000" value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, "").slice(0, 8))} className="w-32 h-10 rounded-lg border px-3 py-2 text-sm placeholder:opacity-40 focus:outline-none focus:ring-2 focus:ring-green-500" style={{ backgroundColor: theme.bgInput, color: theme.text, borderColor: theme.borderInput, borderWidth: 1 }} disabled={addressSaved && !!cepAddress} />
                       </div>
                         {cep.length === 8 && !cepLoading && (
                           <button type="button" onClick={lookupCep} className="mt-6 text-xs hover:underline self-start" style={{ color: theme.accent }}>

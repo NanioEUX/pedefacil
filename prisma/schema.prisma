@@ -76,6 +76,7 @@ model Customer {
   id              String        @id @default(cuid())
   name            String?
   phone           String        @unique
+  cpf             String?
   address         String?
   cep             String?
   totalOrders     Int           @default(0)
