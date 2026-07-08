@@ -178,7 +178,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<"online" | "delivery" | "pickup">("online")
   const [orderType, setOrderType] = useState<"delivery" | "pickup">("delivery")
   const [ordering, setOrdering] = useState(false)
-  const [orderResult, setOrderResult] = useState<{ success: boolean; trackingUrl?: string; paymentLink?: string; message?: string; orderId?: string; orderType?: string } | null>(null)
+  const [orderResult, setOrderResult] = useState<{ success: boolean; trackingUrl?: string; paymentLink?: string; paymentError?: string; message?: string; orderId?: string; orderType?: string } | null>(null)
   const [showTracking, setShowTracking] = useState(false)
   const [trackingOrder, setTrackingOrder] = useState<any>(null)
   const [trackingMessages, setTrackingMessages] = useState<any[]>([])
@@ -617,6 +617,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         success: true,
         trackingUrl: data.trackingUrl,
         paymentLink: data.paymentLink,
+        paymentError: data.paymentError,
         orderId: data.order?.id,
         orderType: orderType,
       })
@@ -839,6 +840,13 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   </button>
                 </a>
                 <p className="mt-1 text-xs text-white/30">Pagamento processado por Asaas</p>
+              </div>
+            )}
+
+            {!orderResult.paymentLink && orderResult.paymentError && (
+              <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/[0.06] p-3">
+                <p className="text-sm text-red-400">Erro ao gerar pagamento: {orderResult.paymentError}</p>
+                <p className="text-xs text-white/30 mt-1">O pedido foi criado, mas não foi possível gerar o link de pagamento.</p>
               </div>
             )}
 

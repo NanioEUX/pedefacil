@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
     }
 
     let paymentLink = ""
+    let paymentError: string | null = null
 
     if (paymentMethod === "asaas" || paymentMethod === "online") {
       if (!establishment.asaasApiKey) {
@@ -135,6 +136,8 @@ export async function POST(req: NextRequest) {
         const itemNames = (Array.isArray(parsedItems) ? parsedItems : [])
           .map((i: any) => `${i.name} x${i.quantity}`)
           .join(", ")
+
+        console.log("[Asaas] Criando pagamento:", { customerName, customerPhone, customerCpf: customerCpf ? "***" : "VAZIO", value: order.total })
 
         const payment = await createPaymentLink({
           apiKey: establishment.asaasApiKey,
@@ -156,9 +159,9 @@ export async function POST(req: NextRequest) {
             status: "payment_pending",
           },
         })
-      } catch (paymentError: any) {
-        console.error("Erro ao gerar pagamento Asaas:", paymentError)
-        paymentLink = ""
+      } catch (err: any) {
+        console.error("[Asaas] ERRO ao gerar pagamento:", err.message)
+        paymentError = err.message || "Erro ao gerar pagamento"
       }
     }
 
@@ -227,7 +230,7 @@ export async function POST(req: NextRequest) {
       console.error("Error decrementing stock:", e)
     }
 
-    return NextResponse.json({ order: fullOrder, paymentLink, trackingUrl: `/pedido/${trackingToken}`, lowStockItems })
+    return NextResponse.json({ order: fullOrder, paymentLink, paymentError, trackingUrl: `/pedido/${trackingToken}`, lowStockItems })
   } catch (error) {
     console.error(error)
     return NextResponse.json({ error: "Erro ao criar pedido" }, { status: 500 })
