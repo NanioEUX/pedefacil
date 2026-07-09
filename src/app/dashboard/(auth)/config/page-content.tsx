@@ -44,6 +44,13 @@ export default function ConfigPage() {
     cover: "",
     asaasApiKey: "",
     asaasWalletId: "",
+    efiClientId: "",
+    efiClientSecret: "",
+    efiPixKey: "",
+    efiCertificate: "",
+    efiEnvironment: "sandbox",
+    efiWebhookToken: "",
+    paymentProvider: "asaas",
     deliveryFeeType: "free",
     deliveryFeeAmount: "0",
     deliveryFreeAbove: "0",
@@ -85,6 +92,13 @@ export default function ConfigPage() {
             cover: data.cover || "",
             asaasApiKey: data.asaasApiKey || "",
             asaasWalletId: data.asaasWalletId || "",
+            efiClientId: data.efiClientId || "",
+            efiClientSecret: data.efiClientSecret || "",
+            efiPixKey: data.efiPixKey || "",
+            efiCertificate: data.efiCertificate || "",
+            efiEnvironment: data.efiEnvironment || "sandbox",
+            efiWebhookToken: data.efiWebhookToken || "",
+            paymentProvider: data.paymentProvider || "asaas",
             deliveryFeeType: data.deliveryFeeType || "free",
             deliveryFeeAmount: String(data.deliveryFeeAmount || "0"),
             deliveryFreeAbove: String(data.deliveryFreeAbove || "0"),
@@ -250,6 +264,96 @@ export default function ConfigPage() {
                 </span>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Efi (Gerencianet) */}
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-semibold text-zinc-900">Efi Bank (Gerencianet)</h3>
+            <p className="text-sm text-zinc-500">
+              Configure a Efi para receber pagamentos via Pix com webhook instantâneo. Pix gratuito e cartão a 1.99%.
+            </p>
+            
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-zinc-700">Provider de Pagamento</label>
+              <select
+                value={form.paymentProvider}
+                onChange={(e) => setForm({ ...form, paymentProvider: e.target.value })}
+                className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 focus:border-green-600 focus:outline-none"
+              >
+                <option value="asaas">Asaas</option>
+                <option value="efi">Efi Bank (Gerencianet)</option>
+              </select>
+            </div>
+
+            {form.paymentProvider === "efi" && (
+              <>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Client ID</label>
+                  <input
+                    type="text"
+                    placeholder="Client ID da Efi"
+                    value={form.efiClientId}
+                    onChange={(e) => setForm({ ...form, efiClientId: e.target.value })}
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Client Secret</label>
+                  <input
+                    type="password"
+                    placeholder="Client Secret da Efi"
+                    value={form.efiClientSecret}
+                    onChange={(e) => setForm({ ...form, efiClientSecret: e.target.value })}
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Chave Pix</label>
+                  <input
+                    type="text"
+                    placeholder="Sua chave Pix (CPF, CNPJ, email, aleatória)"
+                    value={form.efiPixKey}
+                    onChange={(e) => setForm({ ...form, efiPixKey: e.target.value })}
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Certificado (.p12 em Base64)</label>
+                  <textarea
+                    placeholder="Cole o conteúdo do certificado .p12 em Base64"
+                    value={form.efiCertificate}
+                    onChange={(e) => setForm({ ...form, efiCertificate: e.target.value })}
+                    rows={3}
+                    className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none resize-none font-mono text-xs"
+                  />
+                  <p className="text-xs text-zinc-400">Baixe o certificado no painel da Efi → Certificados</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Ambiente</label>
+                  <select
+                    value={form.efiEnvironment}
+                    onChange={(e) => setForm({ ...form, efiEnvironment: e.target.value })}
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 focus:border-green-600 focus:outline-none"
+                  >
+                    <option value="sandbox">Sandbox (Testes)</option>
+                    <option value="production">Produção</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Token do Webhook</label>
+                  <input
+                    type="text"
+                    placeholder="Token para validar webhooks"
+                    value={form.efiWebhookToken}
+                    onChange={(e) => setForm({ ...form, efiWebhookToken: e.target.value })}
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                  />
+                  <p className="text-xs text-zinc-400">URL do webhook: https://flowoshub.com/api/webhooks/efi</p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
