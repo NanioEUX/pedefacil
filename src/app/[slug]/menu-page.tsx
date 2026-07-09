@@ -836,8 +836,15 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       if (res.ok) {
         setCancelModalOrderId(null)
         loadCustomerOrders()
+        // Close tracking if showing the cancelled order
         if (trackingOrder?.id === orderId) {
-          setTrackingOrder({ ...trackingOrder, status: "cancelled", paymentStatus: "cancelled" })
+          setShowTracking(false)
+          setTrackingOrder(null)
+        }
+        // Clear last order if it was the cancelled one
+        if (lastOrder?.orderId === orderId) {
+          setLastOrder(null)
+          localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
         }
       }
     } catch {} finally {
@@ -1731,6 +1738,19 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     </div>
                   </div>
                 ))}
+
+                <button
+                  onClick={() => {
+                    if (window.confirm("Deseja esvaziar o carrinho?")) {
+                      setCart([])
+                      localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
+                    }
+                  }}
+                  className="text-xs font-medium hover:underline pt-1"
+                  style={{ color: "#EF4444" }}
+                >
+                  Esvaziar carrinho
+                </button>
 
                 {!couponData ? (
                   <div className="flex gap-2 pt-3">

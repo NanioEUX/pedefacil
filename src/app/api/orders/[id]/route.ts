@@ -21,6 +21,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Apenas pedidos com pagamento pendente podem ser cancelados" }, { status: 400 })
     }
 
+    // If cancelling, DELETE the order from database
+    if (status === "cancelled") {
+      await prisma.order.delete({
+        where: { id: params.id },
+      })
+      return NextResponse.json({ success: true, deleted: true })
+    }
+
+    // Otherwise, update the order
     const updated = await prisma.order.update({
       where: { id: params.id },
       data: {
