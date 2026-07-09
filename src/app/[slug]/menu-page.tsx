@@ -184,7 +184,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<"online" | "delivery" | "pickup" | "pix" | "card">("pix")
   const [orderType, setOrderType] = useState<"delivery" | "pickup">("delivery")
   const [ordering, setOrdering] = useState(false)
-  const [orderResult, setOrderResult] = useState<{ success: boolean; trackingUrl?: string; paymentLink?: string; paymentError?: string; message?: string; orderId?: string; orderType?: string; paymentMethod?: string } | null>(null)
+  const [orderResult, setOrderResult] = useState<{ success: boolean; trackingUrl?: string; paymentLink?: string; paymentError?: string; message?: string; orderId?: string; orderType?: string; paymentMethod?: string; orderTotal?: number } | null>(null)
   const [showTracking, setShowTracking] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [trackingOrder, setTrackingOrder] = useState<any>(null)
@@ -1973,6 +1973,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                                 orderId: order.id,
                                 paymentLink: order.paymentLink,
                                 paymentMethod: "pix",
+                                orderTotal: order.total,
                               })
                               setTimeout(() => setShowPaymentModal(true), 300)
                             }}
@@ -2056,6 +2057,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                                   success: true,
                                   orderId: trackingOrder.id,
                                   paymentLink: trackingOrder.paymentLink,
+                                  orderTotal: trackingOrder.total,
                                 })
                                 setTimeout(() => {
                                   setShowTracking(false)
@@ -2122,7 +2124,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         <PaymentModal
           orderId={orderResult.orderId!}
           paymentLink={orderResult.paymentLink}
-          total={total}
+          total={orderResult.orderTotal ?? total}
           theme={theme}
           onClose={() => setShowPaymentModal(false)}
           establishmentId={establishment.id}
