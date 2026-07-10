@@ -1154,23 +1154,21 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           className="mx-auto max-w-3xl px-4 pb-3"
         >
           {searchMode ? (
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: theme.textMutedMore }} />
-                <input
-                  type="text"
-                  placeholder="Buscar no cardápio..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                  className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm backdrop-blur-sm transition-all focus:outline-none"
-                  style={{ backgroundColor: theme.bgInput, color: theme.text, borderColor: theme.borderInput, borderWidth: 1 }}
-                />
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: theme.textMutedMore }} />
+              <input
+                type="text"
+                placeholder="Buscar no cardápio..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                className="w-full rounded-xl py-2.5 pl-10 pr-10 text-sm backdrop-blur-sm transition-all focus:outline-none"
+                style={{ backgroundColor: theme.bgInput, color: theme.text, borderColor: theme.borderInput, borderWidth: 1 }}
+              />
               <button
                 onClick={() => { setSearchQuery(""); setSearchMode(false) }}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all hover:opacity-80"
-                style={{ backgroundColor: theme.bgCard, color: theme.textMuted, borderWidth: 1, borderStyle: "solid", borderColor: theme.borderCard }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70"
+                style={{ color: theme.textMutedMore }}
               >
                 <X className="h-4 w-4" />
               </button>
