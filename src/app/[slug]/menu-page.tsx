@@ -855,10 +855,12 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           setShowTracking(false)
           setTrackingOrder(null)
         }
-        // Clear last order if it was the cancelled one
+        // Clear last order and cart if it was the cancelled one
         if (lastOrder?.orderId === orderId) {
           setLastOrder(null)
           localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
+          setCart([])
+          localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
         }
       }
     } catch {} finally {
