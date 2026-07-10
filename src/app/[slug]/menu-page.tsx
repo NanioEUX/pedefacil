@@ -2794,7 +2794,9 @@ function PaymentModal({
         }),
       })
       const data = await res.json()
-      if (data.status === "CONFIRMED" || data.status === "RECEIVED" || data.status === "AUTHORIZED") {
+      if (!res.ok) {
+        setCardError(data.error || `Erro ${res.status}`)
+      } else if (data.status === "CONFIRMED" || data.status === "RECEIVED" || data.status === "AUTHORIZED") {
         setPaymentSuccess(true)
         onPaymentSuccess?.()
       } else if (data.error) {
@@ -2802,8 +2804,8 @@ function PaymentModal({
       } else {
         setCardError("Pagamento não aprovado. Tente novamente.")
       }
-    } catch {
-      setCardError("Erro ao processar pagamento")
+    } catch (e: any) {
+      setCardError(e?.message || "Erro ao processar pagamento")
     } finally {
       setCardProcessing(false)
     }
