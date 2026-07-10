@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     take: 20,
     select: {
       id: true,
+      orderNumber: true,
       customerName: true,
       items: true,
       total: true,

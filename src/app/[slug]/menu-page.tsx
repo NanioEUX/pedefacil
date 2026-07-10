@@ -308,6 +308,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [activeTab, setActiveTab] = useState<"menu" | "orders" | "profile">("menu")
   const [couponError, setCouponError] = useState("")
   const [pendingOrderConfirm, setPendingOrderConfirm] = useState<{ orderId: string; orderNumber: number; total: number } | null>(null)
+  const [inProgressOrder, setInProgressOrder] = useState<{ orderId: string; orderNumber: number; status: string; total: number; trackingUrl: string } | null>(null)
   const skipPendingCheckRef = useRef(false)
   const orderingRef = useRef(false)
   const lastOrderIdRef = useRef<string | null>(null)
@@ -580,6 +581,32 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
   if (availablePayments.length > 0 && !availablePayments.find(p => p.key === paymentMethod)) {
     setPaymentMethod(availablePayments[0].key as any)
+  }
+
+  function openCart() {
+    const phone = customer.phone || customerData?.phone
+    if (phone && customerOrders.length > 0) {
+      const inProgress = customerOrders.find((o: any) =>
+        o.paymentStatus === "paid" && ["confirmed", "preparing", "ready", "out_for_delivery"].includes(o.status)
+      )
+      if (inProgress) {
+        const statusLabels: Record<string, string> = {
+          confirmed: "Confirmado",
+          preparing: "Preparando",
+          ready: "Pronto",
+          out_for_delivery: "Saiu para Entrega",
+        }
+        setInProgressOrder({
+          orderId: inProgress.id,
+          orderNumber: inProgress.orderNumber,
+          status: statusLabels[inProgress.status] || inProgress.status,
+          total: inProgress.total,
+          trackingUrl: `/pedido/${inProgress.trackingToken}`,
+        })
+        return
+      }
+    }
+    setShowCart(true)
   }
 
   function addToCart(product: Product) {
@@ -1347,7 +1374,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             <button
               onClick={() => {
                 setCartToast(null)
-                setShowCart(true)
+                openCart()
               }}
               className="text-sm font-semibold shrink-0"
               style={{ color: theme.primary }}
@@ -1371,7 +1398,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               <span className="text-[10px] font-medium">Cardápio</span>
             </button>
             <button
-              onClick={() => setShowCart(true)}
+              onClick={() => openCart()}
               className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors relative"
               style={{ color: cart.length > 0 ? theme.primary : theme.textMuted }}
             >
@@ -2287,7 +2314,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                                 onClick={() => {
                                   setCart(items.map((i: any) => ({ id: i.id || i.productId || i.name, name: i.name, price: i.price, image: i.image, quantity: i.quantity })))
                                   setShowOrdersList(false)
-                                  setShowCart(true)
+                                  openCart()
                                 }}
                                 className="mt-2 w-full rounded-lg border py-2 text-sm font-medium transition-opacity hover:opacity-80"
                                 style={{ borderColor: theme.borderCard, color: theme.accent }}
@@ -2480,6 +2507,46 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 style={{ backgroundColor: theme.primary }}
               >
                 Sim, criar novo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* In-progress order notification modal */}
+      {inProgressOrder && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: theme.overlay }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 backdrop-blur-xl" style={{ backgroundColor: theme.bgModal, borderWidth: 1, borderStyle: "solid", borderColor: theme.borderCard }}>
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
+                <Package className="h-6 w-6 text-blue-400" />
+              </div>
+            </div>
+            <h3 className="mb-2 text-center text-lg font-bold" style={{ color: theme.text }}>Pedido em andamento</h3>
+            <p className="mb-6 text-center text-sm" style={{ color: theme.textMuted }}>
+              Você já tem o pedido <strong style={{ color: theme.accent }}>#{inProgressOrder.orderNumber}</strong> ({inProgressOrder.status}) no valor de <strong style={{ color: theme.accent }}>R$ {inProgressOrder.total.toFixed(2)}</strong>. O que deseja fazer?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  const token = inProgressOrder.trackingUrl.split("/pedido/")[1]
+                  setInProgressOrder(null)
+                  openTracking(inProgressOrder.orderId, inProgressOrder.trackingUrl)
+                }}
+                className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: theme.primary }}
+              >
+                Acompanhar pedido
+              </button>
+              <button
+                onClick={() => {
+                  setInProgressOrder(null)
+                  setShowCart(true)
+                }}
+                className="w-full rounded-xl border py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{ borderColor: theme.borderCard, color: theme.text }}
+              >
+                Fazer novo pedido
               </button>
             </div>
           </div>
