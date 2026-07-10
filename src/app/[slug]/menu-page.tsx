@@ -2712,26 +2712,34 @@ function PaymentModal({
   }, [countdown > 0])
 
   // Check payment status periodically
+  // PIX tab: poll only after QR code is loaded + 8s delay (gives user time to switch to card)
+  // Card tab: only poll after user submitted card (cardPending=true)
   useEffect(() => {
     if (paymentSuccess || !orderId) return
+    if (tab === "pix" && !qrCode) return
+    if (tab === "card" && !cardPending) return
     const controller = new AbortController()
-    const check = setInterval(async () => {
-      if (controller.signal.aborted) { clearInterval(check); return }
-      try {
-        const res = await fetch(`/api/orders/${orderId}/payment-status`, { signal: controller.signal })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.paymentStatus === "paid") {
-            setPaymentSuccess(true)
-            setCardPending(false)
-            onPaymentSuccess?.()
-            clearInterval(check)
+    const delay = tab === "pix" && !cardPending ? 8000 : 0
+    const timer = setTimeout(() => {
+      const check = setInterval(async () => {
+        if (controller.signal.aborted) { clearInterval(check); return }
+        try {
+          const res = await fetch(`/api/orders/${orderId}/payment-status`, { signal: controller.signal })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.paymentStatus === "paid") {
+              setPaymentSuccess(true)
+              setCardPending(false)
+              onPaymentSuccess?.()
+              clearInterval(check)
+            }
           }
-        }
-      } catch {}
-    }, 3000)
-    return () => { controller.abort(); clearInterval(check) }
-  }, [orderId, paymentSuccess])
+        } catch {}
+      }, 3000)
+      controller.signal.addEventListener("abort", () => clearInterval(check))
+    }, delay)
+    return () => { controller.abort(); clearTimeout(timer) }
+  }, [orderId, paymentSuccess, tab, cardPending, qrCode])
 
   function formatCountdown(seconds: number) {
     const m = Math.floor(seconds / 60)
