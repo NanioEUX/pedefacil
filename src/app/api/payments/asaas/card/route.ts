@@ -9,6 +9,7 @@ const ASAAS_API_URL =
 export async function POST(req: NextRequest) {
   try {
     const { orderId, creditCard, creditCardHolderInfo } = await req.json()
+    const remoteIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "127.0.0.1"
 
     if (!orderId || !creditCard || !creditCardHolderInfo) {
       return NextResponse.json({ error: "Dados incompletos" }, { status: 400 })
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
           value: order.total,
           dueDate: new Date().toISOString().split("T")[0],
           description: `Pedido #${order.orderNumber}`.substring(0, 200),
+          remoteIp,
           creditCard: {
             creditCardNumber: creditCard.number.replace(/\s/g, ""),
             creditCardBrand: detectCardBrand(creditCard.number),
