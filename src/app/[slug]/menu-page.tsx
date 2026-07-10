@@ -761,7 +761,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         }),
       })
 
-      if (!res.ok) throw new Error("Erro ao criar pedido")
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || "Erro ao criar pedido")
+      }
       const data = await res.json()
       console.log("[submitOrder] API response:", {
         orderId: data.order?.id,
