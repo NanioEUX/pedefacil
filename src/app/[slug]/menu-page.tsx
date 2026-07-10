@@ -3028,10 +3028,17 @@ function PaymentModal({
                 <p className="text-sm text-center mb-4" style={{ color: theme.textMuted }}>
                   Processando seu pagamento com cartão...
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-6">
                   <Loader2 className="h-4 w-4 animate-spin" style={{ color: theme.primary }} />
                   <p className="text-xs" style={{ color: theme.textMuted }}>Aguardando confirmação do Asaas</p>
                 </div>
+                <button
+                  onClick={() => { setCardPending(false); setCardError("") }}
+                  className="rounded-lg px-4 py-2 text-xs font-medium transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: `${theme.primary}15`, color: theme.primary, borderWidth: 1, borderStyle: "solid", borderColor: `${theme.primary}30` }}
+                >
+                  Tentar novamente
+                </button>
               </div>
             ) : (
             <div className="space-y-3">
