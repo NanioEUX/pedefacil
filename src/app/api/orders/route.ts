@@ -12,6 +12,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { establishmentId, customerName, customerPhone, customerAddress, customerComplement, customerCep, customerCpf, items, total, deliveryFee, notes, paymentMethod, method, orderType, couponId, useLoyalty, loyaltyPointsUsed, loyaltyDiscount, tableNumber } = body
 
+    console.log("[Orders POST] paymentMethod:", paymentMethod, "| orderType:", orderType, "| method:", method)
+
     if (!establishmentId || !customerName || !items || !total) {
       return NextResponse.json({ error: "Dados incompletos" }, { status: 400 })
     }
@@ -178,6 +180,8 @@ export async function POST(req: NextRequest) {
     let paymentError: string | null = null
     const paymentProvider = establishment.paymentProvider || "asaas"
 
+    console.log("[Orders POST] paymentProvider:", paymentProvider, "| willCreatePayment:", paymentMethod === "asaas" || paymentMethod === "online" || paymentMethod === "pix" || paymentMethod === "card")
+
     if (paymentMethod === "asaas" || paymentMethod === "online" || paymentMethod === "pix" || paymentMethod === "card") {
       if (paymentProvider === "efi") {
         // Efi Pix payment
@@ -264,6 +268,8 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    console.log("[Orders POST] Resultado final - paymentLink:", paymentLink ? "SIM" : "NAO", "| paymentError:", paymentError)
 
     const fullOrder = await prisma.order.findUnique({
       where: { id: order.id },
