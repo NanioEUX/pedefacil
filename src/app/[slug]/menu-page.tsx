@@ -1079,7 +1079,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   // Error screen - payment failed but order was created
   if (orderResult?.success && orderResult.paymentError) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: theme.bg }}>
+      <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: theme.bgPage }}>
         <div className="w-full max-w-md rounded-[20px] border text-center backdrop-blur-xl p-8" style={{ borderColor: theme.borderCard, backgroundColor: theme.bgCard }}>
           <div className="mb-4 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
@@ -1131,7 +1131,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     console.log("[render] TELA DE SUCESSO (sem paymentLink) - orderId:", orderResult.orderId, "paymentError:", orderResult.paymentError)
     return (
       <>
-      <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: theme.bg }}>
+      <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: theme.bgPage }}>
         <div className="w-full max-w-md rounded-[20px] border text-center backdrop-blur-xl p-8" style={{ borderColor: theme.borderCard, backgroundColor: theme.bgCard }}>
             <div className="mb-4 flex justify-center">
               {(establishment.confirmationImage || establishment.logo) ? (
