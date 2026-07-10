@@ -1020,7 +1020,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   if (orderResult?.success && orderResult?.paymentLink) {
     console.log("[render] paymentLink existe, showPaymentModal:", showPaymentModal, "orderId:", orderResult.orderId)
     if (!showPaymentModal) {
-      // Auto-open payment modal
       setTimeout(() => setShowPaymentModal(true), 100)
       return null
     }
@@ -2446,18 +2445,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       )}
 
       {/* Payment modal - Checkout Transparente */}
-      {showPaymentModal && orderResult?.paymentLink && (
-        <PaymentModal
-          orderId={orderResult.orderId!}
-          paymentLink={orderResult.paymentLink}
-          total={orderResult.orderTotal ?? total}
-          theme={theme}
-          onClose={() => setShowPaymentModal(false)}
-          establishmentId={establishment.id}
-          initialTab={orderResult.paymentMethod === "card" ? "card" : "pix"}
-          onPaymentSuccess={() => { setCart([]); localStorage.removeItem(`pedefacil-cart-${establishment.slug}`); setOrderResult(prev => prev ? { ...prev, paymentLink: undefined } : null) }}
-        />
-      )}
+      {/* PaymentModal is rendered in the early return above when paymentLink exists */}
 
       {/* Pending order confirmation modal */}
       {pendingOrderConfirm && (
