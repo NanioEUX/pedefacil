@@ -62,11 +62,14 @@ export async function POST(req: NextRequest) {
     })
 
     if (!updateRes.ok) {
-      const err = await updateRes.json()
-      console.error("[Card] Asaas error:", JSON.stringify(err))
+      const errText = await updateRes.text()
+      console.error("[Card] Asaas PUT error:", updateRes.status, errText)
+      let err: any = {}
+      try { err = JSON.parse(errText) } catch {}
       return NextResponse.json({
-        error: err.errors?.[0]?.description || "Erro ao processar cartão",
+        error: err.errors?.[0]?.description || `Erro ao processar cartão (${updateRes.status})`,
         status: "error",
+        details: err,
       })
     }
 
@@ -117,8 +120,8 @@ export async function POST(req: NextRequest) {
       transactionId: payment.transactionReceiptUrl || null,
     })
   } catch (error: any) {
-    console.error("[Card] Error:", error.message)
-    return NextResponse.json({ error: "Erro ao processar pagamento" }, { status: 500 })
+    console.error("[Card] Error:", error.message, error.stack)
+    return NextResponse.json({ error: `Erro ao processar pagamento: ${error.message}` }, { status: 500 })
   }
 }
 
