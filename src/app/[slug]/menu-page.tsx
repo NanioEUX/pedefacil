@@ -270,26 +270,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     } catch {}
   }, [establishment.slug])
 
-  // Check payment status on mount and clear cart if payment is already confirmed
-  useEffect(() => {
-    if (!lastOrder?.orderId || !lastOrder?.paymentLink) return
-    async function checkPayment() {
-      try {
-        const res = await fetch(`/api/orders/${lastOrder!.orderId}/payment-status`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.paymentStatus === "paid") {
-            setCart([])
-            localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
-            setLastOrder(null)
-            localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
-          }
-        }
-      } catch {}
-    }
-    checkPayment()
-  }, [lastOrder?.orderId, lastOrder?.paymentLink, establishment.slug])
-
   const [showIdentifyModal, setShowIdentifyModal] = useState(false)
   const [cep, setCep] = useState("")
   const [cepAddress, setCepAddress] = useState<any>(null)
@@ -959,7 +939,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         establishmentId={establishment.id}
         initialTab={orderResult.paymentMethod === "card" ? "card" : "pix"}
         mode={orderResult.paymentMethod ? (orderResult.paymentMethod === "card" ? "card" : "pix") : undefined}
-          onPaymentSuccess={() => { setCart([]); localStorage.removeItem(`pedefacil-cart-${establishment.slug}`); setLastOrder(null); localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`) }}
+          onPaymentSuccess={() => { setCart([]); localStorage.removeItem(`pedefacil-cart-${establishment.slug}`) }}
       />
     )
   }
@@ -2362,7 +2342,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           onClose={() => setShowPaymentModal(false)}
           establishmentId={establishment.id}
           initialTab={orderResult.paymentMethod === "card" ? "card" : "pix"}
-        onPaymentSuccess={() => { setCart([]); localStorage.removeItem(`pedefacil-cart-${establishment.slug}`); setLastOrder(null); localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`) }}
+        onPaymentSuccess={() => { setCart([]); localStorage.removeItem(`pedefacil-cart-${establishment.slug}`) }}
         />
       )}
 
