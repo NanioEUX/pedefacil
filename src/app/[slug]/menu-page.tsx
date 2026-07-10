@@ -2812,7 +2812,8 @@ function PaymentModal({
         setCardError("Pagamento não aprovado. Tente novamente.")
       }
     } catch (e: any) {
-      setCardError(e?.message || "Erro ao processar pagamento")
+      console.error("[Card] Catch error:", e?.name, e?.message, e)
+      setCardError(`Erro: ${e?.message || "desconhecido"}`)
     } finally {
       setCardProcessing(false)
     }
