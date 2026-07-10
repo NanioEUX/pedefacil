@@ -309,6 +309,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [couponError, setCouponError] = useState("")
   const [pendingOrderConfirm, setPendingOrderConfirm] = useState<{ orderId: string; orderNumber: number; total: number } | null>(null)
   const [inProgressOrder, setInProgressOrder] = useState<{ orderId: string; orderNumber: number; status: string; total: number; trackingUrl: string } | null>(null)
+  const [pendingOrderItems, setPendingOrderItems] = useState<any[]>([])
   const skipPendingCheckRef = useRef(false)
   const orderingRef = useRef(false)
   const lastOrderIdRef = useRef<string | null>(null)
@@ -605,6 +606,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           trackingUrl: `/pedido/${inProgress.trackingToken}`,
         })
         return
+      }
+      const pendingOrder = customerOrders.find((o: any) => o.paymentStatus === "pending")
+      if (pendingOrder) {
+        setPendingOrderItems(pendingOrder.items || [])
       }
     }
     setShowCart(true)
@@ -1858,26 +1863,29 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               <p className="py-8 text-center" style={{ color: theme.textMuted }}>Carrinho vazio</p>
             ) : (
               <div className="space-y-3">
-                {cart.map((item) => (
+                {cart.map((item) => {
+                  const isFromPendingOrder = pendingOrderItems.some((p: any) => p.productId === item.id)
+                  return (
                   <div key={item.id} className="flex items-center justify-between rounded-lg p-3" style={{ backgroundColor: theme.bgCard }}>
                     <div className="flex-1">
                       <p className="font-medium" style={{ color: theme.text }}>{item.name}</p>
                       <p className="text-sm" style={{ color: theme.textMuted }}>{formatCurrency(item.price)}</p>
+                      {isFromPendingOrder && <span className="text-[10px] font-medium" style={{ color: theme.primary }}>Aguardando pagamento</span>}
                     </div>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full hover:opacity-80 active:scale-95 transition-all" style={{ border: `1px solid ${theme.borderInputColor}`, color: theme.textSubtle }}>
+                      <button onClick={() => updateQuantity(item.id, -1)} disabled={isFromPendingOrder} className="flex h-11 w-11 items-center justify-center rounded-full transition-all" style={{ border: `1px solid ${theme.borderInputColor}`, color: isFromPendingOrder ? theme.textMutedMore : theme.textSubtle, opacity: isFromPendingOrder ? 0.4 : 1 }}>
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="w-6 text-center font-medium" style={{ color: theme.text }}>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full hover:opacity-80 active:scale-95 transition-all" style={{ border: `1px solid ${theme.borderInputColor}`, color: theme.textSubtle }}>
+                      <button onClick={() => updateQuantity(item.id, 1)} disabled={isFromPendingOrder} className="flex h-11 w-11 items-center justify-center rounded-full transition-all" style={{ border: `1px solid ${theme.borderInputColor}`, color: isFromPendingOrder ? theme.textMutedMore : theme.textSubtle, opacity: isFromPendingOrder ? 0.4 : 1 }}>
                         <Plus className="h-3 w-3" />
                       </button>
-                      <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-500">
+                      <button onClick={() => removeItem(item.id)} disabled={isFromPendingOrder} className="transition-colors" style={{ color: isFromPendingOrder ? theme.textMutedMore : "#EF4444", opacity: isFromPendingOrder ? 0.4 : 1 }}>
                         <X className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-                ))}
+                );})}
 
                 {!lastOrder?.paymentLink && (
                   <button
