@@ -270,13 +270,15 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     } catch {}
   }, [establishment.slug])
 
-  // When payment is confirmed, clear lastOrder so cart exits "pending payment" state
+  // When payment is confirmed, clear lastOrder and cart
   useEffect(() => {
     if (!lastOrder?.orderId || !lastOrder?.paymentLink) return
     fetch(`/api/orders/${lastOrder.orderId}/payment-status`)
       .then(r => r.json())
       .then(data => {
         if (data.paymentStatus === "paid") {
+          setCart([])
+          localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
           setLastOrder(null)
           localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
         }
@@ -2174,18 +2176,36 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                           </div>
                         )}
                         {!hasPendingPayment && (
-                          <button
-                            onClick={() => {
-                              setCart(items.map((i: any) => ({ id: i.id || i.productId || i.name, name: i.name, price: i.price, image: i.image, quantity: i.quantity })))
-                              setShowOrdersList(false)
-                              setShowCart(true)
-                            }}
-                            className="mt-2 w-full rounded-lg border py-2 text-sm font-medium transition-opacity hover:opacity-80"
-                            style={{ borderColor: theme.borderCard, color: theme.accent }}
-                          >
-                            <RefreshCw className="inline h-3.5 w-3.5 mr-1" />
-                            Pedir novamente
-                          </button>
+                          <>
+                            {["pending", "confirmed", "preparing", "ready", "out_for_delivery"].includes(order.status) && (
+                              <button
+                                onClick={() => {
+                                  setShowOrdersList(false)
+                                  if (order.trackingToken) {
+                                    openTracking(order.id, `/pedido/${order.trackingToken}`)
+                                  }
+                                }}
+                                className="mt-2 w-full rounded-lg py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                                style={{ backgroundColor: theme.primary }}
+                              >
+                                Acompanhar pedido
+                              </button>
+                            )}
+                            {!["pending", "confirmed", "preparing", "ready", "out_for_delivery"].includes(order.status) && (
+                              <button
+                                onClick={() => {
+                                  setCart(items.map((i: any) => ({ id: i.id || i.productId || i.name, name: i.name, price: i.price, image: i.image, quantity: i.quantity })))
+                                  setShowOrdersList(false)
+                                  setShowCart(true)
+                                }}
+                                className="mt-2 w-full rounded-lg border py-2 text-sm font-medium transition-opacity hover:opacity-80"
+                                style={{ borderColor: theme.borderCard, color: theme.accent }}
+                              >
+                                <RefreshCw className="inline h-3.5 w-3.5 mr-1" />
+                                Pedir novamente
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )
