@@ -89,8 +89,7 @@ export async function POST(req: NextRequest) {
       billingType: "CREDIT_CARD",
       value: order.total,
       remoteIp,
-      creditCard: { creditCardNumber: creditCard.creditCardNumber.slice(0, 4) + "...", creditCardBrand: creditCard.creditCardBrand, creditCardHolder: creditCard.creditCardHolder },
-      creditCardHolderInfo: { name: creditCardHolderInfo.name, cpfCnpj: creditCardHolderInfo.cpfCnpj, email: creditCardHolderInfo.email, phone: creditCardHolderInfo.phone },
+      creditCardHolderInfo: { name: creditCardHolderInfo.name, cpf: creditCardHolderInfo.cpf, email: creditCardHolderInfo.email, phone: creditCardHolderInfo.phone },
     }))
 
     if (!newPaymentRes.ok || !newPayment.id) {
