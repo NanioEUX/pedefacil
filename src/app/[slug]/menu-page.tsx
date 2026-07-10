@@ -2803,13 +2803,11 @@ function PaymentModal({
       } else if (data.status === "CONFIRMED" || data.status === "RECEIVED" || data.status === "AUTHORIZED") {
         setPaymentSuccess(true)
         onPaymentSuccess?.()
-      } else if (data.status === "PENDING" || data.paymentStatus === "pending") {
-        setCardPending(true)
-        setCardError("")
       } else if (data.error) {
         setCardError(data.error)
       } else {
-        setCardError("Pagamento não aprovado. Tente novamente.")
+        setCardPending(true)
+        setCardError("")
       }
     } catch (e: any) {
       console.error("[Card] Catch error:", e?.name, e?.message, e)
