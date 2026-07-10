@@ -287,6 +287,13 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   }, [lastOrder?.orderId, establishment.slug])
 
   const [showIdentifyModal, setShowIdentifyModal] = useState(false)
+  const openIdentifyModal = () => {
+    setCustomer(prev => ({ ...prev, name: "", cpf: "", phone: "" }))
+    setPhoneInput("")
+    setCustomerData(null)
+    setCpfError("")
+    openIdentifyModal()
+  }
   const [cep, setCep] = useState("")
   const [cepAddress, setCepAddress] = useState<any>(null)
   const [cepLoading, setCepLoading] = useState(false)
@@ -571,7 +578,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   function addToCart(product: Product) {
     // Check if customer is identified
     if (!customer.phone) {
-      setShowIdentifyModal(true)
+      openIdentifyModal()
       return
     }
     setCart((prev) => {
@@ -656,14 +663,14 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     if (!customer.name.trim()) {
       setOrderError("Preencha seu nome para finalizar")
       setOrdering(false)
-      setShowIdentifyModal(true)
+      openIdentifyModal()
       return
     }
 
     if (!customer.phone || customer.phone.replace(/\D/g, "").length < 11) {
       setOrderError("Preencha um telefone válido com DDD")
       setOrdering(false)
-      setShowIdentifyModal(true)
+      openIdentifyModal()
       return
     }
 
@@ -671,7 +678,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     if (!cpfDigits || cpfDigits.length !== 11 || !isValidCpf(customer.cpf || "")) {
       setOrderError("CPF inválido. Verifique e tente novamente.")
       setOrdering(false)
-      setShowIdentifyModal(true)
+      openIdentifyModal()
       return
     }
 
@@ -1132,7 +1139,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             </button>
           ) : (
             <button
-              onClick={() => setShowIdentifyModal(true)}
+              onClick={() => openIdentifyModal()}
               className="flex items-center gap-1.5 text-xs hover:opacity-70 shrink-0 animate-pulse"
               style={{ color: theme.textMutedMore }}
             >
@@ -1310,7 +1317,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   loadCustomerOrders()
                   setShowOrdersList(true)
                 } else {
-                  setShowIdentifyModal(true)
+                  openIdentifyModal()
                 }
               }}
               className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors relative"
@@ -1336,7 +1343,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 if (customer.phone || customerData?.phone) {
                   setShowCustomerProfile(true)
                 } else {
-                  setShowIdentifyModal(true)
+                  openIdentifyModal()
                 }
               }}
               className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors"
@@ -2080,7 +2087,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 <div className="text-center py-8">
                   <User className="mx-auto h-8 w-8" style={{ color: theme.textMutedMore }} />
                   <p className="mt-2 text-sm" style={{ color: theme.textMuted }}>Identifique-se para ver seus pedidos</p>
-                  <button onClick={() => { setShowOrdersList(false); setShowIdentifyModal(true) }} className="mt-2 text-sm hover:underline" style={{ color: theme.accent }}>
+                  <button onClick={() => { setShowOrdersList(false); openIdentifyModal() }} className="mt-2 text-sm hover:underline" style={{ color: theme.accent }}>
                     Identificar-se
                   </button>
                 </div>
