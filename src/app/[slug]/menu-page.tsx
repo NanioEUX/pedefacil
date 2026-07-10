@@ -292,7 +292,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     setPhoneInput("")
     setCustomerData(null)
     setCpfError("")
-    openIdentifyModal()
+    setShowIdentifyModal(true)
   }
   const [cep, setCep] = useState("")
   const [cepAddress, setCepAddress] = useState<any>(null)
