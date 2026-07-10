@@ -571,7 +571,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
   function addToCart(product: Product) {
     // Check if customer is identified
-    if (!customer.phone && !customerData?.phone) {
+    if (!customer.phone) {
       setShowIdentifyModal(true)
       return
     }
@@ -1391,7 +1391,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                               setCustomer(prev => ({
                                 ...prev,
                                 name: data.name || prev.name,
-                                phone: data.phone || prev.phone,
                                 cpf: v,
                                 address: data.address || prev.address,
                                 cep: data.cep || prev.cep,
