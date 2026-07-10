@@ -270,16 +270,16 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     } catch {}
   }, [establishment.slug])
 
-  // When payment is confirmed, clear lastOrder and cart
+  // When payment is confirmed, clear lastOrder (cart is already cleared by onPaymentSuccess)
   useEffect(() => {
     if (!lastOrder?.orderId || !lastOrder?.paymentLink) return
+    lastOrderIdRef.current = lastOrder.orderId
+    const capturedOrderId = lastOrder.orderId
     const controller = new AbortController()
-    fetch(`/api/orders/${lastOrder.orderId}/payment-status`, { signal: controller.signal })
+    fetch(`/api/orders/${capturedOrderId}/payment-status`, { signal: controller.signal })
       .then(r => r.json())
       .then(data => {
-        if (data.paymentStatus === "paid") {
-          setCart([])
-          localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
+        if (data.paymentStatus === "paid" && lastOrderIdRef.current === capturedOrderId) {
           setLastOrder(null)
           localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
         }
@@ -310,6 +310,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [pendingOrderConfirm, setPendingOrderConfirm] = useState<{ orderId: string; orderNumber: number; total: number } | null>(null)
   const skipPendingCheckRef = useRef(false)
   const orderingRef = useRef(false)
+  const lastOrderIdRef = useRef<string | null>(null)
 
   // Business hours
   const parsedBusinessHours = useMemo(() => {
@@ -662,7 +663,8 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   }
 
   async function submitOrder() {
-    if (orderingRef.current) return
+    console.log("[submitOrder] called, orderingRef:", orderingRef.current, "skipPendingCheck:", skipPendingCheckRef.current)
+    if (orderingRef.current) { console.log("[submitOrder] BLOCKED by orderingRef"); return }
     orderingRef.current = true
     setOrderError("")
     setOrdering(true)
@@ -701,6 +703,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
     // Check if there's already a pending payment order
     const phone = customer.phone || customerData?.phone
+    console.log("[submitOrder] pending check - phone:", phone, "skipPendingCheck:", skipPendingCheckRef.current)
     if (phone && !skipPendingCheckRef.current) {
       try {
         const checkRes = await fetch(`/api/orders/customer?phone=${phone.replace(/\D/g, "")}&establishmentId=${establishment.id}`)
@@ -718,6 +721,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     }
 
     try {
+      console.log("[submitOrder] calling API...")
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -746,6 +750,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
       if (!res.ok) throw new Error("Erro ao criar pedido")
       const data = await res.json()
+      console.log("[submitOrder] API response:", { orderId: data.order?.id, paymentLink: !!data.paymentLink, paymentError: data.paymentError })
 
       setOrderResult({
         success: true,
@@ -770,6 +775,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         setTimeout(() => setShowPaymentModal(true), 300)
       }
     } catch (err: any) {
+      console.error("[submitOrder] ERROR:", err.message)
       setOrderError(err.message)
     } finally {
       setOrdering(false)
@@ -975,10 +981,11 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         setShowCart(false)
         setShowCheckout(false)
         setEditingAddress(false)
+        setShowPaymentModal(false)
       }, 5000)
       return () => clearTimeout(timer)
     }
-  }, [orderResult?.success, orderResult?.paymentLink])
+  }, [orderResult?.success, orderResult?.paymentLink, orderResult?.orderId])
 
   // If success but has payment link, show only the payment modal (no success screen)
   if (orderResult?.success && orderResult?.paymentLink) {
@@ -998,6 +1005,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           setShowCart(false)
           setShowCheckout(false)
           setEditingAddress(false)
+          setShowPaymentModal(false)
         }}
         establishmentId={establishment.id}
         initialTab={orderResult.paymentMethod === "card" ? "card" : "pix"}
@@ -2443,6 +2451,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               </button>
               <button
                 onClick={() => {
+                  console.log("[Sim, criar novo] clicked, setting skipPendingCheck=true and calling submitOrder()")
                   setPendingOrderConfirm(null)
                   skipPendingCheckRef.current = true
                   submitOrder()
