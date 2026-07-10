@@ -673,6 +673,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     console.log("[submitOrder] lastOrder:", lastOrder ? { orderId: lastOrder.orderId, paymentLink: !!lastOrder.paymentLink } : null)
     console.log("[submitOrder] showPaymentModal:", showPaymentModal)
     if (orderingRef.current) { console.log("[submitOrder] BLOCKED by orderingRef"); return }
+    if (orderResult?.success && orderResult?.paymentLink) { console.log("[submitOrder] BLOCKED by existing paymentLink"); return }
     orderingRef.current = true
     setOrderError("")
     setOrdering(true)
@@ -2575,22 +2576,20 @@ function PaymentModal({
     if (tab !== "pix" || !orderId) return
     setQrLoading(true)
     setQrError("")
+    const controller = new AbortController()
 
     async function fetchQrCode(retries = 3) {
       for (let i = 0; i < retries; i++) {
+        if (controller.signal.aborted) return
         try {
           const res = await fetch("/api/payments/asaas/qr-code", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orderId }),
+            signal: controller.signal,
           })
+          if (controller.signal.aborted) return
           const data = await res.json()
-          if (data.alreadyPaid) {
-            setQrLoading(false)
-            setPaymentSuccess(true)
-            onPaymentSuccess?.()
-            return
-          }
           if (data.encodedImage) {
             setQrCode({ image: data.encodedImage, payload: data.payload })
             setCountdown(300)
@@ -2609,7 +2608,8 @@ function PaymentModal({
           } else {
             setQrError(data.error || "Erro ao gerar QR Code")
           }
-        } catch {
+        } catch (err: any) {
+          if (controller.signal.aborted) return
           if (i < retries - 1) {
             await new Promise(r => setTimeout(r, 2000))
           } else {
@@ -2621,6 +2621,7 @@ function PaymentModal({
     }
 
     fetchQrCode()
+    return () => controller.abort()
   }, [tab, orderId])
 
   // Countdown timer
@@ -2641,9 +2642,11 @@ function PaymentModal({
   // Check payment status periodically
   useEffect(() => {
     if (paymentSuccess || !orderId) return
+    const controller = new AbortController()
     const check = setInterval(async () => {
+      if (controller.signal.aborted) { clearInterval(check); return }
       try {
-        const res = await fetch(`/api/orders/${orderId}/payment-status`)
+        const res = await fetch(`/api/orders/${orderId}/payment-status`, { signal: controller.signal })
         if (res.ok) {
           const data = await res.json()
           if (data.paymentStatus === "paid") {
@@ -2654,7 +2657,7 @@ function PaymentModal({
         }
       } catch {}
     }, 3000)
-    return () => clearInterval(check)
+    return () => { controller.abort(); clearInterval(check) }
   }, [orderId, paymentSuccess])
 
   function formatCountdown(seconds: number) {
