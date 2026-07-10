@@ -306,7 +306,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [activeTab, setActiveTab] = useState<"menu" | "orders" | "profile">("menu")
   const [couponError, setCouponError] = useState("")
   const [pendingOrderConfirm, setPendingOrderConfirm] = useState<{ orderId: string; orderNumber: number; total: number } | null>(null)
-  const [skipPendingCheck, setSkipPendingCheck] = useState(false)
+  const skipPendingCheckRef = useRef(false)
 
   // Business hours
   const parsedBusinessHours = useMemo(() => {
@@ -693,7 +693,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
 
     // Check if there's already a pending payment order
     const phone = customer.phone || customerData?.phone
-    if (phone && !skipPendingCheck) {
+    if (phone && !skipPendingCheckRef.current) {
       try {
         const checkRes = await fetch(`/api/orders/customer?phone=${phone.replace(/\D/g, "")}&establishmentId=${establishment.id}`)
         if (checkRes.ok) {
@@ -765,7 +765,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       setOrderError(err.message)
     } finally {
       setOrdering(false)
-      setSkipPendingCheck(false)
+      skipPendingCheckRef.current = false
     }
   }
 
@@ -2421,7 +2421,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => { setPendingOrderConfirm(null); setSkipPendingCheck(false) }}
+                onClick={() => { setPendingOrderConfirm(null); skipPendingCheckRef.current = false }}
                 className="flex-1 rounded-xl border py-3 text-sm font-semibold transition-opacity hover:opacity-80"
                 style={{ borderColor: theme.borderCard, color: theme.text }}
               >
@@ -2430,10 +2430,8 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               <button
                 onClick={() => {
                   setPendingOrderConfirm(null)
-                  setSkipPendingCheck(true)
-                  setTimeout(() => {
-                    handleSiteOrder(new Event("submit") as any)
-                  }, 100)
+                  skipPendingCheckRef.current = true
+                  handleSiteOrder(new Event("submit") as any)
                 }}
                 className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 style={{ backgroundColor: theme.primary }}
