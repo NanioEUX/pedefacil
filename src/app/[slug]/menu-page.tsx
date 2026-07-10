@@ -270,6 +270,20 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     } catch {}
   }, [establishment.slug])
 
+  // When payment is confirmed, clear lastOrder so cart exits "pending payment" state
+  useEffect(() => {
+    if (!lastOrder?.orderId || !lastOrder?.paymentLink) return
+    fetch(`/api/orders/${lastOrder.orderId}/payment-status`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.paymentStatus === "paid") {
+          setLastOrder(null)
+          localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
+        }
+      })
+      .catch(() => {})
+  }, [lastOrder?.orderId, establishment.slug])
+
   const [showIdentifyModal, setShowIdentifyModal] = useState(false)
   const [cep, setCep] = useState("")
   const [cepAddress, setCepAddress] = useState<any>(null)
@@ -1739,34 +1753,18 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                   </div>
                 ))}
 
-                {lastOrder?.paymentLink ? (
-                  <button
-                    onClick={() => {
-                      if (window.confirm("Deseja cancelar o pedido?")) {
-                        cancelOrder(lastOrder.orderId)
-                        setCart([])
-                        localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
-                      }
-                    }}
-                    className="text-xs font-medium hover:underline pt-1"
-                    style={{ color: "#EF4444" }}
-                  >
-                    Cancelar pedido
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if (window.confirm("Deseja esvaziar o carrinho?")) {
-                        setCart([])
-                        localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
-                      }
-                    }}
-                    className="text-xs font-medium hover:underline pt-1"
-                    style={{ color: "#EF4444" }}
-                  >
-                    Esvaziar carrinho
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    if (window.confirm("Deseja esvaziar o carrinho?")) {
+                      setCart([])
+                      localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
+                    }
+                  }}
+                  className="text-xs font-medium hover:underline pt-1"
+                  style={{ color: "#EF4444" }}
+                >
+                  Esvaziar carrinho
+                </button>
 
                 {!couponData ? (
                   <div className="flex gap-2 pt-3">
