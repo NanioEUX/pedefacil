@@ -589,6 +589,15 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   function openCart() {
     const phone = customer.phone || customerData?.phone
     if (phone && customerOrders.length > 0) {
+      // PRIMEIRO: verificar pedido pendente de pagamento
+      const pendingOrder = customerOrders.find((o: any) => o.paymentStatus === "pending")
+      if (pendingOrder) {
+        setPendingOrderItems(pendingOrder.items || [])
+        setPendingOrderNumber(pendingOrder.orderNumber)
+        setShowCart(true)
+        return
+      }
+      // DEPOIS: verificar pedido em preparo
       const inProgress = customerOrders.find((o: any) =>
         o.paymentStatus === "paid" && ["confirmed", "preparing", "ready", "out_for_delivery"].includes(o.status)
       )
@@ -607,11 +616,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           trackingUrl: `/pedido/${inProgress.trackingToken}`,
         })
         return
-      }
-      const pendingOrder = customerOrders.find((o: any) => o.paymentStatus === "pending")
-      if (pendingOrder) {
-        setPendingOrderItems(pendingOrder.items || [])
-        setPendingOrderNumber(pendingOrder.orderNumber)
       }
     }
     setShowCart(true)
