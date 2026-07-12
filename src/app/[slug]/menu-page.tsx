@@ -224,7 +224,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [cancelling, setCancelling] = useState(false)
   const [customer, setCustomer] = useState<{ name: string; phone: string; address: string; notes: string; cep?: string; cpf?: string }>({ name: "", phone: "", address: "", notes: "" })
 
-  const [lastOrder, setLastOrder] = useState<{ orderId: string; trackingUrl: string; paymentLink?: string } | null>(null)
+  const [lastOrder, setLastOrder] = useState<{ orderId: string; trackingUrl: string; paymentLink?: string; paymentMethod?: string } | null>(null)
   const [hasEstablishmentReply, setHasEstablishmentReply] = useState(false)
   const prevMsgCountRef = useRef(0)
   const [showOrdersList, setShowOrdersList] = useState(false)
@@ -312,6 +312,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [pendingOrderItems, setPendingOrderItems] = useState<any[]>([])
   const [pendingOrderNumber, setPendingOrderNumber] = useState<number | null>(null)
   const [pendingOrderModal, setPendingOrderModal] = useState<{ orderId: string; orderNumber: number; total: number; paymentLink: string; paymentMethod?: string } | null>(null)
+  const [pendingOrderAction, setPendingOrderAction] = useState<{ orderId: string; orderNumber: number; productId: string } | null>(null)
   const skipPendingCheckRef = useRef(false)
   const orderingRef = useRef(false)
   const lastOrderIdRef = useRef<string | null>(null)
@@ -596,20 +597,8 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         o.paymentStatus === "paid" && ["confirmed", "preparing", "ready", "out_for_delivery"].includes(o.status)
       )
 
-      // Pending payment order
+      // Pending payment order - open cart directly with locked items
       if (pendingOrder) {
-        if (!seenPendingOrdersRef.current.has(pendingOrder.id)) {
-          // First interaction - show pending modal with Pagar option
-          setPendingOrderModal({
-            orderId: pendingOrder.id,
-            orderNumber: pendingOrder.orderNumber,
-            total: pendingOrder.total,
-            paymentLink: pendingOrder.paymentLink,
-            paymentMethod: pendingOrder.paymentMethod,
-          })
-          return
-        }
-        // Already chose action - open cart with locked items
         setPendingOrderItems(pendingOrder.items || [])
         setPendingOrderNumber(pendingOrder.orderNumber)
         setShowCart(true)
@@ -649,20 +638,9 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       if (phone) {
         const pendingOrder = customerOrders.find((o: any) => o.paymentStatus === "pending")
         if (pendingOrder) {
-          // If already seen this pending order, allow adding (but still show modal on first interaction)
-          if (seenPendingOrdersRef.current.has(pendingOrder.id)) {
-            // Skip modal, allow adding
-          } else {
-            // First interaction - show modal with Pagar option
-            setPendingOrderModal({
-              orderId: pendingOrder.id,
-              orderNumber: pendingOrder.orderNumber,
-              total: pendingOrder.total,
-              paymentLink: pendingOrder.paymentLink,
-              paymentMethod: pendingOrder.paymentMethod,
-            })
-            return
-          }
+          // Show action modal instead of silently blocking
+          setPendingOrderAction({ orderId: pendingOrder.id, orderNumber: pendingOrder.orderNumber, productId: product.id })
+          return
         }
       }
     }
@@ -1837,9 +1815,24 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border-t p-6 backdrop-blur-xl" style={{ backgroundColor: theme.bgModal, borderColor: theme.borderCard }}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold" style={{ color: theme.text }}>Seu pedido</h2>
-              <button onClick={() => setShowCart(false)} style={{ color: theme.textMutedMore }} className="hover:opacity-70">
-                <X className="h-6 w-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                {pendingOrderNumber && (
+                  <button
+                    onClick={() => {
+                      setCancelModalOrderId(customerOrders.find((o: any) => o.orderNumber === pendingOrderNumber)?.id || "")
+                      setCancelModalTotal(total)
+                    }}
+                    className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
+                    style={{ backgroundColor: "rgba(239,68,68,0.1)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.3)" }}
+                  >
+                    <X className="h-3 w-3" />
+                    Cancelar
+                  </button>
+                )}
+                <button onClick={() => setShowCart(false)} style={{ color: theme.textMutedMore }} className="hover:opacity-70">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
             </div>
 
             <div className="mb-4 flex gap-2">
@@ -2636,6 +2629,91 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 style={{ borderColor: "rgba(239,68,68,0.3)", color: "#EF4444" }}
               >
                 Cancelar pedido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending order action modal - when trying to add item with pending payment */}
+      {pendingOrderAction && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: theme.overlay }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 backdrop-blur-xl" style={{ backgroundColor: theme.bgModal, borderWidth: 1, borderStyle: "solid", borderColor: theme.borderCard }}>
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10">
+                <Clock className="h-6 w-6 text-amber-400" />
+              </div>
+            </div>
+            <h3 className="mb-2 text-center text-lg font-bold" style={{ color: theme.text }}>Pedido pendente</h3>
+            <p className="mb-6 text-center text-sm" style={{ color: theme.textMuted }}>
+              Você tem o pedido <strong style={{ color: theme.accent }}>#{pendingOrderAction.orderNumber}</strong> aguardando pagamento. O que deseja fazer?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setPendingOrderAction(null)
+                  openTracking(pendingOrderAction.orderId, `/pedido/${pendingOrderAction.orderId}`)
+                }}
+                className="w-full rounded-xl py-3 text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{ backgroundColor: theme.primary, color: "white" }}
+              >
+                Acompanhar pedido
+              </button>
+              <button
+                onClick={() => {
+                  const pendingOrder = customerOrders.find((o: any) => o.id === pendingOrderAction.orderId)
+                  if (pendingOrder) {
+                    setPendingOrderAction(null)
+                    setOrderResult({
+                      success: true,
+                      orderId: pendingOrder.id,
+                      paymentLink: pendingOrder.paymentLink,
+                      paymentMethod: pendingOrder.paymentMethod || "pix",
+                      orderTotal: pendingOrder.total,
+                    })
+                    setShowPaymentModal(true)
+                  }
+                }}
+                className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: theme.accent }}
+              >
+                Pagar agora
+              </button>
+              <button
+                onClick={() => {
+                  setCancelModalOrderId(pendingOrderAction.orderId)
+                  setCancelModalTotal(customerOrders.find((o: any) => o.id === pendingOrderAction.orderId)?.total || 0)
+                  setPendingOrderAction(null)
+                }}
+                className="w-full rounded-xl border py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{ borderColor: "rgba(239,68,68,0.3)", color: "#EF4444" }}
+              >
+                Cancelar pedido
+              </button>
+              <button
+                onClick={() => {
+                  const product = establishment.categories.flatMap((c: any) => c.products).find((p: any) => p.id === pendingOrderAction?.productId)
+                  if (!product) return
+                  setPendingOrderAction(null)
+                  setCart((prev) => {
+                    const existing = prev.find((item) => item.id === product.id)
+                    if (existing) {
+                      return prev.map((item) =>
+                        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                      )
+                    }
+                    return [...prev, { id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 } as CartItem]
+                  })
+                  setAddedItemId(product.id)
+                  setTimeout(() => setAddedItemId(null), 800)
+                  setCartToast({ name: product.name, image: product.image || undefined })
+                  setTimeout(() => setCartToast(null), 3000)
+                  setShowCart(true)
+                }}
+                className="w-full rounded-xl py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: theme.bgCard, color: theme.text }}
+              >
+                Continuar comprando
               </button>
             </div>
           </div>
