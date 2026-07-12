@@ -2722,7 +2722,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                 onClick={() => {
                   seenPendingOrdersRef.current.add(inProgressOrder.orderId)
                   setInProgressOrder(null)
-                  setShowCart(true)
                 }}
                 className="w-full rounded-xl border py-3 text-sm font-semibold transition-opacity hover:opacity-80"
                 style={{ borderColor: theme.borderCard, color: theme.text }}
