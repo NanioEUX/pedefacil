@@ -224,7 +224,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
   const [cancelling, setCancelling] = useState(false)
   const [customer, setCustomer] = useState<{ name: string; phone: string; address: string; notes: string; cep?: string; cpf?: string }>({ name: "", phone: "", address: "", notes: "" })
 
-  const [lastOrder, setLastOrder] = useState<{ orderId: string; trackingUrl: string; paymentLink?: string; paymentMethod?: string } | null>(null)
+  const [lastOrder, setLastOrder] = useState<{ orderId: string; trackingUrl: string; paymentLink?: string; paymentMethod?: string; total?: number } | null>(null)
   const [hasEstablishmentReply, setHasEstablishmentReply] = useState(false)
   const prevMsgCountRef = useRef(0)
   const [showOrdersList, setShowOrdersList] = useState(false)
@@ -633,13 +633,15 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       return
     }
     // Check if has pending payment order
-    if (customerOrders.length > 0) {
+    if (customerOrders.length > 0 || (lastOrder?.paymentLink)) {
       const phone = customer.phone || customerData?.phone
       if (phone) {
         const pendingOrder = customerOrders.find((o: any) => o.paymentStatus === "pending")
-        if (pendingOrder) {
+        const orderId = pendingOrder?.id || lastOrder?.orderId
+        const orderNumber = pendingOrder?.orderNumber || 0
+        if (orderId) {
           // Show action modal instead of silently blocking
-          setPendingOrderAction({ orderId: pendingOrder.id, orderNumber: pendingOrder.orderNumber, productId: product.id })
+          setPendingOrderAction({ orderId, orderNumber, productId: product.id })
           return
         }
       }
@@ -845,7 +847,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       console.log("[submitOrder] setOrderResult chamado, paymentLink:", data.paymentLink ? "SIM" : "NAO")
 
       if (data.order?.id && data.trackingUrl) {
-        const lastOrd = { orderId: data.order.id, trackingUrl: data.trackingUrl, paymentLink: data.paymentLink || "", timestamp: Date.now(), paymentMethod: paymentMethod }
+        const lastOrd = { orderId: data.order.id, trackingUrl: data.trackingUrl, paymentLink: data.paymentLink || "", timestamp: Date.now(), paymentMethod: paymentMethod, total }
         setLastOrder(lastOrd)
         localStorage.setItem(`pedefacil-last-order-${establishment.slug}`, JSON.stringify(lastOrd))
       }
@@ -2651,18 +2653,16 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             </div>
             <h3 className="mb-2 text-center text-lg font-bold" style={{ color: theme.text }}>Pedido pendente</h3>
             <p className="mb-6 text-center text-sm" style={{ color: theme.textMuted }}>
-              Você tem o pedido <strong style={{ color: theme.accent }}>#{pendingOrderAction.orderNumber}</strong> aguardando pagamento. Para fazer novo pedido, pague ou cancele o atual.
+              {pendingOrderAction.orderNumber > 0
+                ? `Você tem o pedido <strong style={{ color: theme.accent }}>#${pendingOrderAction.orderNumber}</strong> aguardando pagamento. Para fazer novo pedido, pague ou cancele o atual.`
+                : "Você tem um pedido aguardando pagamento. Para fazer novo pedido, pague ou cancele o atual."
+              }
             </p>
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => {
-                  const pendingOrder = customerOrders.find((o: any) => o.id === pendingOrderAction.orderId)
-                  if (pendingOrder) {
-                    setPendingOrderAction(null)
-                    setPendingOrderItems(pendingOrder.items || [])
-                    setPendingOrderNumber(pendingOrder.orderNumber)
-                    setShowCart(true)
-                  }
+                  setPendingOrderAction(null)
+                  setShowCart(true)
                 }}
                 className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 style={{ backgroundColor: theme.accent }}
@@ -2672,7 +2672,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               <button
                 onClick={() => {
                   setCancelModalOrderId(pendingOrderAction.orderId)
-                  setCancelModalTotal(customerOrders.find((o: any) => o.id === pendingOrderAction.orderId)?.total || 0)
+                  setCancelModalTotal(
+                    customerOrders.find((o: any) => o.id === pendingOrderAction.orderId)?.total ||
+                    (lastOrder?.orderId === pendingOrderAction.orderId ? lastOrder.total : 0)
+                  )
                   setPendingOrderAction(null)
                 }}
                 className="w-full rounded-xl border py-3 text-sm font-semibold transition-opacity hover:opacity-80"
