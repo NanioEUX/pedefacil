@@ -865,7 +865,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       console.log("[submitOrder] setOrderResult chamado, paymentLink:", data.paymentLink ? "SIM" : "NAO")
 
       if (data.order?.id && data.trackingUrl) {
-        const lastOrd = { orderId: data.order.id, trackingUrl: data.trackingUrl, paymentLink: data.paymentLink || "", timestamp: Date.now() }
+        const lastOrd = { orderId: data.order.id, trackingUrl: data.trackingUrl, paymentLink: data.paymentLink || "", timestamp: Date.now(), paymentMethod: paymentMethod }
         setLastOrder(lastOrd)
         localStorage.setItem(`pedefacil-last-order-${establishment.slug}`, JSON.stringify(lastOrd))
       }
@@ -2073,7 +2073,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                           success: true,
                           orderId: lastOrder.orderId,
                           paymentLink: lastOrder.paymentLink,
-                          paymentMethod: "card",
+                          paymentMethod: lastOrder.paymentMethod || "pix",
                           orderTotal: total,
                         })
                         setTimeout(() => setShowPaymentModal(true), 300)
