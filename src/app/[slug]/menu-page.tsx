@@ -1162,6 +1162,50 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     }
   }, [orderResult?.success, orderResult?.paymentLink, orderResult?.orderId, orderResult?.paymentDone])
 
+  // Persistent polling for payment status - runs even when modal is closed
+  useEffect(() => {
+    if (!orderResult?.paymentLink || orderResult?.paymentDone) return
+    if (!orderResult?.orderId) return
+
+    const controller = new AbortController()
+    let mounted = true
+
+    const poll = async () => {
+      while (mounted) {
+        await new Promise(r => setTimeout(r, 3000))
+        if (!mounted) break
+        
+        try {
+          const res = await fetch(`/api/orders/${orderResult.orderId}/payment-status`, { signal: controller.signal })
+          if (!res.ok) continue
+          const data = await res.json()
+          if (data.paymentStatus === "paid") {
+            console.log("[persistent-poll] Payment confirmed:", orderResult.orderId)
+            // Trigger the same success handler
+            setCart([])
+            setPendingOrderItems([])
+            setPendingOrderNumber(null)
+            setLastOrder(null)
+            localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
+            localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
+            localStorage.removeItem(`pedefacil-countdown-${establishment.slug}`)
+            localStorage.removeItem(`pedefacil-countdown-time-${establishment.slug}`)
+            
+            setOrderResult(prev => {
+              if (prev?.orderId) paidOrderIdsRef.current.add(prev.orderId)
+              return prev ? { ...prev, paymentLink: undefined, paymentDone: true } : null
+            })
+            loadCustomerOrders()
+            break
+          }
+        } catch {}
+      }
+    }
+
+    poll()
+    return () => { mounted = false; controller.abort() }
+  }, [orderResult?.paymentLink, orderResult?.paymentDone, orderResult?.orderId, establishment.slug])
+
   // If success but has payment link, show only the payment modal (no success screen)
   if (orderResult?.success && orderResult?.paymentLink && !orderResult?.paymentDone && !paidOrderIdsRef.current.has(orderResult.orderId || "")) {
     console.log("[render] paymentLink existe, showPaymentModal:", showPaymentModal, "orderId:", orderResult.orderId)
