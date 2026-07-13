@@ -1115,10 +1115,8 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         total={orderResult.orderTotal ?? total}
         theme={theme}
         onClose={() => {
-          // If paymentLink exists, user closed without paying - keep orderResult to retry
-          // If no paymentLink, payment was processed (success or error) - clear orderResult
           setOrderResult(prev => {
-            if (prev?.paymentLink) return prev
+            if (prev?.paymentDone) return prev
             return null
           })
           setShowCart(false)
@@ -1139,11 +1137,11 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
             localStorage.removeItem(`pedefacil-countdown-${establishment.slug}`)
             localStorage.removeItem(`pedefacil-countdown-time-${establishment.slug}`)
-            // Clear orderResult after a short delay to allow success screen to show
-            setTimeout(() => {
-              setOrderResult(null)
-              console.log("[onPaymentSuccess] orderResult cleared, returning to normal state")
-            }, 2000)
+            setOrderResult(prev => {
+              if (prev?.orderId) paidOrderIdsRef.current.add(prev.orderId)
+              console.log("[onPaymentSuccess] Order marked as paid:", prev?.orderId)
+              return prev ? { ...prev, paymentLink: undefined, paymentDone: true } : null
+            })
           }}
       />
     )
@@ -2825,7 +2823,6 @@ function PaymentModal({
   initialTab,
   mode,
   onPaymentSuccess,
-  onForceClose,
 }: {
   orderId: string
   paymentLink: string
@@ -2837,7 +2834,6 @@ function PaymentModal({
   initialTab?: "pix" | "card"
   mode?: "pix" | "card"
   onPaymentSuccess?: () => void
-  onForceClose?: () => void
 }) {
   const [tab, setTab] = useState<"pix" | "card">(initialTab || "pix")
 
@@ -2846,8 +2842,25 @@ function PaymentModal({
   const [qrLoading, setQrLoading] = useState(true)
   const [qrError, setQrError] = useState("")
   const [copied, setCopied] = useState(false)
-  const [countdown, setCountdown] = useState(0)
+  const [countdown, setCountdown] = useState(() => {
+    if (typeof window === "undefined") return 0
+    const savedCountdown = parseInt(localStorage.getItem(`pedefacil-countdown-${establishmentSlug}`) || "0")
+    const savedTime = parseInt(localStorage.getItem(`pedefacil-countdown-time-${establishmentSlug}`) || "0")
+    if (savedCountdown > 0 && savedTime > 0) {
+      const elapsed = Math.floor((Date.now() - savedTime) / 1000)
+      return Math.max(0, savedCountdown - elapsed)
+    }
+    return 0
+  })
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
+
+  function handleClose() {
+    if (countdown > 0) {
+      localStorage.setItem(`pedefacil-countdown-${establishmentSlug}`, countdown.toString())
+      localStorage.setItem(`pedefacil-countdown-time-${establishmentSlug}`, Date.now().toString())
+    }
+    onClose()
+  }
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null)
 
   // Card state
@@ -2888,7 +2901,7 @@ function PaymentModal({
           const data = await res.json()
           if (data.encodedImage) {
             setQrCode({ image: data.encodedImage, payload: data.payload })
-            setCountdown(300)
+            setCountdown(prev => prev > 0 ? prev : 300)
             setQrLoading(false)
             return
           }
@@ -3082,7 +3095,7 @@ function PaymentModal({
       setAutoCloseCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          onForceClose?.()
+          handleClose()
           return 0
         }
         return prev - 1
@@ -3109,7 +3122,7 @@ function PaymentModal({
             Fechando automaticamente em <span className="font-bold">{autoCloseCountdown}s</span>
           </p>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="mt-4 w-full rounded-xl py-3 text-sm font-semibold text-white"
             style={{ backgroundColor: theme.primary }}
           >
@@ -3121,7 +3134,7 @@ function PaymentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={handleClose}>
       <div
         className="relative flex flex-col rounded-2xl overflow-hidden shadow-2xl max-h-[90vh]"
         style={{ width: "min(480px, 95vw)", backgroundColor: theme.bgCard }}
@@ -3133,7 +3146,7 @@ function PaymentModal({
             <p className="text-sm font-semibold" style={{ color: theme.text }}>Pagamento</p>
             <p className="text-xs" style={{ color: theme.textMuted }}>Total: {formatCurrency(total)}</p>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full transition-colors" style={{ color: theme.textMuted }}>
+          <button onClick={handleClose} className="flex h-8 w-8 items-center justify-center rounded-full transition-colors" style={{ color: theme.textMuted }}>
             <X className="h-4 w-4" />
           </button>
         </div>
