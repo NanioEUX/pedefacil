@@ -1115,8 +1115,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         total={orderResult.orderTotal ?? total}
         theme={theme}
         onClose={() => {
+          // If paymentLink exists, user closed without paying - keep orderResult to retry
+          // If no paymentLink, payment was processed (success or error) - clear orderResult
           setOrderResult(prev => {
-            if (prev?.paymentDone) return prev
+            if (prev?.paymentLink) return prev
             return null
           })
           setShowCart(false)
@@ -1137,11 +1139,11 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
             localStorage.removeItem(`pedefacil-countdown-${establishment.slug}`)
             localStorage.removeItem(`pedefacil-countdown-time-${establishment.slug}`)
-            setOrderResult(prev => {
-              if (prev?.orderId) paidOrderIdsRef.current.add(prev.orderId)
-              console.log("[onPaymentSuccess] Order marked as paid:", prev?.orderId)
-              return prev ? { ...prev, paymentLink: undefined, paymentDone: true } : null
-            })
+            // Clear orderResult after a short delay to allow success screen to show
+            setTimeout(() => {
+              setOrderResult(null)
+              console.log("[onPaymentSuccess] orderResult cleared, returning to normal state")
+            }, 2000)
           }}
       />
     )
