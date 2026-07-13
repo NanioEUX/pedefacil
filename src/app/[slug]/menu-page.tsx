@@ -648,6 +648,50 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     setShowCart(true)
   }
 
+  async function checkAndOpenPayment(orderId: string) {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/payment-status`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.paymentStatus === "paid") {
+          // Payment already confirmed - refresh orders and show in-progress modal
+          loadCustomerOrders()
+          setTimeout(() => {
+            const order = customerOrders.find((o: any) => o.id === orderId)
+            if (order) {
+              const statusLabels: Record<string, string> = {
+                confirmed: "Confirmado",
+                preparing: "Preparando",
+                ready: "Pronto",
+                out_for_delivery: "Saiu para Entrega",
+              }
+              setInProgressOrder({
+                orderId: order.id,
+                orderNumber: order.orderNumber,
+                status: statusLabels[order.status] || order.status,
+                total: order.total,
+                trackingUrl: `/pedido/${order.trackingToken}`,
+              })
+            }
+          }, 300)
+          return
+        }
+      }
+    } catch {}
+    // If not paid or error, open payment modal
+    const order = customerOrders.find((o: any) => o.id === orderId) || { paymentLink: lastOrder?.paymentLink }
+    if (order?.paymentLink) {
+      setOrderResult({
+        success: true,
+        orderId,
+        paymentLink: order.paymentLink || lastOrder?.paymentLink,
+        paymentMethod: "pix",
+        orderTotal: total,
+      })
+      setTimeout(() => setShowPaymentModal(true), 300)
+    }
+  }
+
   function addToCart(product: Product) {
     // Check if customer is identified
     if (!customer.phone) {
@@ -2111,17 +2155,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                     <Button
                       size="lg"
                       className="w-full gap-2"
-                      onClick={() => {
-                        setShowCart(false)
-                        setOrderResult({
-                          success: true,
-                          orderId: lastOrder.orderId,
-                          paymentLink: lastOrder.paymentLink,
-                          paymentMethod: lastOrder.paymentMethod || "pix",
-                          orderTotal: total,
-                        })
-                        setTimeout(() => setShowPaymentModal(true), 300)
-                      }}
+                      onClick={() => checkAndOpenPayment(lastOrder.orderId)}
                     >
                       <CreditCard className="h-5 w-5" />
                       Pagar pedido
@@ -2377,14 +2411,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
                             <button
                               onClick={() => {
                                 setShowOrdersList(false)
-                                setOrderResult({
-                                  success: true,
-                                  orderId: order.id,
-                                  paymentLink: order.paymentLink,
-                                  paymentMethod: order.paymentMethod || "pix",
-                                  orderTotal: order.total,
-                                })
-                                setTimeout(() => setShowPaymentModal(true), 300)
+                                checkAndOpenPayment(order.id)
                               }}
                               className="flex-1 rounded-lg py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
                               style={{ backgroundColor: theme.primary }}
@@ -2652,16 +2679,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               </button>
               <button
                 onClick={() => {
-                  seenPendingOrdersRef.current.add(pendingOrderModal.orderId)
-                  setPendingOrderModal(null)
-                  setOrderResult({
-                    success: true,
-                    orderId: pendingOrderModal.orderId,
-                    paymentLink: pendingOrderModal.paymentLink,
-                    paymentMethod: pendingOrderModal.paymentMethod || "pix",
-                    orderTotal: pendingOrderModal.total,
-                  })
-                  setShowPaymentModal(true)
+                  checkAndOpenPayment(pendingOrderModal.orderId)
                 }}
                 className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 style={{ backgroundColor: theme.accent }}
