@@ -1109,7 +1109,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
       return null
     }
     return (
-      <PaymentModal
+<PaymentModal
         orderId={orderResult.orderId!}
         paymentLink={orderResult.paymentLink}
         total={orderResult.orderTotal ?? total}
@@ -1124,6 +1124,10 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
           setShowCart(false)
           setShowCheckout(false)
           setEditingAddress(false)
+          setShowPaymentModal(false)
+        }}
+        onForceClose={() => {
+          setOrderResult(null)
           setShowPaymentModal(false)
         }}
         establishmentId={establishment.id}
@@ -1151,7 +1155,13 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
               console.log("[onPaymentSuccess] orderResult cleared, returning to normal state")
             }, 1500)
           }}
-      />
+        onForceClose={() => {
+            console.log("[onForceClose] Force closing payment modal")
+            setOrderResult(null)
+            setShowPaymentModal(false)
+            setShowCart(false)
+          }}
+        />
     )
   }
 
@@ -3088,8 +3098,7 @@ function PaymentModal({
       setAutoCloseCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          // Force close: clear orderResult directly via onPaymentSuccess pattern
-          onClose()
+          onForceClose?.()
           return 0
         }
         return prev - 1
