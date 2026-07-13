@@ -1137,8 +1137,6 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
             setPendingOrderNumber(null)
             localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
             localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
-            localStorage.removeItem(`pedefacil-countdown-${establishment.slug}`)
-            localStorage.removeItem(`pedefacil-countdown-time-${establishment.slug}`)
             // Clear orderResult after a short delay to allow success screen to show
             setTimeout(() => {
               setOrderResult(null)
