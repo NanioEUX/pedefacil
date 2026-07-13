@@ -1903,6 +1903,7 @@ onPaymentSuccess={() => {
                   setCep("")
                   setCepAddress(null)
                   localStorage.removeItem(`pedefacil-customer-${establishment.slug}`)
+                  localStorage.removeItem(`pedefacil-cart-${establishment.slug}`)
                   setShowCustomerProfile(false)
                 }}
                 className="mt-2 w-full flex items-center justify-center gap-2 rounded-lg p-3 text-sm font-medium transition-colors hover:opacity-80"
