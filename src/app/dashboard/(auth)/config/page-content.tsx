@@ -44,13 +44,6 @@ export default function ConfigPage() {
     cover: "",
     asaasApiKey: "",
     asaasWalletId: "",
-    efiClientId: "",
-    efiClientSecret: "",
-    efiPixKey: "",
-    efiCertificate: "",
-    efiEnvironment: "sandbox",
-    efiWebhookToken: "",
-    paymentProvider: "asaas",
     interClientId: "",
     interClientSecret: "",
     interCertificate: "",
@@ -96,13 +89,6 @@ export default function ConfigPage() {
             cover: data.cover || "",
             asaasApiKey: data.asaasApiKey || "",
             asaasWalletId: data.asaasWalletId || "",
-            efiClientId: data.efiClientId || "",
-            efiClientSecret: data.efiClientSecret || "",
-            efiPixKey: data.efiPixKey || "",
-            efiCertificate: data.efiCertificate || "",
-            efiEnvironment: data.efiEnvironment || "sandbox",
-            efiWebhookToken: data.efiWebhookToken || "",
-            paymentProvider: data.paymentProvider || "asaas",
             interClientId: data.interClientId || "",
             interClientSecret: data.interClientSecret || "",
             interCertificate: data.interCertificate || "",
@@ -137,6 +123,7 @@ export default function ConfigPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          paymentProvider: form.interClientId ? "inter" : "asaas",
           deliveryFeeAmount: form.deliveryFeeType === "free" ? 0 : Number(form.deliveryFeeAmount),
           deliveryFreeAbove: form.deliveryFeeType === "free_above" ? Number(form.deliveryFreeAbove) : 0,
           paymentConfig: JSON.stringify(paymentConfig),
@@ -275,120 +262,26 @@ export default function ConfigPage() {
           </CardContent>
         </Card>
 
-        {/* Efi (Gerencianet) */}
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <h3 className="font-semibold text-zinc-900">Efi Bank (Gerencianet)</h3>
-            <p className="text-sm text-zinc-500">
-              Configure a Efi para receber pagamentos via Pix com webhook instantâneo. Pix gratuito e cartão a 1.99%.
-            </p>
-            
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-zinc-700">Provider de Pagamento</label>
-              <select
-                value={form.paymentProvider}
-                onChange={(e) => setForm({ ...form, paymentProvider: e.target.value })}
-                className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 focus:border-green-600 focus:outline-none"
-              >
-                <option value="asaas">Asaas</option>
-                <option value="efi">Efi Bank (Gerencianet)</option>
-              </select>
-            </div>
-
-            {form.paymentProvider === "efi" && (
-              <>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-zinc-700">Client ID</label>
-                  <input
-                    type="text"
-                    placeholder="Client ID da Efi"
-                    value={form.efiClientId}
-                    onChange={(e) => setForm({ ...form, efiClientId: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-zinc-700">Client Secret</label>
-                  <input
-                    type="password"
-                    placeholder="Client Secret da Efi"
-                    value={form.efiClientSecret}
-                    onChange={(e) => setForm({ ...form, efiClientSecret: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-zinc-700">Chave Pix</label>
-                  <input
-                    type="text"
-                    placeholder="Sua chave Pix (CPF, CNPJ, email, aleatória)"
-                    value={form.efiPixKey}
-                    onChange={(e) => setForm({ ...form, efiPixKey: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-zinc-700">Certificado (.p12 em Base64)</label>
-                  <textarea
-                    placeholder="Cole o conteúdo do certificado .p12 em Base64"
-                    value={form.efiCertificate}
-                    onChange={(e) => setForm({ ...form, efiCertificate: e.target.value })}
-                    rows={3}
-                    className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none resize-none font-mono text-xs"
-                  />
-                  <p className="text-xs text-zinc-400">Baixe o certificado no painel da Efi → Certificados</p>
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-zinc-700">Ambiente</label>
-                  <select
-                    value={form.efiEnvironment}
-                    onChange={(e) => setForm({ ...form, efiEnvironment: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 focus:border-green-600 focus:outline-none"
-                  >
-                    <option value="sandbox">Sandbox (Testes)</option>
-                    <option value="production">Produção</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-zinc-700">Token do Webhook</label>
-                  <input
-                    type="text"
-                    placeholder="Token para validar webhooks"
-                    value={form.efiWebhookToken}
-                    onChange={(e) => setForm({ ...form, efiWebhookToken: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
-                  />
-                  <p className="text-xs text-zinc-400">URL do webhook: https://flowoshub.com/api/webhooks/efi</p>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Banco Inter - PIX */}
         <Card>
           <CardContent className="p-6 space-y-4">
-            <h3 className="font-semibold text-zinc-900">Banco Inter (PIX)</h3>
-            <p className="text-sm text-zinc-500">
-              Configure o Banco Inter para receber pagamentos via PIX sem taxa. Cartão continua pelo Asaas.
-            </p>
-
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-zinc-700">Provider de Pagamento</label>
-              <select
-                value={form.paymentProvider}
-                onChange={(e) => setForm({ ...form, paymentProvider: e.target.value })}
-                className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 focus:border-green-600 focus:outline-none"
-              >
-                <option value="asaas">Asaas — PIX e Cartão</option>
-                <option value="inter">Inter — PIX sem taxa, Cartão Asaas</option>
-              </select>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-zinc-900">Banco Inter (PIX)</h3>
+                <p className="text-sm text-zinc-500">
+                  PIX sem taxa via Inter. Opcional — configure para economizar nas taxas.
+                </p>
+              </div>
+              {form.interClientId && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 border border-green-200">
+                  <CheckCircle className="h-3 w-3" />
+                  Configurado
+                </span>
+              )}
             </div>
 
-            {form.paymentProvider === "inter" && (
-              <>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-zinc-700">Client ID</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-zinc-700">Client ID</label>
                   <input
                     type="text"
                     placeholder="Client ID do Inter"
@@ -426,10 +319,8 @@ export default function ConfigPage() {
                     rows={3}
                     className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none resize-none font-mono text-xs"
                   />
-                  <p className="text-xs text-zinc-400">Baixe o certificado no Internet Banking → Soluções → Nova Integração</p>
+                   <p className="text-xs text-zinc-400">Baixe o certificado no Internet Banking → Soluções → Nova Integração</p>
                 </div>
-              </>
-            )}
           </CardContent>
         </Card>
 
