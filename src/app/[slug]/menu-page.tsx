@@ -1090,7 +1090,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     }
   }
 
-  const handlePaymentSuccess = useCallback(() => {
+const handlePaymentSuccess = useCallback(() => {
     console.log("[handlePaymentSuccess] Called - clearing cart and pending order")
     setCart([])
     setPendingOrderItems([])
@@ -1100,10 +1100,12 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
     localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
     localStorage.removeItem(`pedefacil-countdown-${establishment.slug}`)
     localStorage.removeItem(`pedefacil-countdown-time-${establishment.slug}`)
+    // Clear paymentLink but DON'T set paymentDone: true yet.
+    // The success screen will show, auto-close after 3s, then onClose will handle cleanup.
     setOrderResult(prev => {
       if (prev?.orderId) paidOrderIdsRef.current.add(prev.orderId)
-      console.log("[handlePaymentSuccess] Order marked as paid:", prev?.orderId)
-      return prev ? { ...prev, paymentLink: undefined, paymentDone: true } : null
+      console.log("[handlePaymentSuccess] Payment confirmed, clearing paymentLink:", prev?.orderId)
+      return prev ? { ...prev, paymentLink: undefined } : null
     })
     loadCustomerOrders()
   }, [establishment.slug])
@@ -1234,11 +1236,11 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         total={orderResult.orderTotal ?? total}
         theme={theme}
         onClose={() => {
-          // Only clear orderResult if payment was done (success or error).
+          // Only clear orderResult if payment was successful (paymentLink cleared) or error (no paymentLink).
           // If payment is still pending (has paymentLink), keep it so user can retry.
           userClosedPaymentModalRef.current = true
           setOrderResult(prev => {
-            if (prev?.paymentDone) return null // Payment done → clear
+            if (prev?.paymentLink === undefined) return null // Payment done → clear
             if (prev?.paymentLink) return prev // Pending → keep for retry
             return null
           })
@@ -1251,7 +1253,7 @@ export function MenuPage({ establishment, paymentConfig, orderConfig }: Props) {
         establishmentSlug={establishment.slug}
         initialTab={orderResult.paymentMethod === "card" ? "card" : "pix"}
         mode={orderResult.paymentMethod ? (orderResult.paymentMethod === "card" ? "card" : "pix") : undefined}
-onPaymentSuccess={handlePaymentSuccess}
+onPaymentConfirmed={handlePaymentSuccess}
       />
     )
   }
@@ -2918,6 +2920,7 @@ function PaymentModal({
   initialTab?: "pix" | "card"
   mode?: "pix" | "card"
   onPaymentSuccess?: () => void
+  onPaymentConfirmed?: () => void
 }) {
   const [tab, setTab] = useState<"pix" | "card">(initialTab || "pix")
 
@@ -3048,10 +3051,10 @@ function PaymentModal({
           if (res.ok) {
             const data = await res.json()
             if (data.paymentStatus === "paid") {
-              console.log("[PaymentModal] Polling detected paid status, calling onPaymentSuccess")
+              console.log("[PaymentModal] Polling detected paid status, calling onPaymentConfirmed")
               setPaymentSuccess(true)
               setCardPending(false)
-              onPaymentSuccess?.()
+              onPaymentConfirmed?.()
               clearInterval(check)
             }
           }
@@ -3134,9 +3137,9 @@ function PaymentModal({
       if (!res.ok) {
         setCardError(data.error || `Erro ${res.status}`)
       } else if (data.status === "CONFIRMED" || data.status === "RECEIVED" || data.status === "AUTHORIZED") {
-        console.log("[Card] Payment confirmed, calling onPaymentSuccess")
+        console.log("[Card] Payment confirmed, calling onPaymentConfirmed")
         setPaymentSuccess(true)
-        onPaymentSuccess?.()
+        onPaymentConfirmed?.()
       } else if (data.error) {
         setCardError(data.error)
       } else {
