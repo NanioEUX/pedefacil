@@ -1100,12 +1100,11 @@ const handlePaymentSuccess = useCallback(() => {
     localStorage.removeItem(`pedefacil-last-order-${establishment.slug}`)
     localStorage.removeItem(`pedefacil-countdown-${establishment.slug}`)
     localStorage.removeItem(`pedefacil-countdown-time-${establishment.slug}`)
-    // Clear paymentLink but DON'T set paymentDone: true yet.
-    // The success screen will show, auto-close after 3s, then onClose will handle cleanup.
+    // Clear paymentLink AND set paymentDone: true so modal closes and doesn't reopen
     setOrderResult(prev => {
       if (prev?.orderId) paidOrderIdsRef.current.add(prev.orderId)
       console.log("[handlePaymentSuccess] Payment confirmed, clearing paymentLink:", prev?.orderId)
-      return prev ? { ...prev, paymentLink: undefined } : null
+      return prev ? { ...prev, paymentLink: undefined, paymentDone: true } : null
     })
     loadCustomerOrders()
   }, [establishment.slug])
