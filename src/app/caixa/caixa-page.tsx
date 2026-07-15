@@ -1545,7 +1545,7 @@ export default function CaixaPOSPage() {
                           : isFullyPaid
                           ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950"
                           : isOccupied
-                          ? darkMode ? "border-amber-500 bg-amber-950/50 hover:border-amber-400" : "border-amber-300 bg-amber-50 hover:border-amber-400"
+                          ? darkMode ? "border-yellow-400 bg-yellow-800/50 hover:border-yellow-300" : "border-yellow-300 bg-yellow-200 hover:border-yellow-400"
                           : darkMode ? "border-white/[.08] bg-[#1a3a5c] hover:border-green-500" : "border-zinc-200 bg-white hover:border-green-400"
                       }`}
                       onClick={() => selectTable(num)}
@@ -1554,13 +1554,13 @@ export default function CaixaPOSPage() {
                         <span className={`text-3xl font-extrabold leading-none ${
                           hasBillRequest ? "text-red-600 dark:text-red-400"
                           : isActive ? "text-green-700 dark:text-green-300"
-                          : isOccupied ? "text-amber-700 dark:text-amber-300"
+                          : isOccupied ? "text-yellow-700 dark:text-yellow-300"
                           : darkMode ? "text-white/40" : "text-zinc-400"
                         }`}>{num}</span>
                         {hasBillRequest ? (
                           <span className="mt-2 rounded-full bg-red-100 px-3 py-1 text-xs font-extrabold text-red-700 dark:bg-red-900 dark:text-red-300">Pediu a conta</span>
                         ) : isOccupied && total > 0 ? (
-                          <span className={`mt-2 text-sm font-bold ${isFullyPaid ? "text-green-600 dark:text-green-400" : "text-amber-700 dark:text-amber-300"}`}>
+                          <span className={`mt-2 text-sm font-bold ${isFullyPaid ? "text-yellow-600 dark:text-yellow-400" : "text-yellow-700 dark:text-yellow-300"}`}>
                             {isFullyPaid ? "Paga" : formatCurrency(total)}
                           </span>
                         ) : (
