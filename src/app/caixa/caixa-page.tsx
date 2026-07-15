@@ -2368,6 +2368,15 @@ export default function CaixaPOSPage() {
               <div className={`px-6 pb-5 pt-3 border-t ${darkMode ? "border-white/10" : "border-zinc-200"}`}>
                 <button
                   onClick={() => {
+                    if (closingTablePayment === "cash" && closeTableMode === "single") {
+                      if (!cashReceived || parseFloat(cashReceived) < remaining) {
+                        if (!cashReceived) setCashReceived(String(remaining))
+                        document.querySelector<HTMLInputElement>('input[placeholder="R$ 0,00"]')?.focus()
+                        return
+                      }
+                      handleCloseTable()
+                      return
+                    }
                     const paymentLabels: Record<string, string> = { cash: "Dinheiro", card: "Cartão", pix: "Pix" }
                     let selectedPayment = closingTablePayment
                     if (closeTableMode === "custom" && customPayments.length > 0) {
@@ -2386,7 +2395,11 @@ export default function CaixaPOSPage() {
                   disabled={closeTableMode === "split" && (!splitCount || parseInt(splitCount) < 2)}
                   className="w-full rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-40 transition-colors"
                 >
-                  Fechar Mesa · {formatCurrency(remaining)}
+                  {closingTablePayment === "cash" && closeTableMode === "single" && cashReceived && parseFloat(cashReceived) >= remaining
+                    ? `Confirmar · Troco ${formatCurrency(parseFloat(cashReceived) - remaining)}`
+                    : closingTablePayment === "cash" && closeTableMode === "single"
+                    ? `Fechar Mesa · Pagar em Dinheiro`
+                    : `Fechar Mesa · ${formatCurrency(remaining)}`}
                 </button>
               </div>
             </div>
