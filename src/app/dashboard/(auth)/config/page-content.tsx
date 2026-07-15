@@ -54,6 +54,8 @@ export default function ConfigPage() {
     defaultTheme: "dark",
     tableCount: "10",
   })
+
+  const [asaasMode, setAsaasMode] = useState<"both" | "card_only">("both")
   const [paymentConfig, setPaymentConfig] = useState({ online: true, delivery: true, pickup: true })
   const [orderConfig, setOrderConfig] = useState({ 
     delivery: true, 
@@ -99,6 +101,7 @@ export default function ConfigPage() {
             defaultTheme: data.defaultTheme || "dark",
             tableCount: String(data.tableCount || 10),
           })
+          setAsaasMode(data.interClientId ? "card_only" : "both")
           if (data.paymentConfig) {
             try { setPaymentConfig(JSON.parse(data.paymentConfig)) } catch {}
           }
@@ -123,7 +126,7 @@ export default function ConfigPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          paymentProvider: form.interClientId ? "inter" : "asaas",
+          paymentProvider: asaasMode === "card_only" ? "inter" : "asaas",
           deliveryFeeAmount: form.deliveryFeeType === "free" ? 0 : Number(form.deliveryFeeAmount),
           deliveryFreeAbove: form.deliveryFeeType === "free_above" ? Number(form.deliveryFreeAbove) : 0,
           paymentConfig: JSON.stringify(paymentConfig),
@@ -225,69 +228,122 @@ export default function ConfigPage() {
           </CardContent>
         </Card>
 
-        {/* Asaas */}
+        {/* Pagamentos */}
         <Card>
-          <CardContent className="p-6 space-y-4">
-            <h3 className="font-semibold text-zinc-900">Asaas (Pagamentos Online)</h3>
-            <p className="text-sm text-zinc-500">
-              Configure sua API Key do Asaas para receber pagamentos via Pix e cartão de crédito no cardápio online. O cliente é redirecionado para a página de pagamento do Asaas após confirmar o pedido.
-            </p>
-            <div className="relative">
+          <CardContent className="p-6 space-y-5">
+            <div>
+              <h3 className="font-semibold text-zinc-900">Pagamentos</h3>
+              <p className="text-sm text-zinc-500">
+                Configure como deseja receber pagamentos no cardápio online.
+              </p>
+            </div>
+
+            {/* Asaas - Provider obrigatório */}
+            <div className="rounded-xl border border-zinc-200 p-4 space-y-4">
+              <div className="flex items-center gap-2">
+                <h4 className="font-medium text-zinc-900">Asaas</h4>
+                <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">Obrigatório</span>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Provider de pagamentos para cartão de crédito e PIX.
+              </p>
+
+              {/* Modo */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAsaasMode("both")}
+                  className={`flex-1 rounded-lg border-2 p-3 text-left transition-all ${
+                    asaasMode === "both"
+                      ? "border-green-500 bg-green-50"
+                      : "border-zinc-200 hover:border-zinc-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${asaasMode === "both" ? "border-green-600" : "border-zinc-300"}`}>
+                      {asaasMode === "both" && <div className="h-2 w-2 rounded-full bg-green-600" />}
+                    </div>
+                    <span className="text-sm font-medium text-zinc-900">PIX + Cartão</span>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1 ml-6">Tudo via Asaas</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAsaasMode("card_only")}
+                  className={`flex-1 rounded-lg border-2 p-3 text-left transition-all ${
+                    asaasMode === "card_only"
+                      ? "border-green-500 bg-green-50"
+                      : "border-zinc-200 hover:border-zinc-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${asaasMode === "card_only" ? "border-green-600" : "border-zinc-300"}`}>
+                      {asaasMode === "card_only" && <div className="h-2 w-2 rounded-full bg-green-600" />}
+                    </div>
+                    <span className="text-sm font-medium text-zinc-900">Somente Cartão</span>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1 ml-6">PIX via Banco Inter</p>
+                </button>
+              </div>
+
+              {/* Campos Asaas */}
+              <div className="relative">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">API Key</label>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    placeholder="asaas_api_key_..."
+                    value={form.asaasApiKey}
+                    onChange={(e) => { setForm({ ...form, asaasApiKey: e.target.value }); setAsaasTestResult(null) }}
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                  />
+                </div>
+                <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-8 text-zinc-400 hover:text-zinc-400">
+                  {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-zinc-700">API Key</label>
+                <label className="block text-sm font-medium text-zinc-700">Wallet ID</label>
                 <input
-                  type={showKey ? "text" : "password"}
-                  placeholder="asaas_api_key_..."
-                  value={form.asaasApiKey}
-                  onChange={(e) => { setForm({ ...form, asaasApiKey: e.target.value }); setAsaasTestResult(null) }}
+                  type="text"
+                  placeholder="Identificação da carteira"
+                  value={form.asaasWalletId}
+                  onChange={(e) => setForm({ ...form, asaasWalletId: e.target.value })}
                   className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
                 />
               </div>
-              <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-8 text-zinc-400 hover:text-zinc-400">
-                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" size="sm" onClick={testAsaasConnection} disabled={testingAsaas || !form.asaasApiKey} className="gap-2">
-                {testingAsaas ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
-                Testar conexão
-              </Button>
-              {asaasTestResult && (
-                <span className={`flex items-center gap-1.5 text-sm font-medium ${asaasTestResult.ok ? "text-green-600" : "text-red-500"}`}>
-                  {asaasTestResult.ok ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                  {asaasTestResult.message}
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Banco Inter - PIX */}
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-zinc-900">Banco Inter (PIX)</h3>
-                <p className="text-sm text-zinc-500">
-                  PIX sem taxa via Inter. Opcional — configure para economizar nas taxas.
-                </p>
+              <div className="flex items-center gap-3">
+                <Button type="button" variant="outline" size="sm" onClick={testAsaasConnection} disabled={testingAsaas || !form.asaasApiKey} className="gap-2">
+                  {testingAsaas ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
+                  Testar conexão
+                </Button>
+                {asaasTestResult && (
+                  <span className={`flex items-center gap-1.5 text-sm font-medium ${asaasTestResult.ok ? "text-green-600" : "text-red-500"}`}>
+                    {asaasTestResult.ok ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                    {asaasTestResult.message}
+                  </span>
+                )}
               </div>
-              {form.interClientId && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 border border-green-200">
-                  <CheckCircle className="h-3 w-3" />
-                  Configurado
-                </span>
-              )}
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-zinc-700">Client ID</label>
+            {/* Banco Inter - aparece só quando "Somente Cartão" */}
+            {asaasMode === "card_only" && (
+              <div className="rounded-xl border border-green-200 bg-green-50/50 p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-zinc-900">Banco Inter</h4>
+                  <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">PIX 0% taxa</span>
+                </div>
+                <div className="rounded-lg bg-green-100/70 px-3 py-2 text-xs text-green-800">
+                  PIX será via Banco Inter, sem taxa. Cartão continua via Asaas.
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-zinc-700">Client ID</label>
                   <input
                     type="text"
                     placeholder="Client ID do Inter"
                     value={form.interClientId}
                     onChange={(e) => setForm({ ...form, interClientId: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -297,17 +353,17 @@ export default function ConfigPage() {
                     placeholder="Client Secret do Inter"
                     value={form.interClientSecret}
                     onChange={(e) => setForm({ ...form, interClientSecret: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-zinc-700">Chave PIX</label>
                   <input
                     type="text"
-                    placeholder="Sua chave PIX (CPF, CNPJ, email, aleatória)"
+                    placeholder="CPF, CNPJ, email ou aleatória"
                     value={form.interPixKey}
                     onChange={(e) => setForm({ ...form, interPixKey: e.target.value })}
-                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                    className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -317,10 +373,12 @@ export default function ConfigPage() {
                     value={form.interCertificate}
                     onChange={(e) => setForm({ ...form, interCertificate: e.target.value })}
                     rows={3}
-                    className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none resize-none font-mono text-xs"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none resize-none font-mono text-xs"
                   />
-                   <p className="text-xs text-zinc-400">Baixe o certificado no Internet Banking → Soluções → Nova Integração</p>
+                  <p className="text-xs text-zinc-400">Baixe no Internet Banking → Soluções → Nova Integração</p>
                 </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
