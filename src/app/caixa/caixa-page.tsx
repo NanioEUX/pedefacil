@@ -1631,7 +1631,7 @@ export default function CaixaPOSPage() {
                             {isFullyPaid ? "Paga" : formatCurrency(total)}
                           </span>
                         ) : (
-                          <span className={`mt-2 text-xs ${darkMode ? "text-white/30" : "text-zinc-500"}`}>Livre</span>
+                          <span className={`mt-2 text-xs ${darkMode ? "text-white/30" : "text-zinc-500"}`}></span>
                         )}
                         {isOccupied && !hasBillRequest && itemCount > 0 && (
                           <span className={`mt-1 text-[10px] ${darkMode ? "text-white/40" : "text-zinc-600"}`}>{itemCount} {itemCount === 1 ? "item" : "itens"}</span>

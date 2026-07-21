@@ -52,6 +52,8 @@ export default function ConfigPage() {
     deliveryFeeType: "free",
     deliveryFeeAmount: "0",
     deliveryFreeAbove: "0",
+    deliveryMinimumOrderEnabled: false,
+    deliveryMinimumOrderValue: "0",
     defaultTheme: "dark",
     tableCount: "10",
   })
@@ -100,6 +102,8 @@ export default function ConfigPage() {
             deliveryFeeType: data.deliveryFeeType || "free",
             deliveryFeeAmount: String(data.deliveryFeeAmount || "0"),
             deliveryFreeAbove: String(data.deliveryFreeAbove || "0"),
+            deliveryMinimumOrderEnabled: data.deliveryMinimumOrderEnabled || false,
+            deliveryMinimumOrderValue: String(data.deliveryMinimumOrderValue || "0"),
             defaultTheme: data.defaultTheme || "dark",
             tableCount: String(data.tableCount || 10),
           })
@@ -605,6 +609,31 @@ export default function ConfigPage() {
                       />
                     </div>
                   )}
+                  <div className="mt-3 pt-3 border-t border-zinc-200 space-y-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={form.deliveryMinimumOrderEnabled}
+                        onChange={(e) => setForm({ ...form, deliveryMinimumOrderEnabled: e.target.checked })}
+                        className="h-4 w-4 rounded border-zinc-300 text-green-600 focus:ring-green-500"
+                      />
+                      <span className="text-sm font-medium text-zinc-700">Ativar pedido mínimo para delivery</span>
+                    </label>
+                    {form.deliveryMinimumOrderEnabled && (
+                      <div className="space-y-1">
+                        <label className="block text-xs font-medium text-zinc-500">Valor mínimo (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="15,00"
+                          value={form.deliveryMinimumOrderValue}
+                          onChange={(e) => setForm({ ...form, deliveryMinimumOrderValue: e.target.value })}
+                          className="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-green-600 focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

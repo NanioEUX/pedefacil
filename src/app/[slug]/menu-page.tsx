@@ -38,6 +38,8 @@ interface Establishment {
   deliveryFeeType: string
   deliveryFeeAmount: number | null
   deliveryFreeAbove: number | null
+  deliveryMinimumOrderEnabled: boolean
+  deliveryMinimumOrderValue: number | null
   primaryColor: string
   backgroundColor: string
   textColor: string
@@ -2214,6 +2216,11 @@ onPaymentConfirmed={handlePaymentSuccess}
                     <span style={{ color: theme.text }}>Total</span>
                     <span style={{ color: theme.accent }}>{formatCurrency(total)}</span>
                   </div>
+                  {orderType === "delivery" && establishment.deliveryMinimumOrderEnabled && establishment.deliveryMinimumOrderValue && total < Number(establishment.deliveryMinimumOrderValue) && (
+                    <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm" style={{ color: "#92400e" }}>
+                      Pedido mínimo para delivery: {formatCurrency(Number(establishment.deliveryMinimumOrderValue))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-2">
@@ -2231,10 +2238,13 @@ onPaymentConfirmed={handlePaymentSuccess}
                       size="lg"
                       className="w-full gap-2"
                       onClick={() => setShowCheckout(true)}
-                      disabled={!isOpen}
+                      disabled={
+                        !isOpen ||
+                        (orderType === "delivery" && !!establishment.deliveryMinimumOrderEnabled && !!establishment.deliveryMinimumOrderValue && total < Number(establishment.deliveryMinimumOrderValue))
+                      }
                     >
                       <ShoppingBag className="h-5 w-5" />
-                      {!isOpen ? "Estabelecimento fechado" : "Finalizar pedido"}
+                      {!isOpen ? "Estabelecimento fechado" : orderType === "delivery" && establishment.deliveryMinimumOrderEnabled && establishment.deliveryMinimumOrderValue && total < Number(establishment.deliveryMinimumOrderValue) ? `Pedido mínimo ${formatCurrency(Number(establishment.deliveryMinimumOrderValue))}` : "Finalizar pedido"}
                     </Button>
                   )}
                 </div>
