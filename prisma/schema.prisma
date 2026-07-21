@@ -48,8 +48,10 @@ model Establishment {
   deliveryFeeType     String            @default("free")
   deliveryFeeAmount   Float?            @default(0)
   deliveryFreeAbove   Float?            @default(0)
-  deliveryMinimumOrderEnabled Boolean        @default(false)
-  deliveryMinimumOrderValue    Float?         @default(0)
+  minimumOrderEnabled       Boolean        @default(false)
+  minimumOrderValue        Float?         @default(0)
+  minimumOrderApplyToDelivery Boolean    @default(true)
+  minimumOrderApplyToPickup Boolean       @default(false)
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
   pickupMessage       String?
